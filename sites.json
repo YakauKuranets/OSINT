@@ -1,0 +1,13 @@
+[
+  { "name": "GitHub", "check_url": "https://github.com/{username}", "method": "StatusCode" },
+  { "name": "Reddit", "check_url": "https://www.reddit.com/user/{username}/", "method": "StringMatch", "error_indicator": "page not found" },
+  { "name": "Steam", "check_url": "https://steamcommunity.com/id/{username}", "method": "StringMatch", "error_indicator": "The specified profile could not be found" },
+  { "name": "Twitter", "check_url": "https://twitter.com/{username}", "method": "StatusCode" },
+  { "name": "Instagram", "check_url": "https://www.instagram.com/{username}/", "method": "StringMatch", "error_indicator": "Sorry, this page isn't available" },
+  { "name": "Telegram (публичный)", "check_url": "https://t.me/{username}", "method": "StringMatch", "error_indicator": "subscribers" },
+  { "name": "VK", "check_url": "https://vk.com/{username}", "method": "StringMatch", "error_indicator": "Page not found" },
+  { "name": "OK.ru", "check_url": "https://ok.ru/{username}", "method": "StringMatch", "error_indicator": "page not found" },
+  { "name": "Pinterest", "check_url": "https://www.pinterest.com/{username}/", "method": "StringMatch", "error_indicator": "User not found" },
+  { "name": "TikTok", "check_url": "https://www.tiktok.com/@{username}", "method": "StringMatch", "error_indicator": "Couldn't find this account" },
+  { "name": "Ahmia (DarkNet)", "check_url": "http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion/search/?q={username}", "method": "StringMatch", "error_indicator": "No results", "requires_tor": true }
+]
