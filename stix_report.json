@@ -1,0 +1,170 @@
+{
+  "objects": {
+    "identities": [
+      {
+        "created": "1779427821",
+        "description": "Root entity of type Nickname",
+        "id": "identity--@teleor1",
+        "identity_class": "individual",
+        "modified": "1779427821",
+        "name": "@teleor1",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779427821",
+        "description": "Associated entity of type Nickname",
+        "id": "identity--xbox:teleor1",
+        "identity_class": "individual",
+        "modified": "1779427821",
+        "name": "xbox:teleor1",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779427821",
+        "description": "Associated entity of type Nickname",
+        "id": "identity--telegram_bio:You can contact @teleor1 right away.",
+        "identity_class": "individual",
+        "modified": "1779427821",
+        "name": "telegram_bio:You can contact @teleor1 right away.",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779427821",
+        "description": "Associated entity of type Nickname",
+        "id": "identity--pinterest:teleor1",
+        "identity_class": "individual",
+        "modified": "1779427821",
+        "name": "pinterest:teleor1",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779427821",
+        "description": "Associated entity of type Nickname",
+        "id": "identity--telegram:teleor1",
+        "identity_class": "individual",
+        "modified": "1779427821",
+        "name": "telegram:teleor1",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779427821",
+        "description": "Associated entity of type FullName",
+        "id": "identity--telegram_full_name:Егор",
+        "identity_class": "individual",
+        "modified": "1779427821",
+        "name": "telegram_full_name:Егор",
+        "spec_version": "2.1"
+      }
+    ],
+    "indicators": [
+      {
+        "created": "1779427821",
+        "id": "indicator--0",
+        "labels": [
+          "Nickname"
+        ],
+        "modified": "1779427821",
+        "name": "Indicator for xbox:teleor1",
+        "pattern": "[user:value = 'xbox:teleor1']",
+        "pattern_type": "stix",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779427821",
+        "id": "indicator--1",
+        "labels": [
+          "Nickname"
+        ],
+        "modified": "1779427821",
+        "name": "Indicator for telegram_bio:You can contact @teleor1 right away.",
+        "pattern": "[user:value = 'telegram_bio:You can contact @teleor1 right away.']",
+        "pattern_type": "stix",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779427821",
+        "id": "indicator--2",
+        "labels": [
+          "Nickname"
+        ],
+        "modified": "1779427821",
+        "name": "Indicator for pinterest:teleor1",
+        "pattern": "[user:value = 'pinterest:teleor1']",
+        "pattern_type": "stix",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779427821",
+        "id": "indicator--3",
+        "labels": [
+          "Nickname"
+        ],
+        "modified": "1779427821",
+        "name": "Indicator for telegram:teleor1",
+        "pattern": "[user:value = 'telegram:teleor1']",
+        "pattern_type": "stix",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779427821",
+        "id": "indicator--4",
+        "labels": [
+          "FullName"
+        ],
+        "modified": "1779427821",
+        "name": "Indicator for telegram_full_name:Егор",
+        "pattern": "[user:value = 'telegram_full_name:Егор']",
+        "pattern_type": "stix",
+        "spec_version": "2.1"
+      }
+    ],
+    "relationships": [
+      {
+        "created": "1779427821",
+        "id": "relationship--0",
+        "modified": "1779427821",
+        "relationship_type": "related-to",
+        "source_ref": "identity--@teleor1",
+        "spec_version": "2.1",
+        "target_ref": "identity--xbox:teleor1"
+      },
+      {
+        "created": "1779427821",
+        "id": "relationship--1",
+        "modified": "1779427821",
+        "relationship_type": "related-to",
+        "source_ref": "identity--@teleor1",
+        "spec_version": "2.1",
+        "target_ref": "identity--telegram_bio:You can contact @teleor1 right away."
+      },
+      {
+        "created": "1779427821",
+        "id": "relationship--2",
+        "modified": "1779427821",
+        "relationship_type": "related-to",
+        "source_ref": "identity--@teleor1",
+        "spec_version": "2.1",
+        "target_ref": "identity--pinterest:teleor1"
+      },
+      {
+        "created": "1779427821",
+        "id": "relationship--3",
+        "modified": "1779427821",
+        "relationship_type": "related-to",
+        "source_ref": "identity--@teleor1",
+        "spec_version": "2.1",
+        "target_ref": "identity--telegram:teleor1"
+      },
+      {
+        "created": "1779427821",
+        "id": "relationship--4",
+        "modified": "1779427821",
+        "relationship_type": "related-to",
+        "source_ref": "identity--@teleor1",
+        "spec_version": "2.1",
+        "target_ref": "identity--telegram_full_name:Егор"
+      }
+    ]
+  },
+  "type": "bundle"
+}

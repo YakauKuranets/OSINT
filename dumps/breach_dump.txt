@@ -1,0 +1,3 @@
+durov;pavel@telegram.org;79991112233;10.10.1984;@durov;Бизнесмен
+ivanov;ivan@mail.ru;79992223344;15.05.1992;@ivan_pro;Менеджер
+petrov;alex@yandex.ru;79995556677;23.11.1989;@alex_petr;Инженер

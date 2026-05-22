@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>X-GEN OSINT Graph</title>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; }
+        #graph { width: 100vw; height: 100vh; border: none; }
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            max-width: 300px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div id="graph"></div>
+<div id="info" class="info-panel"></div>
+<script>
+    var nodes = new vis.DataSet([{id: '@teleor1', label: '@teleor1', group: 'Nickname'},{id: 'xbox:teleor1', label: 'xbox:teleor1', group: 'Nickname'},{id: 'telegram_bio:You can contact @teleor1 right away.', label: 'telegram_bio:You can contact @teleor1 right away.', group: 'Nickname'},{id: 'pinterest:teleor1', label: 'pinterest:teleor1', group: 'Nickname'},{id: 'telegram:teleor1', label: 'telegram:teleor1', group: 'Nickname'},{id: 'telegram_full_name:Егор', label: 'telegram_full_name:Егор', group: 'FullName'}]);
+    var edges = new vis.DataSet([{from: '@teleor1', to: 'telegram:teleor1', label: 'Social_Spider'},{from: '@teleor1', to: 'telegram_full_name:Егор', label: 'Social_Spider'},{from: '@teleor1', to: 'telegram_bio:You can contact @teleor1 right away.', label: 'Social_Spider'},{from: '@teleor1', to: 'pinterest:teleor1', label: 'Social_Spider'},{from: '@teleor1', to: 'xbox:teleor1', label: 'Social_Spider'}]);
+
+    var container = document.getElementById('graph');
+    var data = { nodes: nodes, edges: edges };
+    var options = {
+        nodes: {
+            shape: 'dot',
+            size: 20,
+            font: { size: 14, color: '#fff' },
+            borderWidth: 2,
+            shadow: true,
+            color: {
+                background: '#2B7CE9',
+                border: '#1A56B8'
+            }
+        },
+        edges: {
+            arrows: 'to',
+            smooth: { type: 'curvedCW', roundness: 0.2 },
+            font: { size: 10, align: 'middle' },
+            color: { color: '#848484', highlight: '#ff0000' }
+        },
+        groups: {
+            Nickname: { color: { background: '#FF9900' } },
+            Email: { color: { background: '#2B7CE9' } },
+            Phone: { color: { background: '#41A317' } },
+            DateOfBirth: { color: { background: '#A131B9' } },
+            FullName: { color: { background: '#E3319D' } }
+        },
+        interaction: {
+            hover: true,
+            navigationButtons: true,
+            keyboard: true
+        }
+    };
+
+    var network = new vis.Network(container, data, options);
+
+    // Показ информации при клике
+    network.on('click', function(params) {
+        if (params.nodes.length > 0) {
+            var nodeId = params.nodes[0];
+            var node = nodes.get(nodeId);
+            var infoDiv = document.getElementById('info');
+            infoDiv.innerHTML = '<b>Тип:</b> ' + node.group + '<br><b>Значение:</b> ' + node.label;
+            infoDiv.style.display = 'block';
+        } else {
+            document.getElementById('info').style.display = 'none';
+        }
+    });
+</script>
+</body>
+</html>
