@@ -26,6 +26,7 @@ mod confidence;
 mod noise_rules;
 mod runtime_profile;
 mod master_report;
+mod preflight;
 
 use axum::{
     routing::{post, get},
@@ -328,6 +329,14 @@ async fn main() {
     );
     if let Err(err) = runtime_profile::save_run_profile_report("run_profile_report.json") {
         eprintln!("[!] Не удалось сохранить run_profile_report.json: {}", err);
+    }
+
+    let preflight_report = preflight::run_and_save_preflight("preflight_report.json");
+    preflight::print_preflight_report(&preflight_report);
+    if !preflight_report.summary.can_continue {
+        println!("[!] Preflight обнаружил критические ошибки. Анализ остановлен до исправления среды.");
+        build_and_save_master_report();
+        return;
     }
 
     let selectors = collect_selectors();
