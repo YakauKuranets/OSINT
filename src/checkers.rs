@@ -19,10 +19,13 @@ pub struct EmailDomainFinding {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DomainDnsSummary {
     pub domain: String,
+    pub provider_class: String,
     pub has_mx: bool,
     pub has_txt: bool,
     pub mx_hosts: Vec<String>,
     pub txt_records: Vec<String>,
+    pub txt_labels: Vec<String>,
+    pub risk_flags: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -32,6 +35,9 @@ pub struct EmailDomainStats {
     pub valid_emails: usize,
     pub invalid_emails: usize,
     pub username_candidates: usize,
+    pub free_mail_domains: usize,
+    pub corporate_domains: usize,
+    pub suspicious_domains: usize,
     pub dns_errors: usize,
     pub findings_count: usize,
     pub evidences_count: usize,
@@ -100,6 +106,26 @@ pub async fn run_email_domain_checkers(seeds: &[EntityNode]) -> EmailDomainRepor
                             },
                         );
 
+                        let provider_class = classify_domain_provider(&domain);
+                        if provider_class == "free_mail" {
+                            report.stats.free_mail_domains += 1;
+                        } else if provider_class == "corporate_or_custom" {
+                            report.stats.corporate_domains += 1;
+                        } else if provider_class == "suspicious_or_disposable" {
+                            report.stats.suspicious_domains += 1;
+                        }
+                        push_finding(
+                            &mut report.findings,
+                            &mut seen_findings,
+                            EmailDomainFinding {
+                                source_id: "email_provider_classifier".to_string(),
+                                entity_type: EntityType::DataSource,
+                                value: format!("provider:{}:{}", domain, provider_class),
+                                confidence: 50,
+                                note: "email_provider_class".to_string(),
+                            },
+                        );
+
                         let candidates = username_candidates_from_email_local(&local);
                         report.stats.username_candidates += candidates.len();
                         for candidate in candidates {
@@ -150,6 +176,9 @@ pub async fn run_email_domain_checkers(seeds: &[EntityNode]) -> EmailDomainRepor
         if dns_enabled {
             match check_domain_dns(&client, &domain).await {
                 Ok(summary) => {
+                    if summary.risk_flags.iter().any(|flag| flag.contains("suspicious")) {
+                        report.stats.suspicious_domains += 1;
+                    }
                     if summary.has_mx {
                         push_finding(
                             &mut report.findings,
@@ -170,9 +199,22 @@ pub async fn run_email_domain_checkers(seeds: &[EntityNode]) -> EmailDomainRepor
                             EmailDomainFinding {
                                 source_id: "domain_dns_txt_checker".to_string(),
                                 entity_type: EntityType::DataSource,
-                                value: format!("txt:{}:{}", summary.domain, classify_txt_records(&summary.txt_records).join(",")),
+                                value: format!("txt:{}:{}", summary.domain, summary.txt_labels.join(",")),
                                 confidence: 50,
                                 note: "domain_has_txt".to_string(),
+                            },
+                        );
+                    }
+                    if !summary.risk_flags.is_empty() {
+                        push_finding(
+                            &mut report.findings,
+                            &mut seen_findings,
+                            EmailDomainFinding {
+                                source_id: "domain_risk_classifier".to_string(),
+                                entity_type: EntityType::DataSource,
+                                value: format!("domain_risk:{}:{}", summary.domain, summary.risk_flags.join(",")),
+                                confidence: 45,
+                                note: "domain_risk_flags".to_string(),
                             },
                         );
                     }
@@ -254,6 +296,7 @@ fn materialize_findings(report: &mut EmailDomainReport) {
 async fn check_domain_dns(client: &Client, domain: &str) -> Result<DomainDnsSummary, reqwest::Error> {
     let mx = query_doh(client, domain, "MX").await?;
     let txt = query_doh(client, domain, "TXT").await?;
+    let a = query_doh(client, domain, "A").await?;
 
     let mx_hosts = dns_answer_data(&mx)
         .into_iter()
@@ -265,13 +308,20 @@ async fn check_domain_dns(client: &Client, domain: &str) -> Result<DomainDnsSumm
         .map(|s| s.trim_matches('"').to_string())
         .filter(|s| !s.is_empty())
         .collect::<Vec<_>>();
+    let a_records = dns_answer_data(&a);
+    let txt_labels = classify_txt_records(&txt_records);
+    let provider_class = classify_domain_provider(domain);
+    let risk_flags = classify_domain_risk(domain, &mx_hosts, &txt_labels, &a_records, &provider_class);
 
     Ok(DomainDnsSummary {
         domain: domain.to_string(),
+        provider_class,
         has_mx: !mx_hosts.is_empty(),
         has_txt: !txt_records.is_empty(),
         mx_hosts,
         txt_records,
+        txt_labels,
+        risk_flags,
     })
 }
 
@@ -329,6 +379,9 @@ fn classify_txt_records(records: &[String]) -> Vec<String> {
         if lower.contains("ms=") || lower.contains("mscid") {
             labels.push("microsoft-verification".to_string());
         }
+        if lower.contains("github-domain-verification") {
+            labels.push("github-verification".to_string());
+        }
     }
     labels.sort();
     labels.dedup();
@@ -336,6 +389,50 @@ fn classify_txt_records(records: &[String]) -> Vec<String> {
         labels.push("txt".to_string());
     }
     labels
+}
+
+fn classify_domain_provider(domain: &str) -> String {
+    let d = domain.trim().to_lowercase();
+    let free = ["gmail.com", "googlemail.com", "yahoo.com", "outlook.com", "hotmail.com", "live.com", "icloud.com", "mail.ru", "yandex.ru", "ya.ru", "proton.me", "protonmail.com", "tutanota.com"];
+    let disposable = ["10minutemail", "tempmail", "guerrillamail", "mailinator", "trashmail", "yopmail", "temp-mail"];
+    if free.contains(&d.as_str()) {
+        "free_mail".to_string()
+    } else if disposable.iter().any(|marker| d.contains(marker)) {
+        "suspicious_or_disposable".to_string()
+    } else {
+        "corporate_or_custom".to_string()
+    }
+}
+
+fn classify_domain_risk(domain: &str, mx_hosts: &[String], txt_labels: &[String], a_records: &[String], provider_class: &str) -> Vec<String> {
+    let mut flags = Vec::new();
+    if provider_class == "suspicious_or_disposable" {
+        flags.push("suspicious_or_disposable_provider".to_string());
+    }
+    if mx_hosts.is_empty() {
+        flags.push("no_mx_records".to_string());
+    }
+    if a_records.is_empty() {
+        flags.push("no_a_records".to_string());
+    }
+    if !txt_labels.iter().any(|label| label == "spf") {
+        flags.push("missing_spf".to_string());
+    }
+    if provider_class == "corporate_or_custom" && !txt_labels.iter().any(|label| label == "dmarc") {
+        flags.push("missing_dmarc_for_custom_domain".to_string());
+    }
+    if looks_like_tracking_or_shortener_domain(domain) {
+        flags.push("suspicious_shortener_or_tracking_domain".to_string());
+    }
+    flags.sort();
+    flags.dedup();
+    flags
+}
+
+fn looks_like_tracking_or_shortener_domain(domain: &str) -> bool {
+    let d = domain.to_lowercase();
+    let markers = ["bit.ly", "tinyurl.com", "t.co", "goo.gl", "ow.ly", "short", "click", "track", "trk"];
+    markers.iter().any(|marker| d == *marker || d.contains(marker))
 }
 
 fn push_finding(
@@ -520,6 +617,16 @@ mod tests {
         let candidates = username_candidates_from_email_local("test.user-01+tag");
         assert!(candidates.contains(&"test.user-01".to_string()));
         assert!(candidates.contains(&"testuser01".to_string()));
+    }
+
+    #[test]
+    fn classifies_free_mail_provider() {
+        assert_eq!(classify_domain_provider("gmail.com"), "free_mail");
+    }
+
+    #[test]
+    fn classifies_disposable_provider() {
+        assert_eq!(classify_domain_provider("abc.tempmail.test"), "suspicious_or_disposable");
     }
 
     #[test]
