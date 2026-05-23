@@ -25,6 +25,7 @@ mod checkers;
 mod confidence;
 mod noise_rules;
 mod runtime_profile;
+mod master_report;
 
 use axum::{
     routing::{post, get},
@@ -40,7 +41,6 @@ use tokio::net::TcpListener;
 use std::io::{self, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-// Состояние приложения: движок под защитой асинхронного Mutex
 struct AppState {
     engine: Mutex<engine::AnalysisEngine>,
 }
@@ -83,7 +83,6 @@ fn collect_selectors() -> InputSelectors {
     }
 }
 
-// --- STIX-структуры ---
 #[derive(Serialize, Deserialize)]
 struct StixIndicator {
     id: String, spec_version: String, created: String, modified: String,
@@ -216,6 +215,20 @@ fn save_full_analysis_report(
     }
 }
 
+fn build_and_save_master_report() {
+    match master_report::build_and_save_master_report("master_report.json") {
+        Ok(report) => {
+            let compact = master_report::compact_master_summary(&report);
+            println!("\n[*] Master Report: master_report.json");
+            println!("  status: {}", compact.get("status").and_then(|v| v.as_str()).unwrap_or("unknown"));
+            println!("  confidence_adjusted: {}", compact.get("confidence_adjusted").map(|v| v.to_string()).unwrap_or_else(|| "null".to_string()));
+            println!("  high_risk: {}", compact.get("high_risk").and_then(|v| v.as_bool()).unwrap_or(false));
+            println!("  missing_reports: {}", report.missing_reports.len());
+        }
+        Err(err) => eprintln!("[!] Не удалось сохранить master_report.json: {}", err),
+    }
+}
+
 fn add_telegram_export_seeds(seeds: &mut Vec<models::EntityNode>, path: &str) {
     println!("\n[*] Telegram Export Parser: {}", path);
     match telegram_export::analyze_telegram_export(path) {
@@ -317,7 +330,6 @@ async fn main() {
         eprintln!("[!] Не удалось сохранить run_profile_report.json: {}", err);
     }
 
-    // 1. СБОР ИСХОДНЫХ СЕЛЕКТОРОВ
     let selectors = collect_selectors();
 
     let mut seeds: Vec<models::EntityNode> = Vec::new();
@@ -345,6 +357,7 @@ async fn main() {
 
     if seeds.is_empty() {
         println!("[!] Ошибка: не введено ни одного валидного селектора. Завершение работы.");
+        build_and_save_master_report();
         return;
     }
 
@@ -359,7 +372,6 @@ async fn main() {
         engine_instance.task_queue.push_back(seed);
     }
 
-    // 2. Первичный прогон
     engine_instance.resolve_cascade().await;
     scoring::evaluate_profile(&mut engine_instance.final_profile);
     apply_and_save_confidence_guardrails(&mut engine_instance.final_profile);
@@ -367,7 +379,6 @@ async fn main() {
     print_conflict_report(&conflict_report);
     save_conflict_report(&conflict_report, "conflict_report.json");
 
-    // 3. ВОЗВРАЩАЕМ ИИ-АНАЛИТИКА MISTRAL
     println!("\n[*] Запуск ИИ-аналитика (Mistral:7b) для составления сводки...");
     let mut profile_text = format!("Target: {}\n", engine_instance.final_profile.root_entity.value);
     for (val, node) in &engine_instance.final_profile.associated_nodes {
@@ -384,7 +395,6 @@ async fn main() {
         None => println!("  [AI] Не удалось получить аналитическую сводку."),
     }
 
-    // Сохраняем STIX, Дорки и HTML перед запуском сервера
     let (indicators, identities, relationships) = profile_to_stix(&engine_instance.final_profile);
     let stix_bundle = serde_json::json!({ "type": "bundle", "objects": { "indicators": indicators, "identities": identities, "relationships": relationships }});
     if let Ok(json_str) = serde_json::to_string_pretty(&stix_bundle) {
@@ -420,6 +430,8 @@ async fn main() {
         next_steps,
     );
 
+    build_and_save_master_report();
+
     println!("\n[?] Найдено связей: {} | confidence: {}", engine_instance.final_profile.active_links.len(), engine_instance.final_profile.calculated_confidence);
     print!("[?] Продолжить поиск по найденным корреляциям? (yes/no): ");
     io::stdout().flush().unwrap();
@@ -444,9 +456,9 @@ async fn main() {
             source_health,
             next_steps,
         );
+        build_and_save_master_report();
     }
 
-    // 4. ЗАПУСК WEB-СЕРВЕРА
     let shared_state = Arc::new(AppState {
         engine: Mutex::new(engine_instance)
     });
@@ -483,11 +495,10 @@ async fn expand_handler(
 
     let _node = models::EntityNode::new(&payload.target, models::EntityType::Nickname);
 
-    // Запускаем каскад для узла
     machine.resolve_cascade().await;
 
-    // Обновляем визуализацию
     crate::visualizer::generate_html_report(&machine.final_profile, "report.html");
+    build_and_save_master_report();
 
     Json(serde_json::json!({
         "status": "success",
