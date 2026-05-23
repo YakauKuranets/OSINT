@@ -57,7 +57,12 @@ pub fn read_case_snapshot(case_id: &str) -> Option<String> {
     std::fs::read_to_string(path).ok()
 }
 
-pub fn recent_cases_struct_page(limit: usize, offset: usize) -> Vec<serde_json::Value> {
+pub fn recent_cases_struct_page(
+    limit: usize,
+    offset: usize,
+    min_confidence: Option<u8>,
+    root_contains: Option<&str>,
+) -> Vec<serde_json::Value> {
     let index_path = "cases/index.json";
     let mut items: Vec<CaseIndexEntry> = std::fs::read_to_string(index_path)
         .ok()
@@ -65,8 +70,17 @@ pub fn recent_cases_struct_page(limit: usize, offset: usize) -> Vec<serde_json::
         .unwrap_or_default();
 
     items.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+    let root_filter = root_contains.map(|s| s.to_lowercase());
+
     items
         .into_iter()
+        .filter(|c| min_confidence.map(|v| c.confidence >= v).unwrap_or(true))
+        .filter(|c| {
+            root_filter
+                .as_ref()
+                .map(|needle| c.root_value.to_lowercase().contains(needle))
+                .unwrap_or(true)
+        })
         .skip(offset)
         .take(limit)
         .map(|c| serde_json::json!({

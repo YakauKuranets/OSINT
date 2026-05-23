@@ -42,6 +42,8 @@ struct ExpandRequest {
 struct CasesQuery {
     limit: Option<usize>,
     offset: Option<usize>,
+    min_confidence: Option<u8>,
+    root_contains: Option<String>,
 }
 
 #[derive(Default)]
@@ -300,8 +302,16 @@ async fn cases_handler_with_query(
 ) -> impl IntoResponse {
     let limit = params.limit.unwrap_or(50).clamp(1, 200);
     let offset = params.offset.unwrap_or(0);
-    let items = case_store::recent_cases_struct_page(limit, offset);
-    Json(serde_json::json!({ "cases": items, "limit": limit, "offset": offset }))
+    let min_confidence = params.min_confidence;
+    let root_contains = params.root_contains.as_deref();
+    let items = case_store::recent_cases_struct_page(limit, offset, min_confidence, root_contains);
+    Json(serde_json::json!({
+        "cases": items,
+        "limit": limit,
+        "offset": offset,
+        "min_confidence": min_confidence,
+        "root_contains": params.root_contains
+    }))
 }
 
 #[axum::debug_handler]
