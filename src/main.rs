@@ -7,6 +7,8 @@ mod dork_generator;
 mod social_spider;
 mod ai_core;
 mod enumerator;
+mod data_broker;
+mod sandbox_runner;
 
 use axum::{
     routing::{post, get},
@@ -30,6 +32,37 @@ struct AppState {
 #[derive(Deserialize)]
 struct ExpandRequest {
     target: String
+}
+
+#[derive(Default)]
+struct InputSelectors {
+    phone: Option<String>,
+    email: Option<String>,
+    nickname: Option<String>,
+    full_name: Option<String>,
+    dob: Option<String>,
+    country: Option<String>,
+}
+
+fn ask_optional(prompt: &str) -> Option<String> {
+    print!("{}", prompt);
+    io::stdout().flush().ok()?;
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).ok()?;
+    let value = input.trim().to_string();
+    if value.is_empty() { None } else { Some(value) }
+}
+
+fn collect_selectors() -> InputSelectors {
+    println!("\n[?] Введите максимум исходных данных (можно пропускать поля):");
+    InputSelectors {
+        phone: ask_optional("  Телефон: "),
+        email: ask_optional("  Email: "),
+        nickname: ask_optional("  Никнейм: "),
+        full_name: ask_optional("  ФИО: "),
+        dob: ask_optional("  Дата рождения (ДД.ММ.ГГГГ): "),
+        country: ask_optional("  Страна: "),
+    }
 }
 
 // --- STIX-структуры ---
@@ -90,35 +123,33 @@ async fn main() {
     println!("     📊 X-GEN OSINT PLATFORM v3.0 [NEURO]         ");
     println!("==================================================");
 
-    // 1. ВОЗВРАЩАЕМ РУЧНОЙ ВВОД ЦЕЛИ
-    print!("\n[?] Введите цель (никнейм, телефон или email): ");
-    io::stdout().flush().unwrap();
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).expect("Не удалось прочитать строку");
-    let value = input.trim().to_string();
+    // 1. СБОР ИСХОДНЫХ СЕЛЕКТОРОВ
+    let selectors = collect_selectors();
 
-    if value.is_empty() {
-        println!("[!] Ошибка: Пустой ввод. Завершение работы.");
+    let mut seeds: Vec<models::EntityNode> = Vec::new();
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
+    if let Some(v) = selectors.phone.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Phone, first_seen: now }); }
+    if let Some(v) = selectors.email.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Email, first_seen: now }); }
+    if let Some(v) = selectors.nickname.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Nickname, first_seen: now }); }
+    if let Some(v) = selectors.full_name.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::FullName, first_seen: now }); }
+    if let Some(v) = selectors.dob.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::DateOfBirth, first_seen: now }); }
+    if let Some(v) = selectors.country.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Country, first_seen: now }); }
+
+    if seeds.is_empty() {
+        println!("[!] Ошибка: не введено ни одного валидного селектора. Завершение работы.");
         return;
     }
 
-    let entity_type = if value.starts_with('+') || (value.chars().all(|c| c.is_numeric()) && value.len() >= 10) {
-        models::EntityType::Phone
-    } else if value.contains('@') && value.contains('.') {
-        models::EntityType::Email
-    } else {
-        models::EntityType::Nickname
-    };
-
-    println!("[*] Автоматически определен тип селектора: {:?}", entity_type);
     println!("--------------------------------------------------");
     println!("[+] X-GEN Absolute OSINT Protocol активирован. Нейро-ядро разблокировано.");
-    println!("[*] Запуск сквозного каскадного поиска для: {}\n", value);
+    println!("[*] Запуск сквозного каскадного поиска для {} стартовых селекторов\n", seeds.len());
 
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
-    let start_target = models::EntityNode { value: value.clone(), entity_type, first_seen: now };
+    let start_target = seeds.remove(0);
 
     let mut engine_instance = engine::AnalysisEngine::new(start_target, "dumps");
+    for seed in seeds {
+        engine_instance.task_queue.push_back(seed);
+    }
 
     // 2. Первичный прогон
     engine_instance.resolve_cascade().await;
@@ -147,11 +178,22 @@ async fn main() {
     if let Ok(json_str) = serde_json::to_string_pretty(&stix_bundle) {
         let _ = std::fs::write("stix_report.json", &json_str);
     }
-    let _ = crate::dork_generator::generate_dorks(&engine_instance.final_profile, "dorks.txt");
+    let _ = crate::dork_generator::DorkGenerator::generate_dorks(&engine_instance.final_profile, "dorks.txt");
     crate::visualizer::generate_html_report(&engine_instance.final_profile, "report.html");
     let resolution_report = scoring::build_resolution_report(&engine_instance.final_profile);
     if let Ok(report_json) = serde_json::to_string_pretty(&resolution_report) {
         let _ = std::fs::write("resolution_report.json", report_json);
+    }
+
+    println!("\n[?] Найдено связей: {} | confidence: {}", engine_instance.final_profile.active_links.len(), engine_instance.final_profile.calculated_confidence);
+    print!("[?] Продолжить поиск по найденным корреляциям? (yes/no): ");
+    io::stdout().flush().unwrap();
+    let mut decision = String::new();
+    io::stdin().read_line(&mut decision).ok();
+    if decision.trim().eq_ignore_ascii_case("yes") {
+        engine_instance.resolve_cascade().await;
+        scoring::evaluate_profile(&mut engine_instance.final_profile);
+        crate::visualizer::generate_html_report(&engine_instance.final_profile, "report.html");
     }
 
     // 4. ЗАПУСК WEB-СЕРВЕРА

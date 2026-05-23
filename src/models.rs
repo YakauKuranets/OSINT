@@ -6,6 +6,7 @@ pub enum EntityType {
     Nickname,
     Email,
     Phone,
+    Country,
     BankIdentifier,
     DateOfBirth,
     FullName,
