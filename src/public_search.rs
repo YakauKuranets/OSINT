@@ -1,6 +1,7 @@
 use crate::evidence::{build_evidence_observation, EvidenceInput};
 use crate::models::{EntityNode, EntityType, EvidenceRecord, ObservationRecord, SensitivityClass, SourceClass};
 use crate::noise_rules::{adjusted_confidence, evaluate_noise, NoiseAction, NoiseDecisionInput};
+use crate::runtime_profile;
 use crate::sanitize::{sanitize_text, SanitizeOptions};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -64,10 +65,8 @@ fn now_unix() -> u64 {
 
 pub async fn run_public_search_for_seeds(seeds: &[EntityNode]) -> PublicSearchReport {
     let tasks = build_public_search_tasks(seeds);
-    let max_tasks = std::env::var("OSINT_PUBLIC_SEARCH_MAX_TASKS").ok().and_then(|v| v.parse::<usize>().ok()).unwrap_or(20);
-    let github_enabled = std::env::var("OSINT_GITHUB_SEARCH")
-        .map(|v| v == "1" || v.eq_ignore_ascii_case("true") || v.eq_ignore_ascii_case("yes"))
-        .unwrap_or(true);
+    let max_tasks = runtime_profile::public_search_max_tasks();
+    let github_enabled = runtime_profile::github_search();
 
     let client = Client::builder().timeout(std::time::Duration::from_secs(12)).build().expect("build public search client");
     let mut report = PublicSearchReport {
