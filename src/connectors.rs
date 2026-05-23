@@ -71,6 +71,26 @@ impl EmailBreachConnector {
             connector_kind: self.kind().to_string(),
         }]
     }
+
+    pub fn collect_breaches(
+        &self,
+        email: &str,
+        breaches: &[String],
+        timestamp: u64,
+    ) -> Vec<Observation> {
+        breaches
+            .iter()
+            .map(|name| Observation {
+                value: format!("breach:{}", name),
+                entity_type: EntityType::Nickname,
+                source_id: self.id().to_string(),
+                timestamp,
+                confidence: 75,
+                evidence_snippet: format!("email={} matched breach={}", email, name),
+                connector_kind: self.kind().to_string(),
+            })
+            .collect()
+    }
 }
 
 impl SocialSpiderConnector {

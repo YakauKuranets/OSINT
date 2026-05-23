@@ -7,6 +7,7 @@ use reqwest::Client;
 use serde_json::Value;
 use crate::ai_core::AiCore;
 use crate::data_broker::DataBroker;
+use crate::connectors::EmailBreachConnector;
 
 pub struct AnalysisEngine {
     pub task_queue: VecDeque<EntityNode>,
@@ -354,14 +355,16 @@ impl AnalysisEngine {
             if current_node.entity_type == EntityType::Email {
                 let breaches = self.check_hibp(&current_node.value).await;
                 if !breaches.is_empty() {
+                    let email_connector = EmailBreachConnector;
                     let hibp_meta = SourceMetadata {
                         source_id: "HIBP_API".to_string(),
                         class: SourceClass::VerifiedRegistry,
                         import_timestamp: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs(),
                         data_actual_year: 2026,
                     };
-                    for breach_name in &breaches {
-                        let node = EntityNode { value: format!("breach:{}", breach_name), entity_type: EntityType::Nickname, first_seen: hibp_meta.import_timestamp };
+                    let observations = email_connector.collect_breaches(&current_node.value, &breaches, hibp_meta.import_timestamp);
+                    for obs in observations {
+                        let node = obs.to_entity_node();
                         self.final_profile.associated_nodes.insert(node.value.clone(), node.clone());
                         self.final_profile.active_links.push(crate::models::EntityLink {
                             source_node_value: current_node.value.clone(),
