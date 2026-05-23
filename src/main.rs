@@ -17,6 +17,7 @@ mod sanitize;
 mod hashing;
 mod conflicts;
 mod analysis_report;
+mod telegram_export;
 
 use axum::{
     routing::{post, get},
@@ -50,6 +51,7 @@ struct InputSelectors {
     full_name: Option<String>,
     dob: Option<String>,
     country: Option<String>,
+    telegram_export_path: Option<String>,
 }
 
 fn ask_optional(prompt: &str) -> Option<String> {
@@ -70,6 +72,7 @@ fn collect_selectors() -> InputSelectors {
         full_name: ask_optional("  ФИО: "),
         dob: ask_optional("  Дата рождения (ДД.ММ.ГГГГ): "),
         country: ask_optional("  Страна: "),
+        telegram_export_path: ask_optional("  Путь к Telegram export/result.json (Enter = пропустить): "),
     }
 }
 
@@ -187,6 +190,31 @@ fn save_full_analysis_report(
     }
 }
 
+fn add_telegram_export_seeds(seeds: &mut Vec<models::EntityNode>, path: &str) {
+    println!("\n[*] Telegram Export Parser: {}", path);
+    match telegram_export::analyze_telegram_export(path) {
+        Ok(report) => {
+            println!(
+                "  chats={} | messages={} | emails={} | phones={} | usernames={} | urls={}",
+                report.chats_analyzed,
+                report.messages_analyzed,
+                report.extracted_counts.emails,
+                report.extracted_counts.phones,
+                report.extracted_counts.usernames,
+                report.extracted_counts.urls
+            );
+            if let Err(err) = telegram_export::save_telegram_export_report(&report, "telegram_export_report.json") {
+                eprintln!("  [!] Не удалось сохранить telegram_export_report.json: {}", err);
+            }
+
+            let nodes = telegram_export::observations_as_entity_nodes(&report, 100);
+            println!("  [+] Добавлено Telegram-derived селекторов: {}", nodes.len());
+            seeds.extend(nodes);
+        }
+        Err(err) => eprintln!("  [!] Telegram export не обработан: {}", err),
+    }
+}
+
 #[tokio::main]
 async fn main() {
     println!("==================================================");
@@ -204,6 +232,9 @@ async fn main() {
     if let Some(v) = selectors.full_name.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::FullName, first_seen: now }); }
     if let Some(v) = selectors.dob.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::DateOfBirth, first_seen: now }); }
     if let Some(v) = selectors.country.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Country, first_seen: now }); }
+    if let Some(path) = selectors.telegram_export_path.as_deref() {
+        add_telegram_export_seeds(&mut seeds, path);
+    }
 
     let mut registry = connectors::ConnectorRegistry::new();
     let mut connector_seeds = Vec::new();
