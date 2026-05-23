@@ -43,6 +43,36 @@ impl Connector for SocialSpiderConnector {
     }
 }
 
+pub struct EmailBreachConnector;
+
+impl Connector for EmailBreachConnector {
+    fn id(&self) -> &'static str {
+        "email_breach"
+    }
+
+    fn kind(&self) -> &'static str {
+        "breach"
+    }
+
+    fn supports(&self, entity_type: &EntityType) -> bool {
+        matches!(entity_type, EntityType::Email)
+    }
+}
+
+impl EmailBreachConnector {
+    pub fn collect(&self, email: &str, timestamp: u64) -> Vec<Observation> {
+        vec![Observation {
+            value: format!("seed_email:{}", email),
+            entity_type: EntityType::Email,
+            source_id: self.id().to_string(),
+            timestamp,
+            confidence: 60,
+            evidence_snippet: "connector-enabled-email-seed".to_string(),
+            connector_kind: self.kind().to_string(),
+        }]
+    }
+}
+
 impl SocialSpiderConnector {
     pub fn collect(
         &self,
