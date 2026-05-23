@@ -1,13 +1,2893 @@
 [
-  { "name": "GitHub", "check_url": "https://github.com/{username}", "method": "StatusCode" },
-  { "name": "Reddit", "check_url": "https://www.reddit.com/user/{username}/", "method": "StringMatch", "error_indicator": "page not found" },
-  { "name": "Steam", "check_url": "https://steamcommunity.com/id/{username}", "method": "StringMatch", "error_indicator": "The specified profile could not be found" },
-  { "name": "Twitter", "check_url": "https://twitter.com/{username}", "method": "StatusCode" },
-  { "name": "Instagram", "check_url": "https://www.instagram.com/{username}/", "method": "StringMatch", "error_indicator": "Sorry, this page isn't available" },
-  { "name": "Telegram (публичный)", "check_url": "https://t.me/{username}", "method": "StringMatch", "error_indicator": "subscribers" },
-  { "name": "VK", "check_url": "https://vk.com/{username}", "method": "StringMatch", "error_indicator": "Page not found" },
-  { "name": "OK.ru", "check_url": "https://ok.ru/{username}", "method": "StringMatch", "error_indicator": "page not found" },
-  { "name": "Pinterest", "check_url": "https://www.pinterest.com/{username}/", "method": "StringMatch", "error_indicator": "User not found" },
-  { "name": "TikTok", "check_url": "https://www.tiktok.com/@{username}", "method": "StringMatch", "error_indicator": "Couldn't find this account" },
-  { "name": "Ahmia (DarkNet)", "check_url": "http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion/search/?q={username}", "method": "StringMatch", "error_indicator": "No results", "requires_tor": true }
+  {
+    "name": "GitHub",
+    "check_url": "https://github.com/{username}",
+    "method": "StatusCode"
+  },
+  {
+    "name": "Reddit",
+    "check_url": "https://www.reddit.com/user/{username}/",
+    "method": "StringMatch",
+    "error_indicator": "page not found"
+  },
+  {
+    "name": "Steam",
+    "check_url": "https://steamcommunity.com/id/{username}",
+    "method": "StringMatch",
+    "error_indicator": "The specified profile could not be found"
+  },
+  {
+    "name": "Twitter",
+    "check_url": "https://twitter.com/{username}",
+    "method": "StatusCode"
+  },
+  {
+    "name": "Instagram",
+    "check_url": "https://www.instagram.com/{username}/",
+    "method": "StringMatch",
+    "error_indicator": "Sorry, this page isn't available"
+  },
+  {
+    "name": "Telegram (публичный)",
+    "check_url": "https://t.me/{username}",
+    "method": "StringMatch",
+    "error_indicator": "subscribers"
+  },
+  {
+    "name": "VK",
+    "check_url": "https://vk.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Page not found"
+  },
+  {
+    "name": "OK.ru",
+    "check_url": "https://ok.ru/{username}",
+    "method": "StringMatch",
+    "error_indicator": "page not found"
+  },
+  {
+    "name": "Pinterest",
+    "check_url": "https://www.pinterest.com/{username}/",
+    "method": "StringMatch",
+    "error_indicator": "User not found"
+  },
+  {
+    "name": "TikTok",
+    "check_url": "https://www.tiktok.com/@{username}",
+    "method": "StringMatch",
+    "error_indicator": "Couldn't find this account"
+  },
+  {
+    "name": "Ahmia (DarkNet)",
+    "check_url": "http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion/search/?q={username}",
+    "method": "StringMatch",
+    "error_indicator": "No results",
+    "requires_tor": true
+  },
+  {
+    "name": "1337x",
+    "check_url": "https://www.1337x.to/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "2Dimensions",
+    "check_url": "https://2Dimensions.com/a/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "7Cups",
+    "check_url": "https://www.7cups.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "9GAG",
+    "check_url": "https://www.9gag.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "APClips",
+    "check_url": "https://apclips.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Amateur Porn Content Creators"
+  },
+  {
+    "name": "About.me",
+    "check_url": "https://about.me/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Academia.edu",
+    "check_url": "https://independent.academia.edu/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "AdmireMe.Vip",
+    "check_url": "https://admireme.vip/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Page Not Found"
+  },
+  {
+    "name": "Airbit",
+    "check_url": "https://airbit.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Airliners",
+    "check_url": "https://www.airliners.net/user/{username}/profile/photos",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "All Things Worn",
+    "check_url": "https://www.allthingsworn.com/profile/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Sell Used Panties"
+  },
+  {
+    "name": "AllMyLinks",
+    "check_url": "https://allmylinks.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Page not found"
+  },
+  {
+    "name": "AniWorld",
+    "check_url": "https://aniworld.to/user/profil/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Dieses Profil ist nicht verfügbar"
+  },
+  {
+    "name": "Anilist",
+    "check_url": "https://anilist.co/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Apple Developer",
+    "check_url": "https://developer.apple.com/forums/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Apple Discussions",
+    "check_url": "https://discussions.apple.com/profile/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Looking for something in Apple Support Communities?"
+  },
+  {
+    "name": "Aparat",
+    "check_url": "https://www.aparat.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Archive of Our Own",
+    "check_url": "https://archiveofourown.org/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Archive.org",
+    "check_url": "https://archive.org/details/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Arduino Forum",
+    "check_url": "https://forum.arduino.cc/u/{username}/summary",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ArtStation",
+    "check_url": "https://www.artstation.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Asciinema",
+    "check_url": "https://asciinema.org/~{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Ask Fedora",
+    "check_url": "https://ask.fedoraproject.org/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Atcoder",
+    "check_url": "https://atcoder.jp/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Vjudge",
+    "check_url": "https://VJudge.net/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Audiojungle",
+    "check_url": "https://audiojungle.net/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Autofrage",
+    "check_url": "https://www.autofrage.net/nutzer/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Avizo",
+    "check_url": "https://www.avizo.cz/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "AWS Skills Profile",
+    "check_url": "https://skillsprofile.skillbuilder.aws/user/{username}/",
+    "method": "StringMatch",
+    "error_indicator": "shareProfileAccepted\":false"
+  },
+  {
+    "name": "BOOTH",
+    "check_url": "https://{username}.booth.pm/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bandcamp",
+    "check_url": "https://www.bandcamp.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bazar.cz",
+    "check_url": "https://www.bazar.cz/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Behance",
+    "check_url": "https://www.behance.net/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bezuzyteczna",
+    "check_url": "https://bezuzyteczna.pl/uzytkownicy/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BiggerPockets",
+    "check_url": "https://www.biggerpockets.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BioHacking",
+    "check_url": "https://forum.dangerousthings.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BitBucket",
+    "check_url": "https://bitbucket.org/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bitwarden Forum",
+    "check_url": "https://community.bitwarden.com/u/{username}/summary",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Blipfoto",
+    "check_url": "https://www.blipfoto.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Blitz Tactics",
+    "check_url": "https://blitztactics.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "That page doesn't exist"
+  },
+  {
+    "name": "Blogger",
+    "check_url": "https://{username}.blogspot.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bluesky",
+    "check_url": "https://bsky.app/profile/{username}.bsky.social",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BongaCams",
+    "check_url": "https://pt.bongacams.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bookcrossing",
+    "check_url": "https://www.bookcrossing.com/mybookshelf/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BoardGameGeek",
+    "check_url": "https://boardgamegeek.com/user/{username}",
+    "method": "StringMatch",
+    "error_indicator": "\"isValid\":true"
+  },
+  {
+    "name": "BraveCommunity",
+    "check_url": "https://community.brave.com/u/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BreachSta.rs Forum",
+    "check_url": "https://breachsta.rs/profile/{username}",
+    "method": "StringMatch",
+    "error_indicator": "<title>Error - BreachStars</title>"
+  },
+  {
+    "name": "BugCrowd",
+    "check_url": "https://bugcrowd.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BuyMeACoffee",
+    "check_url": "https://buymeacoff.ee/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BuzzFeed",
+    "check_url": "https://buzzfeed.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Cfx.re Forum",
+    "check_url": "https://forum.cfx.re/u/{username}/summary",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "CGTrader",
+    "check_url": "https://www.cgtrader.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "CNET",
+    "check_url": "https://www.cnet.com/profiles/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "CSSBattle",
+    "check_url": "https://cssbattle.dev/player/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "CTAN",
+    "check_url": "https://ctan.org/author/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Caddy Community",
+    "check_url": "https://caddy.community/u/{username}/summary",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Car Talk Community",
+    "check_url": "https://community.cartalk.com/u/{username}/summary",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Carbonmade",
+    "check_url": "https://{username}.carbonmade.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Carrd",
+    "check_url": "https://{username}.carrd.co/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Career.habr",
+    "check_url": "https://career.habr.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "<h1>Ошибка 404</h1>"
+  },
+  {
+    "name": "CashApp",
+    "check_url": "https://cash.app/${username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Championat",
+    "check_url": "https://www.championat.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Chaos",
+    "check_url": "https://chaos.social/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Chatujme.cz",
+    "check_url": "https://profil.chatujme.cz/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Neexistujicí profil"
+  },
+  {
+    "name": "ChaturBate",
+    "check_url": "https://chaturbate.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Chess",
+    "check_url": "https://www.chess.com/member/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Username is valid"
+  },
+  {
+    "name": "Choice Community",
+    "check_url": "https://choice.community/u/{username}/summary",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Clapper",
+    "check_url": "https://clapperapp.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "CloudflareCommunity",
+    "check_url": "https://community.cloudflare.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Clozemaster",
+    "check_url": "https://www.clozemaster.com/players/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Oh no! Player not found."
+  },
+  {
+    "name": "Clubhouse",
+    "check_url": "https://www.clubhouse.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Code Snippet Wiki",
+    "check_url": "https://codesnippets.fandom.com/wiki/User:{username}",
+    "method": "StringMatch",
+    "error_indicator": "This user has not filled out their profile page yet"
+  },
+  {
+    "name": "Codeberg",
+    "check_url": "https://codeberg.org/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Codecademy",
+    "check_url": "https://www.codecademy.com/profiles/{username}",
+    "method": "StringMatch",
+    "error_indicator": "This profile could not be found"
+  },
+  {
+    "name": "Codechef",
+    "check_url": "https://www.codechef.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Codeforces",
+    "check_url": "https://codeforces.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Codepen",
+    "check_url": "https://codepen.io/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Coders Rank",
+    "check_url": "https://profile.codersrank.io/user/{username}/",
+    "method": "StringMatch",
+    "error_indicator": "not a registered member"
+  },
+  {
+    "name": "Coderwall",
+    "check_url": "https://coderwall.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "CodeSandbox",
+    "check_url": "https://codesandbox.io/u/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Could not find user with username"
+  },
+  {
+    "name": "Codewars",
+    "check_url": "https://www.codewars.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Codolio",
+    "check_url": "https://codolio.com/profile/{username}",
+    "method": "StringMatch",
+    "error_indicator": "<title>Page Not Found | Codolio</title>"
+  },
+  {
+    "name": "Coinvote",
+    "check_url": "https://coinvote.cc/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ColourLovers",
+    "check_url": "https://www.colourlovers.com/lover/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Contently",
+    "check_url": "https://{username}.contently.com/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Coroflot",
+    "check_url": "https://www.coroflot.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Cplusplus",
+    "check_url": "https://cplusplus.com/user/{username}",
+    "method": "StringMatch",
+    "error_indicator": "<title>404 Page Not Found</title>"
+  },
+  {
+    "name": "Cracked",
+    "check_url": "https://www.cracked.com/members/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Cracked Forum",
+    "check_url": "https://cracked.ax/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Credly",
+    "check_url": "https://www.credly.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Crevado",
+    "check_url": "https://{username}.crevado.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Crowdin",
+    "check_url": "https://crowdin.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "CryptoHack",
+    "check_url": "https://cryptohack.org/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Cryptomator Forum",
+    "check_url": "https://community.cryptomator.org/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Cults3D",
+    "check_url": "https://cults3d.com/en/users/{username}/creations",
+    "method": "StringMatch",
+    "error_indicator": "Oh dear, this page is not working!"
+  },
+  {
+    "name": "CyberDefenders",
+    "check_url": "https://cyberdefenders.org/p/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "DEV Community",
+    "check_url": "https://dev.to/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "DMOJ",
+    "check_url": "https://dmoj.ca/user/{username}",
+    "method": "StringMatch",
+    "error_indicator": "No such user"
+  },
+  {
+    "name": "DailyMotion",
+    "check_url": "https://www.dailymotion.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "dcinside",
+    "check_url": "https://gallog.dcinside.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Dealabs",
+    "check_url": "https://www.dealabs.com/profile/{username}",
+    "method": "StringMatch",
+    "error_indicator": "La page que vous essayez"
+  },
+  {
+    "name": "DeviantArt",
+    "check_url": "https://www.deviantart.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Llama Not Found"
+  },
+  {
+    "name": "DigitalSpy",
+    "check_url": "https://forums.digitalspy.com/profile/{username}",
+    "method": "StringMatch",
+    "error_indicator": "The page you were looking for could not be found."
+  },
+  {
+    "name": "Discogs",
+    "check_url": "https://www.discogs.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Discord.bio",
+    "check_url": "https://discords.com/api-v2/bio/details/{username}",
+    "method": "StringMatch",
+    "error_indicator": "<title>Server Error (500)</title>"
+  },
+  {
+    "name": "Discuss.Elastic.co",
+    "check_url": "https://discuss.elastic.co/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Disqus",
+    "check_url": "https://disqus.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Docker Hub",
+    "check_url": "https://hub.docker.com/u/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Dribbble",
+    "check_url": "https://dribbble.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Whoops, that page is gone."
+  },
+  {
+    "name": "Duolingo",
+    "check_url": "https://www.duolingo.com/profile/{username}",
+    "method": "StringMatch",
+    "error_indicator": "{\"users\":[]}"
+  },
+  {
+    "name": "Eintracht Frankfurt Forum",
+    "check_url": "https://community.eintracht.de/fans/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Empretienda AR",
+    "check_url": "https://{username}.empretienda.com.ar",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Envato Forum",
+    "check_url": "https://forums.envato.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Erome",
+    "check_url": "https://www.erome.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Exposure",
+    "check_url": "https://{username}.exposure.co/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "exophase",
+    "check_url": "https://www.exophase.com/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "EyeEm",
+    "check_url": "https://www.eyeem.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "F3.cool",
+    "check_url": "https://f3.cool/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Fameswap",
+    "check_url": "https://fameswap.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Fandom",
+    "check_url": "https://www.fandom.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Fanpop",
+    "check_url": "https://www.fanpop.com/fans/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Finanzfrage",
+    "check_url": "https://www.finanzfrage.net/nutzer/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Flickr",
+    "check_url": "https://www.flickr.com/people/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Flightradar24",
+    "check_url": "https://my.flightradar24.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Flipboard",
+    "check_url": "https://flipboard.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Football",
+    "check_url": "https://www.rusfootball.info/user/{username}/",
+    "method": "StringMatch",
+    "error_indicator": "Пользователь с таким именем не найден"
+  },
+  {
+    "name": "FortniteTracker",
+    "check_url": "https://fortnitetracker.com/profile/all/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Forum Ophilia",
+    "check_url": "https://www.forumophilia.com/profile.php?mode=viewprofile&u={username}",
+    "method": "StringMatch",
+    "error_indicator": "that user does not exist"
+  },
+  {
+    "name": "Fosstodon",
+    "check_url": "https://fosstodon.org/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Framapiaf",
+    "check_url": "https://framapiaf.org/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Freelancer",
+    "check_url": "https://www.freelancer.com/u/{username}",
+    "method": "StringMatch",
+    "error_indicator": "\"users\":{}"
+  },
+  {
+    "name": "Freesound",
+    "check_url": "https://freesound.org/people/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GNOME VCS",
+    "check_url": "https://gitlab.gnome.org/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GaiaOnline",
+    "check_url": "https://www.gaiaonline.com/profiles/{username}",
+    "method": "StringMatch",
+    "error_indicator": "No user ID specified or user does not exist"
+  },
+  {
+    "name": "Gamespot",
+    "check_url": "https://www.gamespot.com/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GameFAQs",
+    "check_url": "https://gamefaqs.gamespot.com/community/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GeeksforGeeks",
+    "check_url": "https://auth.geeksforgeeks.org/user/{username}",
+    "method": "StringMatch",
+    "error_indicator": "false   | GeeksforGeeks Profile"
+  },
+  {
+    "name": "Genius (Artists)",
+    "check_url": "https://genius.com/artists/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Genius (Users)",
+    "check_url": "https://genius.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Gesundheitsfrage",
+    "check_url": "https://www.gesundheitsfrage.net/nutzer/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GetMyUni",
+    "check_url": "https://www.getmyuni.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Giant Bomb",
+    "check_url": "https://www.giantbomb.com/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Giphy",
+    "check_url": "https://giphy.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "<title> GIFs - Find &amp; Share on GIPHY</title>"
+  },
+  {
+    "name": "GitBook",
+    "check_url": "https://{username}.gitbook.io/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Warframe Market",
+    "check_url": "https://warframe.market/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GitLab",
+    "check_url": "https://gitlab.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "[]"
+  },
+  {
+    "name": "Gitea",
+    "check_url": "https://gitea.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Gitee",
+    "check_url": "https://gitee.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GoodReads",
+    "check_url": "https://www.goodreads.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Google Play",
+    "check_url": "https://play.google.com/store/apps/developer?id={username}",
+    "method": "StringMatch",
+    "error_indicator": "the requested URL was not found on this server"
+  },
+  {
+    "name": "Gradle",
+    "check_url": "https://plugins.gradle.org/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Grailed",
+    "check_url": "https://www.grailed.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Gravatar",
+    "check_url": "http://en.gravatar.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Gumroad",
+    "check_url": "https://www.gumroad.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Page not found (404) - Gumroad"
+  },
+  {
+    "name": "Gutefrage",
+    "check_url": "https://www.gutefrage.net/nutzer/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "HackTheBox",
+    "check_url": "https://forum.hackthebox.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Hackaday",
+    "check_url": "https://hackaday.io/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "HackenProof (Hackers)",
+    "check_url": "https://hackenproof.com/hackers/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Page not found"
+  },
+  {
+    "name": "HackerEarth",
+    "check_url": "https://hackerearth.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "HackerNews",
+    "check_url": "https://news.ycombinator.com/user?id={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "HackerOne",
+    "check_url": "https://hackerone.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Page not found"
+  },
+  {
+    "name": "HackerRank",
+    "check_url": "https://hackerrank.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Something went wrong"
+  },
+  {
+    "name": "HackerSploit",
+    "check_url": "https://forum.hackersploit.org/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "HackMD",
+    "check_url": "https://hackmd.io/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Harvard Scholar",
+    "check_url": "https://scholar.harvard.edu/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Hashnode",
+    "check_url": "https://hashnode.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Heavy-R",
+    "check_url": "https://www.heavy-r.com/user/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Channel not found"
+  },
+  {
+    "name": "Hive Blog",
+    "check_url": "https://hive.blog/@{username}",
+    "method": "StringMatch",
+    "error_indicator": "<title>User Not Found - Hive</title>"
+  },
+  {
+    "name": "Holopin",
+    "check_url": "https://holopin.io/@{username}",
+    "method": "StringMatch",
+    "error_indicator": "true"
+  },
+  {
+    "name": "Houzz",
+    "check_url": "https://houzz.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "HubPages",
+    "check_url": "https://hubpages.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Hubski",
+    "check_url": "https://hubski.com/user/{username}",
+    "method": "StringMatch",
+    "error_indicator": "No such user"
+  },
+  {
+    "name": "HudsonRock",
+    "check_url": "https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-username?username={username}",
+    "method": "StringMatch",
+    "error_indicator": "This username is not associated"
+  },
+  {
+    "name": "Hugging Face",
+    "check_url": "https://huggingface.co/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "IFTTT",
+    "check_url": "https://www.ifttt.com/p/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Ifunny",
+    "check_url": "https://ifunny.co/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "IRC-Galleria",
+    "check_url": "https://irc-galleria.net/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Icons8 Community",
+    "check_url": "https://community.icons8.com/u/{username}/summary",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Image Fap",
+    "check_url": "https://www.imagefap.com/profile/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Not found"
+  },
+  {
+    "name": "ImgUp.cz",
+    "check_url": "https://imgup.cz/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Imgur",
+    "check_url": "https://imgur.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "imood",
+    "check_url": "https://www.imood.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Instapaper",
+    "check_url": "https://www.instapaper.com/p/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Instructables",
+    "check_url": "https://www.instructables.com/member/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Intigriti",
+    "check_url": "https://app.intigriti.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Ionic Forum",
+    "check_url": "https://forum.ionicframework.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Issuu",
+    "check_url": "https://issuu.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Itch.io",
+    "check_url": "https://{username}.itch.io/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Itemfix",
+    "check_url": "https://www.itemfix.com/c/{username}",
+    "method": "StringMatch",
+    "error_indicator": "<title>ItemFix - Channel: </title>"
+  },
+  {
+    "name": "Jellyfin Weblate",
+    "check_url": "https://translate.jellyfin.org/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Jimdo",
+    "check_url": "https://{username}.jimdosite.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Joplin Forum",
+    "check_url": "https://discourse.joplinapp.org/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Jupyter Community Forum",
+    "check_url": "https://discourse.jupyter.org/u/{username}/summary",
+    "method": "StringMatch",
+    "error_indicator": "Oops! That page doesn’t exist or is private."
+  },
+  {
+    "name": "Kaggle",
+    "check_url": "https://www.kaggle.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "kaskus",
+    "check_url": "https://www.kaskus.co.id/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Keybase",
+    "check_url": "https://keybase.io/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Kick",
+    "check_url": "https://kick.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Kik",
+    "check_url": "https://kik.me/{username}",
+    "method": "StringMatch",
+    "error_indicator": "The page you requested was not found"
+  },
+  {
+    "name": "Kongregate",
+    "check_url": "https://www.kongregate.com/accounts/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "LOR",
+    "check_url": "https://www.linux.org.ru/people/{username}/profile",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Laracast",
+    "check_url": "https://laracasts.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Launchpad",
+    "check_url": "https://launchpad.net/~{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "LeetCode",
+    "check_url": "https://leetcode.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "LemmyWorld",
+    "check_url": "https://lemmy.world/u/{username}",
+    "method": "StringMatch",
+    "error_indicator": "<h1>Error!</h1>"
+  },
+  {
+    "name": "LessWrong",
+    "check_url": "https://www.lesswrong.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Letterboxd",
+    "check_url": "https://letterboxd.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Sorry, we can’t find the page you’ve requested."
+  },
+  {
+    "name": "LibraryThing",
+    "check_url": "https://www.librarything.com/profile/{username}",
+    "method": "StringMatch",
+    "error_indicator": "<p>Error: This user doesn't exist</p>"
+  },
+  {
+    "name": "Lichess",
+    "check_url": "https://lichess.org/@/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "LinkedIn",
+    "check_url": "https://linkedin.com/in/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Linktree",
+    "check_url": "https://linktr.ee/{username}",
+    "method": "StringMatch",
+    "error_indicator": "\"statusCode\":404"
+  },
+  {
+    "name": "LinuxFR.org",
+    "check_url": "https://linuxfr.org/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Listed",
+    "check_url": "https://listed.to/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "LiveJournal",
+    "check_url": "https://{username}.livejournal.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Lobsters",
+    "check_url": "https://lobste.rs/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "LottieFiles",
+    "check_url": "https://lottiefiles.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "LushStories",
+    "check_url": "https://www.lushstories.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MMORPG Forum",
+    "check_url": "https://forums.mmorpg.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mamot",
+    "check_url": "https://mamot.fr/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Medium",
+    "check_url": "https://medium.com/@{username}",
+    "method": "StringMatch",
+    "error_indicator": "<body"
+  },
+  {
+    "name": "Memrise",
+    "check_url": "https://www.memrise.com/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Minecraft",
+    "check_url": "https://api.mojang.com/users/profiles/minecraft/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Couldn't find any profile with name"
+  },
+  {
+    "name": "MixCloud",
+    "check_url": "https://www.mixcloud.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Monkeytype",
+    "check_url": "https://monkeytype.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Motherless",
+    "check_url": "https://motherless.com/m/{username}",
+    "method": "StringMatch",
+    "error_indicator": "no longer a member"
+  },
+  {
+    "name": "Motorradfrage",
+    "check_url": "https://www.motorradfrage.net/nutzer/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MuseScore",
+    "check_url": "https://musescore.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MyAnimeList",
+    "check_url": "https://myanimelist.net/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MyMiniFactory",
+    "check_url": "https://www.myminifactory.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mydramalist",
+    "check_url": "https://www.mydramalist.com/profile/{username}",
+    "method": "StringMatch",
+    "error_indicator": "The requested page was not found"
+  },
+  {
+    "name": "Myspace",
+    "check_url": "https://myspace.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "NICommunityForum",
+    "check_url": "https://community.native-instruments.com/profile/{username}",
+    "method": "StringMatch",
+    "error_indicator": "The page you were looking for could not be found."
+  },
+  {
+    "name": "namuwiki",
+    "check_url": "https://namu.wiki/w/%EC%82%AC%EC%9A%A9%EC%9E%90:{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "NationStates Nation",
+    "check_url": "https://nationstates.net/nation={username}",
+    "method": "StringMatch",
+    "error_indicator": "Was this your nation? It may have ceased to exist due to inactivity, but can rise again!"
+  },
+  {
+    "name": "NationStates Region",
+    "check_url": "https://nationstates.net/region={username}",
+    "method": "StringMatch",
+    "error_indicator": "does not exist."
+  },
+  {
+    "name": "Naver",
+    "check_url": "https://blog.naver.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Needrom",
+    "check_url": "https://www.needrom.com/author/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Newgrounds",
+    "check_url": "https://{username}.newgrounds.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Nextcloud Forum",
+    "check_url": "https://help.nextcloud.com/u/{username}/summary",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Nightbot",
+    "check_url": "https://nightbot.tv/t/{username}/commands",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Ninja Kiwi",
+    "check_url": "https://ninjakiwi.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "NintendoLife",
+    "check_url": "https://www.nintendolife.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "NitroType",
+    "check_url": "https://www.nitrotype.com/racer/{username}",
+    "method": "StringMatch",
+    "error_indicator": "<title>Nitro Type | Competitive Typing Game | Race Your Friends</title>"
+  },
+  {
+    "name": "NotABug.org",
+    "check_url": "https://notabug.org/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Nothing Community",
+    "check_url": "https://nothing.community/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Nyaa.si",
+    "check_url": "https://nyaa.si/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ObservableHQ",
+    "check_url": "https://observablehq.com/@{username}",
+    "method": "StringMatch",
+    "error_indicator": "Page not found"
+  },
+  {
+    "name": "Open Collective",
+    "check_url": "https://opencollective.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "OpenGameArt",
+    "check_url": "https://opengameart.org/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "OpenStreetMap",
+    "check_url": "https://www.openstreetmap.org/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Odysee",
+    "check_url": "https://odysee.com/@{username}",
+    "method": "StringMatch",
+    "error_indicator": "<link rel=\"canonical\" content=\"odysee.com\"/>"
+  },
+  {
+    "name": "Opensource",
+    "check_url": "https://opensource.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "OurDJTalk",
+    "check_url": "https://ourdjtalk.com/members?username={username}",
+    "method": "StringMatch",
+    "error_indicator": "The specified member cannot be found"
+  },
+  {
+    "name": "Outgress",
+    "check_url": "https://outgress.com/agents/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Outgress - Error"
+  },
+  {
+    "name": "PCGamer",
+    "check_url": "https://forums.pcgamer.com/members/?username={username}",
+    "method": "StringMatch",
+    "error_indicator": "The specified member cannot be found. Please enter a member's entire name."
+  },
+  {
+    "name": "PSNProfiles.com",
+    "check_url": "https://psnprofiles.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Packagist",
+    "check_url": "https://packagist.org/packages/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pastebin",
+    "check_url": "https://pastebin.com/u/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Not Found (#404)"
+  },
+  {
+    "name": "Patched",
+    "check_url": "https://patched.sh/User/{username}",
+    "method": "StringMatch",
+    "error_indicator": "The member you specified is either invalid or doesn't exist."
+  },
+  {
+    "name": "Patreon",
+    "check_url": "https://www.patreon.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "PentesterLab",
+    "check_url": "https://pentesterlab.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "HotUKdeals",
+    "check_url": "https://www.hotukdeals.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mydealz",
+    "check_url": "https://www.mydealz.de/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Chollometro",
+    "check_url": "https://www.chollometro.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "PepperNL",
+    "check_url": "https://nl.pepper.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "PepperPL",
+    "check_url": "https://www.pepper.pl/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Preisjaeger",
+    "check_url": "https://www.preisjaeger.at/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pepperdeals",
+    "check_url": "https://www.pepperdeals.se/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "PepperealsUS",
+    "check_url": "https://www.pepperdeals.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Promodescuentos",
+    "check_url": "https://www.promodescuentos.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Periscope",
+    "check_url": "https://www.periscope.tv/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pinkbike",
+    "check_url": "https://www.pinkbike.com/u/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "pixelfed.social",
+    "check_url": "https://pixelfed.social/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "PlayStore",
+    "check_url": "https://play.google.com/store/apps/developer?id={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Playstrategy",
+    "check_url": "https://playstrategy.org/@/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Plurk",
+    "check_url": "https://www.plurk.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "User Not Found!"
+  },
+  {
+    "name": "PocketStars",
+    "check_url": "https://pocketstars.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Join Your Favorite Adult Stars"
+  },
+  {
+    "name": "Pokemon Showdown",
+    "check_url": "https://pokemonshowdown.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Polarsteps",
+    "check_url": "https://polarsteps.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Polygon",
+    "check_url": "https://www.polygon.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Polymart",
+    "check_url": "https://polymart.org/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pornhub",
+    "check_url": "https://pornhub.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ProductHunt",
+    "check_url": "https://www.producthunt.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "programming.dev",
+    "check_url": "https://programming.dev/u/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Error!"
+  },
+  {
+    "name": "Pychess",
+    "check_url": "https://www.pychess.org/@/{username}",
+    "method": "StringMatch",
+    "error_indicator": "404"
+  },
+  {
+    "name": "PromoDJ",
+    "check_url": "http://promodj.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pronouns.page",
+    "check_url": "https://pronouns.page/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "PyPi",
+    "check_url": "https://pypi.org/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Python.org Discussions",
+    "check_url": "https://discuss.python.org/u/{username}/summary",
+    "method": "StringMatch",
+    "error_indicator": "Oops! That page doesn’t exist or is private."
+  },
+  {
+    "name": "Rajce.net",
+    "check_url": "https://{username}.rajce.idnes.cz/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Rarible",
+    "check_url": "https://rarible.com/marketplace/api/v4/urls/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Rate Your Music",
+    "check_url": "https://rateyourmusic.com/~{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Rclone Forum",
+    "check_url": "https://forum.rclone.org/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "RedTube",
+    "check_url": "https://www.redtube.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Redbubble",
+    "check_url": "https://www.redbubble.com/people/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Realmeye",
+    "check_url": "https://www.realmeye.com/player/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Sorry, but we either:"
+  },
+  {
+    "name": "Reisefrage",
+    "check_url": "https://www.reisefrage.net/nutzer/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Replit.com",
+    "check_url": "https://replit.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ResearchGate",
+    "check_url": "https://www.researchgate.net/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ReverbNation",
+    "check_url": "https://www.reverbnation.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Sorry, we couldn't find that page"
+  },
+  {
+    "name": "Roblox",
+    "check_url": "https://www.roblox.com/user.aspx?username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "RocketTube",
+    "check_url": "https://www.rockettube.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "OOPS! Houston, we have a problem"
+  },
+  {
+    "name": "RoyalCams",
+    "check_url": "https://royalcams.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Ruby Forums",
+    "check_url": "https://ruby-forum.com/u/{username}/summary",
+    "method": "StringMatch",
+    "error_indicator": "Oops! That page doesn’t exist or is private."
+  },
+  {
+    "name": "RubyGems",
+    "check_url": "https://rubygems.org/profiles/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Rumble",
+    "check_url": "https://rumble.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "RuneScape",
+    "check_url": "https://apps.runescape.com/runemetrics/app/overview/player/{username}",
+    "method": "StringMatch",
+    "error_indicator": "{\"error\":\"NO_PROFILE\",\"loggedIn\":\"false\"}"
+  },
+  {
+    "name": "SWAPD",
+    "check_url": "https://swapd.co/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Sbazar.cz",
+    "check_url": "https://www.sbazar.cz/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Scratch",
+    "check_url": "https://scratch.mit.edu/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Scribd",
+    "check_url": "https://www.scribd.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Page not found"
+  },
+  {
+    "name": "SEOForum",
+    "check_url": "https://seoforum.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Shelf",
+    "check_url": "https://www.shelf.im/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ShitpostBot5000",
+    "check_url": "https://www.shitpostbot.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Signal",
+    "check_url": "https://community.signalusers.org/u/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Oops! That page doesn’t exist or is private."
+  },
+  {
+    "name": "Sketchfab",
+    "check_url": "https://sketchfab.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Slack",
+    "check_url": "https://{username}.slack.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Slant",
+    "check_url": "https://www.slant.co/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Slashdot",
+    "check_url": "https://slashdot.org/~{username}",
+    "method": "StringMatch",
+    "error_indicator": "user you requested does not exist"
+  },
+  {
+    "name": "SlideShare",
+    "check_url": "https://slideshare.net/{username}",
+    "method": "StringMatch",
+    "error_indicator": "<title>Page no longer exists</title>"
+  },
+  {
+    "name": "Slides",
+    "check_url": "https://slides.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SmugMug",
+    "check_url": "https://{username}.smugmug.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Smule",
+    "check_url": "https://www.smule.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Smule | Page Not Found (404)"
+  },
+  {
+    "name": "Snapchat",
+    "check_url": "https://www.snapchat.com/add/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SOOP",
+    "check_url": "https://www.sooplive.co.kr/station/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SoundCloud",
+    "check_url": "https://soundcloud.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SourceForge",
+    "check_url": "https://sourceforge.net/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SpaceHey",
+    "check_url": "https://spacehey.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Not Found (Error 404) | SpaceHey"
+  },
+  {
+    "name": "SoylentNews",
+    "check_url": "https://soylentnews.org/~{username}",
+    "method": "StringMatch",
+    "error_indicator": "The user you requested does not exist, no matter how much you wish this might be the case."
+  },
+  {
+    "name": "SpeakerDeck",
+    "check_url": "https://speakerdeck.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Speedrun.com",
+    "check_url": "https://speedrun.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Spells8",
+    "check_url": "https://forum.spells8.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Splice",
+    "check_url": "https://splice.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Splits.io",
+    "check_url": "https://splits.io/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Sporcle",
+    "check_url": "https://www.sporcle.com/user/{username}/people",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Sportlerfrage",
+    "check_url": "https://www.sportlerfrage.net/nutzer/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SportsRU",
+    "check_url": "https://www.sports.ru/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Spotify",
+    "check_url": "https://open.spotify.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Star Citizen",
+    "check_url": "https://robertsspaceindustries.com/citizens/{username}",
+    "method": "StringMatch",
+    "error_indicator": "404"
+  },
+  {
+    "name": "Status Cafe",
+    "check_url": "https://status.cafe/users/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Page Not Found"
+  },
+  {
+    "name": "Steam Community (Group)",
+    "check_url": "https://steamcommunity.com/groups/{username}",
+    "method": "StringMatch",
+    "error_indicator": "No group could be retrieved for the given URL"
+  },
+  {
+    "name": "Steam Community (User)",
+    "check_url": "https://steamcommunity.com/id/{username}/",
+    "method": "StringMatch",
+    "error_indicator": "The specified profile could not be found"
+  },
+  {
+    "name": "Strava",
+    "check_url": "https://www.strava.com/athletes/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Substack",
+    "check_url": "https://{username}.substack.com/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SublimeForum",
+    "check_url": "https://forum.sublimetext.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TETR.IO",
+    "check_url": "https://ch.tetr.io/u/{username}",
+    "method": "StringMatch",
+    "error_indicator": "No such user!"
+  },
+  {
+    "name": "TheMovieDB",
+    "check_url": "https://www.themoviedb.org/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Tiendanube",
+    "check_url": "https://{username}.mitiendanube.com/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Topcoder",
+    "check_url": "https://profiles.topcoder.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Topmate",
+    "check_url": "https://topmate.io/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TRAKTRAIN",
+    "check_url": "https://traktrain.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Telegram",
+    "check_url": "https://t.me/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Tellonym.me",
+    "check_url": "https://tellonym.me/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Tenor",
+    "check_url": "https://tenor.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Terraria Forums",
+    "check_url": "https://forums.terraria.org/index.php?search/42798315/&c[users]={username}&o=relevance",
+    "method": "StringMatch",
+    "error_indicator": "The following members could not be found"
+  },
+  {
+    "name": "ThemeForest",
+    "check_url": "https://themeforest.net/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "tistory",
+    "check_url": "https://{username}.tistory.com/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TnAFlix",
+    "check_url": "https://www.tnaflix.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TradingView",
+    "check_url": "https://www.tradingview.com/u/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Trakt",
+    "check_url": "https://www.trakt.tv/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TrashboxRU",
+    "check_url": "https://trashbox.ru/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Trawelling",
+    "check_url": "https://traewelling.de/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Trello",
+    "check_url": "https://trello.com/{username}",
+    "method": "StringMatch",
+    "error_indicator": "model not found"
+  },
+  {
+    "name": "TryHackMe",
+    "check_url": "https://tryhackme.com/p/{username}",
+    "method": "StringMatch",
+    "error_indicator": "{\"success\":false}"
+  },
+  {
+    "name": "Tuna",
+    "check_url": "https://tuna.voicemod.net/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Tweakers",
+    "check_url": "https://tweakers.net/gallery/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Twitch",
+    "check_url": "https://www.twitch.tv/{username}",
+    "method": "StringMatch",
+    "error_indicator": "content='Twitch is the world&#39;s leading video platform and community for gamers.'"
+  },
+  {
+    "name": "Trovo",
+    "check_url": "https://trovo.live/s/{username}/",
+    "method": "StringMatch",
+    "error_indicator": "Uh Ohhh..."
+  },
+  {
+    "name": "Typeracer",
+    "check_url": "https://data.typeracer.com/pit/profile?user={username}",
+    "method": "StringMatch",
+    "error_indicator": "Profile Not Found"
+  },
+  {
+    "name": "Ultimate-Guitar",
+    "check_url": "https://ultimate-guitar.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Unsplash",
+    "check_url": "https://unsplash.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Untappd",
+    "check_url": "https://untappd.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Valorant Forums",
+    "check_url": "https://valorantforums.com/u/{username}",
+    "method": "StringMatch",
+    "error_indicator": "The page you requested could not be found."
+  },
+  {
+    "name": "VSCO",
+    "check_url": "https://vsco.co/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Velog",
+    "check_url": "https://velog.io/@{username}/posts",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Velomania",
+    "check_url": "https://forum.velomania.ru/member.php?username={username}",
+    "method": "StringMatch",
+    "error_indicator": "Пользователь не зарегистрирован и не имеет профиля для просмотра."
+  },
+  {
+    "name": "Venmo",
+    "check_url": "https://account.venmo.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Vero",
+    "check_url": "https://vero.co/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Not Found"
+  },
+  {
+    "name": "Vimeo",
+    "check_url": "https://vimeo.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "VirusTotal",
+    "check_url": "https://www.virustotal.com/gui/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "VLR",
+    "check_url": "https://www.vlr.gg/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "WICG Forum",
+    "check_url": "https://discourse.wicg.io/u/{username}/summary",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wakatime",
+    "check_url": "https://wakatime.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Warrior Forum",
+    "check_url": "https://www.warriorforum.com/members/{username}.html",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wattpad",
+    "check_url": "https://www.wattpad.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "WebNode",
+    "check_url": "https://{username}.webnode.cz/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Weblate",
+    "check_url": "https://hosted.weblate.org/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Weebly",
+    "check_url": "https://{username}.weebly.com/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wikidot",
+    "check_url": "http://www.wikidot.com/user:info/{username}",
+    "method": "StringMatch",
+    "error_indicator": "User does not exist."
+  },
+  {
+    "name": "Wikipedia",
+    "check_url": "https://en.wikipedia.org/wiki/Special:CentralAuth/{username}?uselang=qqx",
+    "method": "StringMatch",
+    "error_indicator": "centralauth-admin-nonexistent:"
+  },
+  {
+    "name": "Windy",
+    "check_url": "https://community.windy.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wix",
+    "check_url": "https://{username}.wix.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "WolframalphaForum",
+    "check_url": "https://community.wolfram.com/web/{username}/home",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "WordPress",
+    "check_url": "https://{username}.wordpress.com/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "WordPressOrg",
+    "check_url": "https://profiles.wordpress.org/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wordnik",
+    "check_url": "https://www.wordnik.com/users/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Page Not Found"
+  },
+  {
+    "name": "Wykop",
+    "check_url": "https://www.wykop.pl/ludzie/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Xbox Gamertag",
+    "check_url": "https://xboxgamertag.com/search/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Xvideos",
+    "check_url": "https://xvideos.com/profiles/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "YandexMusic",
+    "check_url": "https://music.yandex/users/{username}/playlists",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "YouNow",
+    "check_url": "https://www.younow.com/{username}/",
+    "method": "StringMatch",
+    "error_indicator": "No users found"
+  },
+  {
+    "name": "YouPic",
+    "check_url": "https://youpic.com/photographer/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "YouPorn",
+    "check_url": "https://youporn.com/uservids/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "YouTube",
+    "check_url": "https://www.youtube.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "akniga",
+    "check_url": "https://akniga.org/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "authorSTREAM",
+    "check_url": "http://www.authorstream.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "babyblogRU",
+    "check_url": "https://www.babyblog.ru/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "chaos.social",
+    "check_url": "https://chaos.social/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "couchsurfing",
+    "check_url": "https://www.couchsurfing.com/people/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "d3RU",
+    "check_url": "https://d3.ru/user/{username}/posts",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "dailykos",
+    "check_url": "https://www.dailykos.com/user/{username}",
+    "method": "StringMatch",
+    "error_indicator": "{\"result\":true,\"message\":null}"
+  },
+  {
+    "name": "datingRU",
+    "check_url": "http://dating.ru/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "devRant",
+    "check_url": "https://devrant.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "drive2",
+    "check_url": "https://www.drive2.ru/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "eGPU",
+    "check_url": "https://egpu.io/forums/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "eintracht",
+    "check_url": "https://community.eintracht.de/fans/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "fixya",
+    "check_url": "https://www.fixya.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "fl",
+    "check_url": "https://www.fl.ru/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "forum_guns",
+    "check_url": "https://forum.guns.ru/forummisc/blog/{username}",
+    "method": "StringMatch",
+    "error_indicator": "action=https://forum.guns.ru/forummisc/blog/search"
+  },
+  {
+    "name": "freecodecamp",
+    "check_url": "https://www.freecodecamp.org/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "furaffinity",
+    "check_url": "https://www.furaffinity.net/user/{username}",
+    "method": "StringMatch",
+    "error_indicator": "This user cannot be found."
+  },
+  {
+    "name": "geocaching",
+    "check_url": "https://www.geocaching.com/p/default.aspx?u={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "habr",
+    "check_url": "https://habr.com/ru/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "hackster",
+    "check_url": "https://www.hackster.io/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "hunting",
+    "check_url": "https://www.hunting.ru/forum/members/?username={username}",
+    "method": "StringMatch",
+    "error_indicator": "Указанный пользователь не найден. Пожалуйста, введите другое имя."
+  },
+  {
+    "name": "igromania",
+    "check_url": "http://forum.igromania.ru/member.php?username={username}",
+    "method": "StringMatch",
+    "error_indicator": "Пользователь не зарегистрирован и не имеет профиля для просмотра."
+  },
+  {
+    "name": "interpals",
+    "check_url": "https://www.interpals.net/{username}",
+    "method": "StringMatch",
+    "error_indicator": "The requested user does not exist or is inactive"
+  },
+  {
+    "name": "irecommend",
+    "check_url": "https://irecommend.ru/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "jbzd.com.pl",
+    "check_url": "https://jbzd.com.pl/uzytkownik/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "jeuxvideo",
+    "check_url": "https://www.jeuxvideo.com/profil/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "kofi",
+    "check_url": "https://ko-fi.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "kwork",
+    "check_url": "https://kwork.ru/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "last.fm",
+    "check_url": "https://last.fm/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "leasehackr",
+    "check_url": "https://forum.leasehackr.com/u/{username}/summary/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "livelib",
+    "check_url": "https://www.livelib.ru/reader/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "mastodon.cloud",
+    "check_url": "https://mastodon.cloud/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "mastodon.social",
+    "check_url": "https://mastodon.social/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "mastodon.xyz",
+    "check_url": "https://mastodon.xyz/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "mstdn.social",
+    "check_url": "https://mstdn.social/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "mercadolivre",
+    "check_url": "https://www.mercadolivre.com.br/perfil/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "minds",
+    "check_url": "https://www.minds.com/{username}/",
+    "method": "StringMatch",
+    "error_indicator": "\"valid\":true"
+  },
+  {
+    "name": "moikrug",
+    "check_url": "https://moikrug.ru/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "mstdn.io",
+    "check_url": "https://mstdn.io/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "nairaland.com",
+    "check_url": "https://www.nairaland.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "n8n Community",
+    "check_url": "https://community.n8n.io/u/{username}/summary",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "nnRU",
+    "check_url": "https://{username}.www.nn.ru/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "note",
+    "check_url": "https://note.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "npm",
+    "check_url": "https://www.npmjs.com/~{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "omg.lol",
+    "check_url": "https://{username}.omg.lol",
+    "method": "StringMatch",
+    "error_indicator": "\"available\": true"
+  },
+  {
+    "name": "opennet",
+    "check_url": "https://www.opennet.ru/~{username}",
+    "method": "StringMatch",
+    "error_indicator": "Имя участника не найдено"
+  },
+  {
+    "name": "osu!",
+    "check_url": "https://osu.ppy.sh/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "phpRU",
+    "check_url": "https://php.ru/forum/members/?username={username}",
+    "method": "StringMatch",
+    "error_indicator": "Указанный пользователь не найден. Пожалуйста, введите другое имя."
+  },
+  {
+    "name": "pikabu",
+    "check_url": "https://pikabu.ru/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "pr0gramm",
+    "check_url": "https://pr0gramm.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "prog.hu",
+    "check_url": "https://prog.hu/azonosito/info/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "satsisRU",
+    "check_url": "https://satsis.info/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "sessionize",
+    "check_url": "https://sessionize.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "social.tchncs.de",
+    "check_url": "https://social.tchncs.de/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "spletnik",
+    "check_url": "https://spletnik.ru/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "svidbook",
+    "check_url": "https://www.svidbook.ru/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "threads",
+    "check_url": "https://www.threads.net/@{username}",
+    "method": "StringMatch",
+    "error_indicator": "<title>Threads • Log in</title>"
+  },
+  {
+    "name": "toster",
+    "check_url": "https://www.toster.ru/user/{username}/answers",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "tumblr",
+    "check_url": "https://{username}.tumblr.com/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "uid",
+    "check_url": "http://uid.me/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "write.as",
+    "check_url": "https://write.as/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "xHamster",
+    "check_url": "https://xhamster.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "znanylekarz.pl",
+    "check_url": "https://www.znanylekarz.pl/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Platzi",
+    "check_url": "https://platzi.com/p/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BabyRu",
+    "check_url": "https://www.baby.ru/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wowhead",
+    "check_url": "https://wowhead.com/user={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "addons.wago.io",
+    "check_url": "https://addons.wago.io/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "CurseForge",
+    "check_url": "https://www.curseforge.com/members/{username}/projects",
+    "method": "StatusCode",
+    "error_indicator": null
+  }
 ]
