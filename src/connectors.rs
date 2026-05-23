@@ -12,6 +12,17 @@ pub struct Observation {
 }
 
 impl Observation {
+    pub fn source_tag(&self) -> String {
+        format!(
+            "{}::{}::c{}",
+            self.connector_kind,
+            self.source_id,
+            self.confidence
+        )
+    }
+}
+
+impl Observation {
     pub fn to_entity_node(&self) -> EntityNode {
         EntityNode {
             value: self.value.clone(),

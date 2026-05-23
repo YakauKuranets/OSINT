@@ -361,12 +361,14 @@ impl AnalysisEngine {
                     let observations = email_connector.collect_breaches(&current_node.value, &breaches, hibp_meta.import_timestamp);
                     for obs in observations {
                         let node = obs.to_entity_node();
+                        let mut obs_meta = hibp_meta.clone();
+                        obs_meta.source_id = obs.source_tag();
                         self.final_profile.associated_nodes.insert(node.value.clone(), node.clone());
                         self.final_profile.active_links.push(crate::models::EntityLink {
                             source_node_value: current_node.value.clone(),
                             target_node_value: node.value,
                             weight_modifier: 20,
-                            metadata: hibp_meta.clone(),
+                            metadata: obs_meta,
                         });
                     }
                 }
@@ -382,12 +384,14 @@ impl AnalysisEngine {
                         if !self.visited_pool.contains(&Self::normalize_for_search(&node.value, &node.entity_type)) {
                             self.task_queue.push_back(node.clone());
                         }
+                        let mut obs_meta = result.source_meta.clone();
+                        obs_meta.source_id = obs.source_tag();
                         self.final_profile.associated_nodes.insert(node.value.clone(), node.clone());
                         self.final_profile.active_links.push(crate::models::EntityLink {
                             source_node_value: current_node.value.clone(),
                             target_node_value: node.value,
                             weight_modifier: 30,
-                            metadata: result.source_meta.clone(),
+                            metadata: obs_meta,
                         });
                     }
                 }
@@ -407,12 +411,14 @@ impl AnalysisEngine {
                     let observations = phone_connector.collect_phone_traits(&phone_info, phone_meta.import_timestamp);
                     for obs in observations {
                         let node = obs.to_entity_node();
+                        let mut obs_meta = phone_meta.clone();
+                        obs_meta.source_id = obs.source_tag();
                         self.final_profile.associated_nodes.insert(node.value.clone(), node.clone());
                         self.final_profile.active_links.push(crate::models::EntityLink {
                             source_node_value: current_node.value.clone(),
                             target_node_value: node.value,
                             weight_modifier: 15,
-                            metadata: phone_meta.clone(),
+                            metadata: obs_meta,
                         });
                     }
                 }
@@ -428,12 +434,14 @@ impl AnalysisEngine {
                         if !self.visited_pool.contains(&Self::normalize_for_search(&node.value, &node.entity_type)) {
                             self.task_queue.push_back(node.clone());
                         }
+                        let mut obs_meta = result.source_meta.clone();
+                        obs_meta.source_id = obs.source_tag();
                         self.final_profile.associated_nodes.insert(node.value.clone(), node.clone());
                         self.final_profile.active_links.push(crate::models::EntityLink {
                             source_node_value: current_node.value.clone(),
                             target_node_value: node.value,
                             weight_modifier: 30,
-                            metadata: result.source_meta.clone(),
+                            metadata: obs_meta,
                         });
                     }
                 }
