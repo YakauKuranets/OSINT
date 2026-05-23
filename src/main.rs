@@ -20,6 +20,7 @@ mod analysis_report;
 mod telegram_export;
 mod discovery;
 mod public_search;
+mod autopilot;
 
 use axum::{
     routing::{post, get},
@@ -217,44 +218,36 @@ fn add_telegram_export_seeds(seeds: &mut Vec<models::EntityNode>, path: &str) {
     }
 }
 
-async fn add_public_discovery_seeds(seeds: &mut Vec<models::EntityNode>) {
-    println!("\n[*] Public Discovery Engine MVP");
-    let report = discovery::run_public_discovery_for_seeds(seeds).await;
+async fn run_autopilot_seeds(seeds: &mut Vec<models::EntityNode>) {
+    println!("\n[*] Autonomous OSINT Autopilot");
+    let report = autopilot::run_autonomous_osint(seeds).await;
     println!(
-        "  tasks={} | fetched={} | findings={} | errors={}",
-        report.stats.tasks_planned,
-        report.stats.tasks_fetched,
-        report.stats.findings_count,
-        report.stats.fetch_errors
+        "  cycles={} | initial_seeds={} | final_seeds={} | new_nodes={}",
+        report.cycles.len(),
+        report.initial_seed_count,
+        report.final_seed_count,
+        report.total_new_nodes
     );
 
-    if let Err(err) = discovery::save_discovery_report(&report, "discovery_report.json") {
-        eprintln!("  [!] Не удалось сохранить discovery_report.json: {}", err);
+    for cycle in &report.cycles {
+        println!(
+            "  - cycle {}: input={} discovery_new={} search_new={} total={}",
+            cycle.cycle,
+            cycle.input_seed_count,
+            cycle.new_discovery_nodes,
+            cycle.new_public_search_nodes,
+            cycle.total_seed_count_after_cycle
+        );
     }
 
-    let nodes = discovery::observations_as_entity_nodes(&report, 100);
-    println!("  [+] Добавлено public-discovery селекторов: {}", nodes.len());
-    seeds.extend(nodes);
-}
-
-async fn add_public_search_seeds(seeds: &mut Vec<models::EntityNode>) {
-    println!("\n[*] Public Search Adapters MVP");
-    let report = public_search::run_public_search_for_seeds(seeds).await;
-    println!(
-        "  tasks={} | executed={} | findings={} | api_errors={}",
-        report.stats.tasks_planned,
-        report.stats.tasks_executed,
-        report.stats.findings_count,
-        report.stats.api_errors
-    );
-
-    if let Err(err) = public_search::save_public_search_report(&report, "public_search_report.json") {
-        eprintln!("  [!] Не удалось сохранить public_search_report.json: {}", err);
+    if let Err(err) = autopilot::save_autopilot_report(&report, "autopilot_report.json") {
+        eprintln!("  [!] Не удалось сохранить autopilot_report.json: {}", err);
     }
 
-    let nodes = public_search::observations_as_entity_nodes(&report, 100);
-    println!("  [+] Добавлено public-search селекторов: {}", nodes.len());
-    seeds.extend(nodes);
+    if let Some(last_cycle) = report.cycles.last() {
+        let _ = discovery::save_discovery_report(&last_cycle.discovery_report, "discovery_report.json");
+        let _ = public_search::save_public_search_report(&last_cycle.public_search_report, "public_search_report.json");
+    }
 }
 
 #[tokio::main]
@@ -278,8 +271,7 @@ async fn main() {
         add_telegram_export_seeds(&mut seeds, path);
     }
 
-    add_public_discovery_seeds(&mut seeds).await;
-    add_public_search_seeds(&mut seeds).await;
+    run_autopilot_seeds(&mut seeds).await;
 
     let mut registry = connectors::ConnectorRegistry::new();
     let mut connector_seeds = Vec::new();
