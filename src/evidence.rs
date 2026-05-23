@@ -1,9 +1,9 @@
+use crate::hashing::sha256_hex;
 use crate::models::{
     DirtyDataPolicy, EntityType, EvidenceRecord, ObservationRecord, ObservationStatus,
     SensitivityClass, SourceClass,
 };
 use crate::sanitize::{sanitize_text, SanitizeOptions};
-use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone)]
@@ -29,12 +29,6 @@ fn now_unix() -> u64 {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs()
-}
-
-pub fn sha256_hex(value: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(value.as_bytes());
-    format!("{:x}", hasher.finalize())
 }
 
 pub fn normalize_value(value: &str, entity_type: &EntityType) -> String {
