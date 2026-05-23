@@ -1,5 +1,6 @@
 use crate::evidence::{build_evidence_observation, EvidenceInput};
 use crate::models::{EntityNode, EntityType, EvidenceRecord, ObservationRecord, SensitivityClass, SourceClass};
+use crate::noise_rules::{adjusted_confidence, evaluate_noise, NoiseAction, NoiseDecisionInput};
 use crate::runtime_profile;
 use crate::sanitize::{sanitize_text, SanitizeOptions};
 use reqwest::{Client, redirect::Policy};
@@ -42,6 +43,8 @@ pub struct DiscoveryStats {
     pub tasks_fetched: usize,
     pub fetch_errors: usize,
     pub findings_count: usize,
+    pub blocked_by_noise_rules: usize,
+    pub downranked_by_noise_rules: usize,
     pub evidences_count: usize,
     pub observations_count: usize,
 }
@@ -117,6 +120,9 @@ pub async fn run_public_discovery_for_seeds(seeds: &[EntityNode]) -> DiscoveryRe
 
                 let findings = extract_findings_from_text(&body, &task, &url);
                 for finding in findings {
+                    let Some(finding) = apply_noise_rules_to_finding(finding, &mut report.stats) else {
+                        continue;
+                    };
                     let normalized = normalize_item_value(&finding.value, &finding.entity_type);
                     if normalized.is_empty() || !seen_observations.insert((finding.entity_type.clone(), normalized)) {
                         continue;
@@ -153,6 +159,32 @@ pub async fn run_public_discovery_for_seeds(seeds: &[EntityNode]) -> DiscoveryRe
     report.stats.evidences_count = report.evidences.len();
     report.stats.observations_count = report.observations.len();
     report
+}
+
+fn apply_noise_rules_to_finding(mut finding: DiscoveryFinding, stats: &mut DiscoveryStats) -> Option<DiscoveryFinding> {
+    let decision = evaluate_noise(&NoiseDecisionInput {
+        source_id: finding.source_id.clone(),
+        note: finding.note.clone(),
+        entity_type: finding.entity_type.clone(),
+        value: finding.value.clone(),
+        url: finding.url.clone(),
+        confidence: finding.confidence,
+    });
+
+    match decision.action {
+        NoiseAction::Block => {
+            stats.blocked_by_noise_rules += 1;
+            None
+        }
+        NoiseAction::Downrank => {
+            stats.downranked_by_noise_rules += 1;
+            let adjusted = adjusted_confidence(finding.confidence, &decision)?;
+            finding.confidence = adjusted;
+            finding.note = format!("{} | noise_downrank: {}", finding.note, decision.reason);
+            Some(finding)
+        }
+        NoiseAction::Allow => Some(finding),
+    }
 }
 
 pub fn build_tasks_from_seed(seed: &EntityNode) -> Vec<DiscoveryTask> {
