@@ -15,6 +15,7 @@ mod source_registry;
 mod intake;
 mod sanitize;
 mod hashing;
+mod conflicts;
 
 use axum::{
     routing::{post, get},
