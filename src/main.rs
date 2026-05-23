@@ -13,6 +13,7 @@ mod connectors;
 mod evidence;
 mod source_registry;
 mod intake;
+mod sanitize;
 
 use axum::{
     routing::{post, get},
