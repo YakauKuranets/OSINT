@@ -22,6 +22,7 @@ mod discovery;
 mod public_search;
 mod autopilot;
 mod checkers;
+mod confidence;
 
 use axum::{
     routing::{post, get},
@@ -171,6 +172,25 @@ fn save_conflict_report(report: &conflicts::ConflictReport, path: &str) {
             }
         }
         Err(err) => eprintln!("[!] Не удалось сериализовать conflict report: {}", err),
+    }
+}
+
+fn apply_and_save_confidence_guardrails(profile: &mut models::IdentityProfile) {
+    let before = profile.calculated_confidence;
+    let report = confidence::apply_confidence_guardrails(profile);
+    println!(
+        "\n[*] Confidence Guardrails: original={} adjusted={} capped={}",
+        before,
+        report.adjusted_score,
+        report.was_capped()
+    );
+    if report.was_capped() {
+        for rule in &report.applied_guardrails {
+            println!("  - {:?} cap={} | {}", rule.kind, rule.cap, rule.reason);
+        }
+    }
+    if let Err(err) = confidence::save_confidence_report(&report, "confidence_report.json") {
+        eprintln!("[!] Не удалось сохранить confidence_report.json: {}", err);
     }
 }
 
@@ -325,6 +345,7 @@ async fn main() {
     // 2. Первичный прогон
     engine_instance.resolve_cascade().await;
     scoring::evaluate_profile(&mut engine_instance.final_profile);
+    apply_and_save_confidence_guardrails(&mut engine_instance.final_profile);
     let conflict_report = conflicts::ConflictEngine::analyze(&engine_instance.final_profile);
     print_conflict_report(&conflict_report);
     save_conflict_report(&conflict_report, "conflict_report.json");
@@ -390,6 +411,7 @@ async fn main() {
     if decision.trim().eq_ignore_ascii_case("yes") {
         engine_instance.resolve_cascade().await;
         scoring::evaluate_profile(&mut engine_instance.final_profile);
+        apply_and_save_confidence_guardrails(&mut engine_instance.final_profile);
         let conflict_report = conflicts::ConflictEngine::analyze(&engine_instance.final_profile);
         print_conflict_report(&conflict_report);
         save_conflict_report(&conflict_report, "conflict_report.json");
