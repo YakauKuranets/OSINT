@@ -106,7 +106,7 @@ pub fn get_default_sites() -> Vec<TargetSite> {
             name: "Pinterest".to_string(),
             check_url: "https://www.pinterest.com/{}/".to_string(),
             error_indicator: Some("User not found".to_string()),
-            success_indicator: None,
+            success_indicator: Some("profileUsername".to_string()),
         },
         TargetSite {
             name: "OK.ru".to_string(),
@@ -309,9 +309,9 @@ pub fn get_default_sites() -> Vec<TargetSite> {
 
 fn extra_social_sites() -> Vec<TargetSite> {
     vec![
-        TargetSite { name: "Threads".to_string(), check_url: "https://www.threads.net/@{}".to_string(), error_indicator: Some("Sorry, this page isn't available".to_string()), success_indicator: None },
+        TargetSite { name: "Threads".to_string(), check_url: "https://www.threads.net/@{}".to_string(), error_indicator: Some("Sorry, this page isn't available".to_string()), success_indicator: Some("profile".to_string()) },
         TargetSite { name: "Bluesky".to_string(), check_url: "https://bsky.app/profile/{}".to_string(), error_indicator: Some("Profile not found".to_string()), success_indicator: Some("did:plc:".to_string()) },
-        TargetSite { name: "Mastodon.social".to_string(), check_url: "https://mastodon.social/@{}".to_string(), error_indicator: Some("Record not found".to_string()), success_indicator: Some("@".to_string()) },
+        TargetSite { name: "Mastodon.social".to_string(), check_url: "https://mastodon.social/@{}".to_string(), error_indicator: Some("Record not found".to_string()), success_indicator: Some("property=\"profile:username\"".to_string()) },
         TargetSite { name: "GitLab".to_string(), check_url: "https://gitlab.com/{}".to_string(), error_indicator: Some("404 Page not found".to_string()), success_indicator: Some("profile-page".to_string()) },
         TargetSite { name: "Bitbucket".to_string(), check_url: "https://bitbucket.org/{}/".to_string(), error_indicator: Some("Page not found".to_string()), success_indicator: Some("profile".to_string()) },
         TargetSite { name: "Kaggle".to_string(), check_url: "https://www.kaggle.com/{}".to_string(), error_indicator: Some("404 - Not Found".to_string()), success_indicator: Some("profile".to_string()) },
@@ -351,6 +351,59 @@ fn build_strict_client() -> Client {
     }
 
     builder.build().unwrap()
+}
+
+fn normalize_username(raw_username: &str) -> Option<String> {
+    let username = raw_username.trim().trim_start_matches('@').trim();
+    let lowered = username.to_lowercase();
+
+    if username.is_empty()
+        || lowered.starts_with("seed_")
+        || username.contains(':')
+        || username.contains('/')
+        || username.contains('\\')
+        || username.contains(' ')
+        || username.len() > 64
+    {
+        return None;
+    }
+
+    if !username
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.' || c == '-')
+    {
+        return None;
+    }
+
+    Some(username.to_string())
+}
+
+fn username_in_body(body: &str, username: &str) -> bool {
+    let lower_body = body.to_lowercase();
+    let lower_username = username.to_lowercase();
+    lower_body.contains(&format!("@{}", lower_username))
+        || lower_body.contains(&format!("/{}", lower_username))
+        || lower_body.contains(&format!("\"{}\"", lower_username))
+        || lower_body.contains(&format!("'{}'", lower_username))
+        || lower_body.contains(&format!("profileusername\":\"{}", lower_username))
+}
+
+fn site_specific_profile_confirmed(site_name: &str, username: &str, url: &str, body: &str) -> bool {
+    match site_name {
+        "Pinterest" => {
+            username_in_body(body, username)
+                && (body.contains("profileUsername") || body.contains("pinterest://user"))
+                && url.to_lowercase().contains(&format!("pinterest.com/{}/", username.to_lowercase()))
+        }
+        "Mastodon.social" => {
+            username_in_body(body, username)
+                && (body.contains("property=\"profile:username\"")
+                    || body.contains("rel=\"me\"")
+                    || body.contains("account__header"))
+        }
+        "Viber (web mentions)" => false,
+        _ => true,
+    }
 }
 
 /// Извлекает дополнительные данные из УЖЕ скачанного HTML (без лишних запросов)
@@ -421,12 +474,15 @@ pub async fn hunt_social_profiles(
         data_actual_year: 2026,
     };
 
-    let username = raw_username.trim_start_matches('@').trim();
+    let Some(username) = normalize_username(raw_username) else {
+        println!("  [Spider] Пропуск невалидного username: {}", raw_username);
+        return found_profiles;
+    };
 
     println!("  [Spider] Приоритетный охват: VK, Telegram, TikTok, Instagram, YouTube, Viber mentions");
     println!("  [Spider] Жесткая проверка {} сайтов для {}", sites.len(), username);
     for site in sites {
-        let url = site.check_url.replace("{}", username);
+        let url = site.check_url.replace("{}", &username);
         let resp = match strict_client.get(&url)
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
             .send()
@@ -452,14 +508,20 @@ pub async fn hunt_social_profiles(
         }
 
         if let Some(success_text) = &site.success_indicator {
-            let check_str = success_text.replace("{}", username);
+            let check_str = success_text.replace("{}", &username);
             if !body.contains(&check_str) {
                 continue;
             }
+        } else if !username_in_body(&body, &username) {
+            continue;
         }
 
-        // Профиль 100% подтверждён
-        println!("  [+] Найден верифицированный профиль: {} -> {}", site.name, url);
+        if !site_specific_profile_confirmed(&site.name, &username, &url, &body) {
+            continue;
+        }
+
+        // Профиль подтверждён эвристиками конкретного сайта
+        println!("  [+] Найден вероятный профиль: {} -> {}", site.name, url);
         let node = EntityNode {
             value: format!("{}:{}", site.name.to_lowercase().replace(" ", "_"), username),
             entity_type: EntityType::Nickname,
@@ -485,4 +547,26 @@ pub async fn hunt_social_profiles(
         }
     }
     found_profiles
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rejects_seed_username() {
+        assert!(normalize_username("seed_nickname:@Fro_ZzZ").is_none());
+        assert!(normalize_username("bad:user").is_none());
+    }
+
+    #[test]
+    fn accepts_clean_username() {
+        assert_eq!(normalize_username("@Fro_ZzZ"), Some("Fro_ZzZ".to_string()));
+    }
+
+    #[test]
+    fn mastodon_requires_profile_markers() {
+        assert!(!site_specific_profile_confirmed("Mastodon.social", "Fro_ZzZ", "https://mastodon.social/@Fro_ZzZ", "<html>@Fro_ZzZ</html>"));
+        assert!(site_specific_profile_confirmed("Mastodon.social", "Fro_ZzZ", "https://mastodon.social/@Fro_ZzZ", "<meta property=\"profile:username\" content=\"Fro_ZzZ\">"));
+    }
 }
