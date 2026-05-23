@@ -1,5 +1,13 @@
 use crate::models::{IdentityProfile, ResolutionEvidence, ResolutionReport, SourceClass};
 
+#[derive(Debug, Clone)]
+pub struct SourceHealth {
+    pub source_id: String,
+    pub links: usize,
+    pub avg_weight: f32,
+    pub reliability: String,
+}
+
 const CURRENT_YEAR: u32 = 2026;
 
 pub fn evaluate_profile(profile: &mut IdentityProfile) {
@@ -109,4 +117,42 @@ pub fn suggest_next_steps(profile: &IdentityProfile) -> Vec<String> {
         steps.push("Запустить второй каскад: у вас уже достаточно связей для глубокой корреляции".to_string());
     }
     steps
+}
+
+pub fn source_health_summary(profile: &IdentityProfile) -> Vec<SourceHealth> {
+    let mut stats: std::collections::HashMap<String, (usize, i32)> = std::collections::HashMap::new();
+    for link in &profile.active_links {
+        let entry = stats.entry(link.metadata.source_id.clone()).or_insert((0, 0));
+        entry.0 += 1;
+        entry.1 += link.weight_modifier as i32;
+    }
+
+    let mut items: Vec<SourceHealth> = stats
+        .into_iter()
+        .map(|(source_id, (links, total_weight))| {
+            let avg_weight = if links == 0 { 0.0 } else { total_weight as f32 / links as f32 };
+            let reliability = if links >= 8 && avg_weight >= 20.0 {
+                "high"
+            } else if links >= 3 && avg_weight >= 10.0 {
+                "medium"
+            } else {
+                "low"
+            }
+            .to_string();
+
+            SourceHealth {
+                source_id,
+                links,
+                avg_weight,
+                reliability,
+            }
+        })
+        .collect();
+
+    items.sort_by(|a, b| {
+        b.links
+            .cmp(&a.links)
+            .then_with(|| b.avg_weight.partial_cmp(&a.avg_weight).unwrap_or(std::cmp::Ordering::Equal))
+    });
+    items
 }

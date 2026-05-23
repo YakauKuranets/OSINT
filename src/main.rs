@@ -191,6 +191,15 @@ async fn main() {
         println!("  {}. {}", idx + 1, step);
     }
 
+    let source_health = scoring::source_health_summary(&engine_instance.final_profile);
+    println!("\n[*] Надежность источников (top-5):");
+    for src in source_health.iter().take(5) {
+        println!(
+            "  - {} | links={} | avg_weight={:.1} | reliability={}",
+            src.source_id, src.links, src.avg_weight, src.reliability
+        );
+    }
+
     println!("\n[?] Найдено связей: {} | confidence: {}", engine_instance.final_profile.active_links.len(), engine_instance.final_profile.calculated_confidence);
     print!("[?] Продолжить поиск по найденным корреляциям? (yes/no): ");
     io::stdout().flush().unwrap();
