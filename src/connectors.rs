@@ -27,3 +27,36 @@ pub trait Connector {
     fn supports(&self, entity_type: &EntityType) -> bool;
 }
 
+pub struct SocialSpiderConnector;
+
+impl Connector for SocialSpiderConnector {
+    fn id(&self) -> &'static str {
+        "social_spider"
+    }
+
+    fn kind(&self) -> &'static str {
+        "social"
+    }
+
+    fn supports(&self, entity_type: &EntityType) -> bool {
+        matches!(entity_type, EntityType::Nickname)
+    }
+}
+
+impl SocialSpiderConnector {
+    pub fn collect(
+        &self,
+        username: &str,
+        timestamp: u64,
+    ) -> Vec<Observation> {
+        vec![Observation {
+            value: format!("seed_nickname:{}", username),
+            entity_type: EntityType::Nickname,
+            source_id: self.id().to_string(),
+            timestamp,
+            confidence: 50,
+            evidence_snippet: "connector-enabled-social-seed".to_string(),
+            connector_kind: self.kind().to_string(),
+        }]
+    }
+}

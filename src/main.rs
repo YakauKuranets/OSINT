@@ -24,6 +24,7 @@ use tokio::sync::Mutex;
 use tokio::net::TcpListener;
 use std::io::{self, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
+use crate::connectors::Connector;
 
 // Состояние приложения: движок под защитой асинхронного Mutex
 struct AppState {
@@ -135,6 +136,18 @@ async fn main() {
     if let Some(v) = selectors.full_name.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::FullName, first_seen: now }); }
     if let Some(v) = selectors.dob.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::DateOfBirth, first_seen: now }); }
     if let Some(v) = selectors.country.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Country, first_seen: now }); }
+
+    let social_connector = connectors::SocialSpiderConnector;
+    let mut connector_seeds = Vec::new();
+    for seed in &seeds {
+        if social_connector.supports(&seed.entity_type) {
+            let observations = social_connector.collect(&seed.value, now);
+            for obs in observations {
+                connector_seeds.push(obs.to_entity_node());
+            }
+        }
+    }
+    seeds.extend(connector_seeds);
 
     if seeds.is_empty() {
         println!("[!] Ошибка: не введено ни одного валидного селектора. Завершение работы.");
