@@ -6729,5 +6729,125 @@
     "method": "StatusCode",
     "error_indicator": null,
     "requires_tor": true
+  },
+  {
+    "name": "Google Search",
+    "check_url": "https://www.google.com/search?q=\"{username}\"",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bing Search",
+    "check_url": "https://www.bing.com/search?q=\"{username}\"",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "DuckDuckGo Search",
+    "check_url": "https://duckduckgo.com/?q=\"{username}\"",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Yahoo Search",
+    "check_url": "https://search.yahoo.com/search?p=\"{username}\"",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Yandex Search",
+    "check_url": "https://yandex.com/search/?text=\"{username}\"",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Brave Search",
+    "check_url": "https://search.brave.com/search?q=\"{username}\"",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Startpage Search",
+    "check_url": "https://www.startpage.com/sp/search?query=\"{username}\"",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Qwant Search",
+    "check_url": "https://www.qwant.com/?q=\"{username}\"",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mojeek Search",
+    "check_url": "https://www.mojeek.com/search?q=\"{username}\"",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Swisscows Search",
+    "check_url": "https://swisscows.com/web?query=\"{username}\"",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Searx Search",
+    "check_url": "https://searx.be/search?q=\"{username}\"",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wayback Search",
+    "check_url": "https://web.archive.org/web/*/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "IntelX Search",
+    "check_url": "https://intelx.io/?s={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "PublicWWW Search",
+    "check_url": "https://publicwww.com/websites/%22{username}%22/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GitHub Code Search",
+    "check_url": "https://github.com/search?q=%22{username}%22&type=code",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GitLab Search",
+    "check_url": "https://gitlab.com/search?search={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Reddit Search",
+    "check_url": "https://www.reddit.com/search/?q={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "YouTube Search",
+    "check_url": "https://www.youtube.com/results?search_query={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Telegram Channel Search",
+    "check_url": "https://t.me/s/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Ahmia Clearnet Search",
+    "check_url": "https://ahmia.fi/search/?q={username}",
+    "method": "StatusCode",
+    "error_indicator": null
   }
 ]
