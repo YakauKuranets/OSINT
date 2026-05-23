@@ -64,7 +64,7 @@ pub fn generate_html_report(profile: &IdentityProfile, output_path: &str) {
         }}
         * {{ box-sizing: border-box; }}
         body {{ margin: 0; font-family: Inter, Segoe UI, Arial, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }}
-        .app {{ display: grid; grid-template-columns: 420px 1fr; width: 100vw; height: 100vh; }}
+        .app {{ display: grid; grid-template-columns: 440px 1fr; width: 100vw; height: 100vh; }}
         .sidebar {{ overflow: auto; padding: 16px; background: linear-gradient(180deg, rgba(15,23,42,0.98), rgba(15,23,42,0.9)); border-right: 1px solid var(--line); }}
         .brand {{ display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }}
         .brand h1 {{ font-size: 18px; line-height: 1.2; margin: 0; }}
@@ -82,6 +82,9 @@ pub fn generate_html_report(profile: &IdentityProfile, output_path: &str) {
         .row strong {{ display: block; font-size: 13px; margin-bottom: 4px; }}
         .row span, .row code {{ color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }}
         .ok {{ color: var(--green); }} .warn {{ color: var(--yellow); }} .bad {{ color: var(--red); }}
+        .tag {{ display: inline-block; margin: 2px 4px 2px 0; padding: 2px 6px; border-radius: 999px; background: rgba(148,163,184,0.14); border: 1px solid rgba(148,163,184,0.22); color: var(--muted); font-size: 11px; }}
+        .tag.badtag {{ background: rgba(251,113,133,0.12); border-color: rgba(251,113,133,0.35); color: var(--red); }}
+        .tag.oktag {{ background: rgba(52,211,153,0.12); border-color: rgba(52,211,153,0.35); color: var(--green); }}
         .graph-wrap {{ position: relative; min-width: 0; }}
         #graph {{ width: 100%; height: 100vh; background: radial-gradient(circle at top left, rgba(56,189,248,0.12), transparent 35%), #090e1a; }}
         .info-panel {{ position: absolute; top: 14px; left: 14px; max-width: 460px; background: rgba(2,6,23,0.88); padding: 14px; border-radius: 14px; border: 1px solid var(--line); backdrop-filter: blur(10px); display: none; }}
@@ -116,6 +119,11 @@ pub fn generate_html_report(profile: &IdentityProfile, output_path: &str) {
         </div>
 
         <div class="section">
+            <div class="section-title">Master Verdict</div>
+            <div class="list" id="masterBox"><div class="row"><span>Загрузка master_report.json…</span></div></div>
+        </div>
+
+        <div class="section">
             <div class="section-title">Autopilot</div>
             <div class="list" id="autopilotBox"><div class="row"><span>Загрузка autopilot_report.json…</span></div></div>
         </div>
@@ -123,6 +131,11 @@ pub fn generate_html_report(profile: &IdentityProfile, output_path: &str) {
         <div class="section">
             <div class="section-title">Email / Domain</div>
             <div class="list" id="emailBox"><div class="row"><span>Загрузка email_domain_report.json…</span></div></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Discovery / Noise</div>
+            <div class="list" id="discoveryBox"><div class="row"><span>Загрузка discovery_report.json…</span></div></div>
         </div>
 
         <div class="section">
@@ -197,27 +210,44 @@ pub fn generate_html_report(profile: &IdentityProfile, output_path: &str) {
     function row(title, body, cls='') {{ return `<div class="row"><strong class="${{cls}}">${{escapeHtml(title)}}</strong><span>${{body}}</span></div>`; }}
     function escapeHtml(v) {{ return String(v ?? '').replace(/[&<>'"]/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}}[c])); }}
     function n(v) {{ return Number.isFinite(Number(v)) ? Number(v).toLocaleString('ru-RU') : '—'; }}
+    function tags(values, bad=false) {{ return (values || []).map(v => `<span class="tag ${{bad ? 'badtag' : 'oktag'}}">${{escapeHtml(v)}}</span>`).join('') || '<span class="tag">none</span>'; }}
 
     Promise.all([
+        loadJson('master_report.json'),
         loadJson('autopilot_report.json'),
         loadJson('email_domain_report.json'),
+        loadJson('discovery_report.json'),
         loadJson('public_search_report.json'),
         loadJson('confidence_report.json'),
         loadJson('conflict_report.json')
-    ]).then(([auto, email, search, confidence, conflicts]) => {{
+    ]).then(([master, auto, email, discovery, search, confidence, conflicts]) => {{
+        renderMaster(master);
         renderAutopilot(auto);
         renderEmail(email);
+        renderDiscovery(discovery);
         renderSearch(search);
         renderConfidence(confidence);
         renderConflicts(conflicts);
     }});
 
+    function renderMaster(r) {{
+        const box = document.getElementById('masterBox');
+        if (!r) {{ box.innerHTML = row('Нет данных', 'master_report.json не найден', 'warn'); return; }}
+        const v = r.verdict || {{}};
+        const s = r.summary || {{}};
+        const cls = v.high_risk ? 'bad' : ((v.confidence_adjusted || 0) >= 75 ? 'ok' : 'warn');
+        box.innerHTML = row(v.status || 'unknown', `confidence=${{v.confidence_adjusted ?? '—'}} | high_risk=${{v.high_risk ?? false}} | missing=${{n((r.missing_reports || []).length)}}`, cls);
+        box.innerHTML += row('Pipeline summary', `profile=${{escapeHtml(s.run_profile || '—')}} | auto_new=${{n(s.autopilot_new_nodes)}} | email_new=${{n(s.autopilot_email_domain_new_nodes)}} | discovery=${{n(s.discovery_findings)}} | public=${{n(s.public_search_findings)}}`);
+        if ((v.reasons || []).length) box.innerHTML += row('Reasons', tags(v.reasons, true));
+    }}
+
     function renderAutopilot(r) {{
         const box = document.getElementById('autopilotBox');
         if (!r) {{ box.innerHTML = row('Нет данных', 'autopilot_report.json не найден', 'warn'); return; }}
-        box.innerHTML = row('Сводка', `cycles=${{n(r.cycles?.length)}} | initial=${{n(r.initial_seed_count)}} | final=${{n(r.final_seed_count)}} | new=${{n(r.total_new_nodes)}}`);
+        const emailNewTotal = (r.cycles || []).reduce((sum, c) => sum + Number(c.new_email_domain_nodes || 0), 0);
+        box.innerHTML = row('Сводка', `cycles=${{n(r.cycles?.length)}} | initial=${{n(r.initial_seed_count)}} | final=${{n(r.final_seed_count)}} | new=${{n(r.total_new_nodes)}} | email/domain_new=${{n(emailNewTotal)}}`);
         for (const c of (r.cycles || []).slice(0, 4)) {{
-            box.innerHTML += row(`Cycle ${{c.cycle}}`, `input=${{n(c.input_seed_count)}} | discovery_new=${{n(c.new_discovery_nodes)}} | search_new=${{n(c.new_public_search_nodes)}} | total=${{n(c.total_seed_count_after_cycle)}}`);
+            box.innerHTML += row(`Cycle ${{c.cycle}}`, `input=${{n(c.input_seed_count)}} | email_new=${{n(c.new_email_domain_nodes)}} | discovery_new=${{n(c.new_discovery_nodes)}} | search_new=${{n(c.new_public_search_nodes)}} | total=${{n(c.total_seed_count_after_cycle)}}`);
         }}
     }}
 
@@ -226,8 +256,21 @@ pub fn generate_html_report(profile: &IdentityProfile, output_path: &str) {
         if (!r) {{ box.innerHTML = row('Нет данных', 'email_domain_report.json не найден', 'warn'); return; }}
         const s = r.stats || {{}};
         box.innerHTML = row('Email/domain', `emails=${{n(s.emails_checked)}} | valid=${{n(s.valid_emails)}} | domains=${{n(s.domains_checked)}} | candidates=${{n(s.username_candidates)}} | dns_errors=${{n(s.dns_errors)}}`);
-        for (const d of (r.dns_summaries || []).slice(0, 4)) {{
-            box.innerHTML += row(d.domain || 'domain', `MX=${{d.has_mx ? 'yes' : 'no'}} | TXT=${{d.has_txt ? 'yes' : 'no'}} | mx_hosts=${{escapeHtml((d.mx_hosts || []).slice(0,2).join(', '))}}`);
+        box.innerHTML += row('Provider classes', `free=${{n(s.free_mail_domains)}} | corporate=${{n(s.corporate_domains)}} | suspicious=${{n(s.suspicious_domains)}}`);
+        for (const d of (r.dns_summaries || []).slice(0, 6)) {{
+            const risk = (d.risk_flags || []).length ? `<br>risk=${{tags(d.risk_flags, true)}}` : '';
+            const txt = `<br>txt=${{tags(d.txt_labels || [], false)}}`;
+            box.innerHTML += row(d.domain || 'domain', `provider=${{escapeHtml(d.provider_class || 'unknown')}} | MX=${{d.has_mx ? 'yes' : 'no'}} | TXT=${{d.has_txt ? 'yes' : 'no'}} | mx=${{escapeHtml((d.mx_hosts || []).slice(0,2).join(', '))}}${{txt}}${{risk}}`, (d.risk_flags || []).length ? 'warn' : 'ok');
+        }}
+    }}
+
+    function renderDiscovery(r) {{
+        const box = document.getElementById('discoveryBox');
+        if (!r) {{ box.innerHTML = row('Нет данных', 'discovery_report.json не найден', 'warn'); return; }}
+        const s = r.stats || {{}};
+        box.innerHTML = row('Discovery', `tasks=${{n(s.tasks_planned)}} | fetched=${{n(s.tasks_fetched)}} | findings=${{n(s.findings_count)}} | blocked=${{n(s.blocked_by_noise_rules)}} | downranked=${{n(s.downranked_by_noise_rules)}} | errors=${{n(s.fetch_errors)}}`);
+        for (const f of (r.findings || []).slice(0, 5)) {{
+            box.innerHTML += row(`${{f.entity_type}} / ${{f.confidence}}%`, `<code>${{escapeHtml(f.value)}}</code><br>${{escapeHtml(f.note || '')}}`);
         }}
     }}
 
