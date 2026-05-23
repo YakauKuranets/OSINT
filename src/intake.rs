@@ -1,6 +1,6 @@
+use crate::hashing::{hex_bytes, Sha256Hasher};
 use crate::models::SourceClass;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::fs::File;
 use std::io::{Read, Result as IoResult};
 use std::path::{Path, PathBuf};
@@ -60,7 +60,7 @@ pub fn is_dirty_source(source_class: SourceClass) -> bool {
 
 pub fn sha256_file(path: &Path) -> IoResult<String> {
     let mut file = File::open(path)?;
-    let mut hasher = Sha256::new();
+    let mut hasher = Sha256Hasher::new();
     let mut buffer = [0_u8; 64 * 1024];
 
     loop {
@@ -71,7 +71,7 @@ pub fn sha256_file(path: &Path) -> IoResult<String> {
         hasher.update(&buffer[..read]);
     }
 
-    Ok(format!("{:x}", hasher.finalize()))
+    Ok(hasher.finalize_hex())
 }
 
 pub fn detect_mime(path: &Path) -> String {
@@ -104,9 +104,9 @@ pub fn detect_mime(path: &Path) -> String {
 }
 
 fn make_intake_id(source_id: &str, raw_sha256: &str, imported_at: u64) -> String {
-    let mut hasher = Sha256::new();
+    let mut hasher = Sha256Hasher::new();
     hasher.update(format!("{}::{}::{}", source_id, raw_sha256, imported_at).as_bytes());
-    let hash = format!("{:x}", hasher.finalize());
+    let hash = hex_bytes(&hasher.finalize());
     format!("intake_{}", &hash[..16])
 }
 
