@@ -23,6 +23,7 @@ mod public_search;
 mod autopilot;
 mod checkers;
 mod confidence;
+mod noise_rules;
 
 use axum::{
     routing::{post, get},
