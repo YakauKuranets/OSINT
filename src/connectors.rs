@@ -140,16 +140,11 @@ impl Connector for EmailBreachConnector {
 }
 
 impl EmailBreachConnector {
-    pub fn collect(&self, email: &str, timestamp: u64) -> Vec<Observation> {
-        vec![Observation {
-            value: format!("seed_email:{}", email),
-            entity_type: EntityType::Email,
-            source_id: self.id().to_string(),
-            timestamp,
-            confidence: 60,
-            evidence_snippet: "connector-enabled-email-seed".to_string(),
-            connector_kind: self.kind().to_string(),
-        }]
+    pub fn collect(&self, _email: &str, _timestamp: u64) -> Vec<Observation> {
+        // Раньше здесь создавался псевдо-селектор seed_email:<email>, который потом снова
+        // попадал в AnalysisEngine как реальный email и запускал ложный второй каскад.
+        // Реальная email-проверка уже выполняется в AnalysisEngine::resolve_cascade().
+        Vec::new()
     }
 
     pub fn collect_breaches(
@@ -293,17 +288,12 @@ impl BrokerConnector {
 impl SocialSpiderConnector {
     pub fn collect(
         &self,
-        username: &str,
-        timestamp: u64,
+        _username: &str,
+        _timestamp: u64,
     ) -> Vec<Observation> {
-        vec![Observation {
-            value: format!("seed_nickname:{}", username),
-            entity_type: EntityType::Nickname,
-            source_id: self.id().to_string(),
-            timestamp,
-            confidence: 50,
-            evidence_snippet: "connector-enabled-social-seed".to_string(),
-            connector_kind: self.kind().to_string(),
-        }]
+        // Раньше здесь создавался псевдо-селектор seed_nickname:<username>.
+        // Он уходил в spider как настоящий username и давал мусорные URL.
+        // Реальный social spider уже запускается в AnalysisEngine::resolve_cascade().
+        Vec::new()
     }
 }
