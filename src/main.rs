@@ -124,6 +124,37 @@ fn profile_to_stix(profile: &models::IdentityProfile) -> (Vec<StixIndicator>, Ve
     (indicators, identities, relationships)
 }
 
+fn print_conflict_report(report: &conflicts::ConflictReport) {
+    println!("\n[*] Conflict Engine:");
+    println!(
+        "  findings={} | severity_score={} | high_risk={}",
+        report.findings.len(),
+        report.severity_score(),
+        report.has_high_risk()
+    );
+
+    if report.findings.is_empty() {
+        println!("  - Конфликты не обнаружены.");
+        return;
+    }
+
+    for finding in report.findings.iter().take(8) {
+        println!(
+            "  - [{:?}/{:?}] {} | sources={:?}",
+            finding.severity,
+            finding.kind,
+            finding.entity_value,
+            finding.source_ids
+        );
+        println!("    {}", finding.message);
+        println!("    next: {}", finding.recommended_action);
+    }
+
+    if report.findings.len() > 8 {
+        println!("  ... и еще {} конфликтов", report.findings.len() - 8);
+    }
+}
+
 #[tokio::main]
 async fn main() {
     println!("==================================================");
@@ -169,6 +200,8 @@ async fn main() {
     // 2. Первичный прогон
     engine_instance.resolve_cascade().await;
     scoring::evaluate_profile(&mut engine_instance.final_profile);
+    let conflict_report = conflicts::ConflictEngine::analyze(&engine_instance.final_profile);
+    print_conflict_report(&conflict_report);
 
     // 3. ВОЗВРАЩАЕМ ИИ-АНАЛИТИКА MISTRAL
     println!("\n[*] Запуск ИИ-аналитика (Mistral:7b) для составления сводки...");
@@ -223,6 +256,8 @@ async fn main() {
     if decision.trim().eq_ignore_ascii_case("yes") {
         engine_instance.resolve_cascade().await;
         scoring::evaluate_profile(&mut engine_instance.final_profile);
+        let conflict_report = conflicts::ConflictEngine::analyze(&engine_instance.final_profile);
+        print_conflict_report(&conflict_report);
         crate::visualizer::generate_html_report(&engine_instance.final_profile, "report.html");
     }
 
