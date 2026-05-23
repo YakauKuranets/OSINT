@@ -91,6 +91,7 @@ mod tests {
     use super::*;
     use crate::models::{EntityNode, EntityType};
     use std::collections::HashMap;
+    use std::path::Path;
 
     // 1. BACKEND TEST: Проверка логики генерации вариаций
     #[test]
