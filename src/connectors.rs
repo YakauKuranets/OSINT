@@ -70,7 +70,7 @@ impl ConnectorRegistry {
         }
     }
 
-    fn interval_for_connector(connector_id: &'static str) -> u64 {
+    pub fn interval_for_connector(connector_id: &str) -> u64 {
         let env_key = format!("OSINT_CONNECTOR_INTERVAL_{}", connector_id.to_uppercase());
         std::env::var(&env_key)
             .ok()

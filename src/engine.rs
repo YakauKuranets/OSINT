@@ -23,6 +23,7 @@ pub struct AnalysisEngine {
     http_client: Client,
     pub ai_core: AiCore,
     data_broker: DataBroker,
+    connector_last_run: std::collections::HashMap<String, u64>,
 }
 
 impl AnalysisEngine {
@@ -81,6 +82,18 @@ impl AnalysisEngine {
             http_client,
             ai_core: AiCore::new(),
             data_broker: DataBroker::new("brokers.json"),
+            connector_last_run: std::collections::HashMap::new(),
+        }
+    }
+
+    fn should_run_connector(&mut self, connector_id: &str, now: u64) -> bool {
+        let interval = crate::connectors::ConnectorRegistry::interval_for_connector(connector_id);
+        match self.connector_last_run.get(connector_id) {
+            Some(prev) if now.saturating_sub(*prev) < interval => false,
+            _ => {
+                self.connector_last_run.insert(connector_id.to_string(), now);
+                true
+            }
         }
     }
 
@@ -315,6 +328,8 @@ impl AnalysisEngine {
 
             // Telegram Deep Scan
             if current_node.entity_type == EntityType::Nickname || current_node.entity_type == EntityType::Phone {
+                let tg_now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs();
+                if self.should_run_connector("telegram", tg_now) {
                 let search_value = if current_node.entity_type == EntityType::Phone { &normalized_value } else { &current_node.value };
                 println!("  [Telegram] Запрос для {} (ожидание может занять до 30 сек)...", search_value);
                 let tg_info = self.check_telegram(search_value).await;
@@ -346,9 +361,12 @@ impl AnalysisEngine {
                     }
                 }
             }
+            }
 
             // Email обработка (HIBP + DataBroker)
             if current_node.entity_type == EntityType::Email {
+                let email_now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs();
+                if self.should_run_connector("email_breach", email_now) {
                 let breaches = self.check_hibp(&current_node.value).await;
                 if !breaches.is_empty() {
                     let email_connector = EmailBreachConnector;
@@ -396,9 +414,12 @@ impl AnalysisEngine {
                     }
                 }
             }
+            }
 
             // Phone обработка (NumVerify + DataBroker)
             if current_node.entity_type == EntityType::Phone {
+                let phone_now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs();
+                if self.should_run_connector("phone_intel", phone_now) {
                 let phone_info = self.check_phone(&current_node.value).await;
                 if !phone_info.is_empty() {
                     let phone_connector = PhoneIntelConnector;
@@ -445,6 +466,7 @@ impl AnalysisEngine {
                         });
                     }
                 }
+            }
             }
 
             // Локальные дампы
