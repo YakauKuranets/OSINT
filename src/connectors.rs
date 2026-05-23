@@ -293,12 +293,20 @@ impl BrokerConnector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::{Mutex, OnceLock};
+
+    fn env_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
 
     #[test]
     fn throttle_policy_uses_default_interval() {
+        let _guard = env_lock().lock().unwrap();
         unsafe {
             std::env::set_var("OSINT_CONNECTOR_INTERVAL_DEFAULT", "7");
             std::env::remove_var("OSINT_CONNECTOR_INTERVAL_SOCIAL_SPIDER");
+            std::env::remove_var("OSINT_CONNECTOR_INTERVAL_EMAIL_BREACH");
         }
         let value = ThrottlePolicy::interval_for_connector("social_spider");
         assert_eq!(value, 7);
@@ -306,12 +314,17 @@ mod tests {
 
     #[test]
     fn throttle_policy_prefers_connector_specific_interval() {
+        let _guard = env_lock().lock().unwrap();
         unsafe {
             std::env::set_var("OSINT_CONNECTOR_INTERVAL_DEFAULT", "7");
             std::env::set_var("OSINT_CONNECTOR_INTERVAL_SOCIAL_SPIDER", "3");
         }
         let value = ThrottlePolicy::interval_for_connector("social_spider");
         assert_eq!(value, 3);
+        unsafe {
+            std::env::remove_var("OSINT_CONNECTOR_INTERVAL_SOCIAL_SPIDER");
+            std::env::remove_var("OSINT_CONNECTOR_INTERVAL_DEFAULT");
+        }
     }
 }
 
