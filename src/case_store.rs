@@ -57,7 +57,7 @@ pub fn read_case_snapshot(case_id: &str) -> Option<String> {
     std::fs::read_to_string(path).ok()
 }
 
-pub fn recent_cases_struct(limit: usize) -> Vec<serde_json::Value> {
+pub fn recent_cases_struct_page(limit: usize, offset: usize) -> Vec<serde_json::Value> {
     let index_path = "cases/index.json";
     let mut items: Vec<CaseIndexEntry> = std::fs::read_to_string(index_path)
         .ok()
@@ -67,6 +67,7 @@ pub fn recent_cases_struct(limit: usize) -> Vec<serde_json::Value> {
     items.sort_by(|a, b| b.created_at.cmp(&a.created_at));
     items
         .into_iter()
+        .skip(offset)
         .take(limit)
         .map(|c| serde_json::json!({
             "case_id": c.case_id,

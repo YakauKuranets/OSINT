@@ -16,6 +16,7 @@ use axum::{
     routing::{post, get},
     extract::State,
     extract::Path,
+    extract::Query,
     Json,
     Router,
     response::IntoResponse,
@@ -35,6 +36,12 @@ struct AppState {
 #[derive(Deserialize)]
 struct ExpandRequest {
     target: String
+}
+
+#[derive(Deserialize)]
+struct CasesQuery {
+    limit: Option<usize>,
+    offset: Option<usize>,
 }
 
 #[derive(Default)]
@@ -261,8 +268,9 @@ async fn main() {
 
     let app = Router::new()
         .route("/expand", post(expand_handler))
-        .route("/cases", get(cases_handler))
+        .route("/cases", get(cases_handler_with_query))
         .route("/cases/:case_id", get(case_by_id_handler))
+        .route("/health", get(health_handler))
         .route("/", get(|| async {
             axum::response::Html(include_str!("../report.html"))
         }))
@@ -278,9 +286,22 @@ async fn main() {
 }
 
 #[axum::debug_handler]
-async fn cases_handler() -> impl IntoResponse {
-    let items = case_store::recent_cases_struct(50);
-    Json(serde_json::json!({ "cases": items }))
+async fn health_handler() -> impl IntoResponse {
+    Json(serde_json::json!({
+        "status": "ok",
+        "service": "x-gen-osint",
+        "version": "3.0"
+    }))
+}
+
+#[axum::debug_handler]
+async fn cases_handler_with_query(
+    Query(params): Query<CasesQuery>
+) -> impl IntoResponse {
+    let limit = params.limit.unwrap_or(50).clamp(1, 200);
+    let offset = params.offset.unwrap_or(0);
+    let items = case_store::recent_cases_struct_page(limit, offset);
+    Json(serde_json::json!({ "cases": items, "limit": limit, "offset": offset }))
 }
 
 #[axum::debug_handler]
