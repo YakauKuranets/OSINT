@@ -23,6 +23,10 @@ struct SiteConfigEntry {
 }
 
 fn load_sites_from_json(path: &str) -> Vec<TargetSite> {
+    let allow_onion = std::env::var("OSINT_ENABLE_ONION")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true") || v.eq_ignore_ascii_case("yes"))
+        .unwrap_or(false);
+
     let data = match std::fs::read_to_string(path) {
         Ok(v) => v,
         Err(_) => return Vec::new(),
@@ -34,7 +38,7 @@ fn load_sites_from_json(path: &str) -> Vec<TargetSite> {
         .filter(|s| !s.name.trim().is_empty() && s.check_url.contains("{username}"))
         .filter(|s| {
             let is_tor = s.requires_tor.unwrap_or(false) || s.check_url.contains(".onion");
-            !is_tor
+            allow_onion || !is_tor
         })
         .map(|s| TargetSite {
             name: s.name,
@@ -336,11 +340,17 @@ fn priority_cis_social_sites() -> Vec<TargetSite> {
 }
 
 fn build_strict_client() -> Client {
-    Client::builder()
+    let mut builder = Client::builder()
         .timeout(std::time::Duration::from_secs(8))
-        .redirect(Policy::none()) // Блокирует Soft 404
-        .build()
-        .unwrap()
+        .redirect(Policy::none()); // Блокирует Soft 404
+
+    if let Ok(proxy_url) = std::env::var("OSINT_TOR_PROXY") {
+        if let Ok(proxy) = reqwest::Proxy::all(&proxy_url) {
+            builder = builder.proxy(proxy);
+        }
+    }
+
+    builder.build().unwrap()
 }
 
 /// Извлекает дополнительные данные из УЖЕ скачанного HTML (без лишних запросов)
