@@ -7,6 +7,7 @@ pub struct ReverseOsintEnumerator {
 }
 
 impl ReverseOsintEnumerator {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             client: Client::builder()
@@ -16,6 +17,7 @@ impl ReverseOsintEnumerator {
         }
     }
 
+    #[allow(dead_code)]
     pub async fn check_email(&self, email: &str) -> Vec<(EntityNode, SourceMetadata)> {
         let mut results = Vec::new();
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
