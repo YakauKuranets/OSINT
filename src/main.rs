@@ -10,6 +10,7 @@ mod enumerator;
 mod data_broker;
 mod sandbox_runner;
 mod connectors;
+mod evidence;
 
 use axum::{
     routing::{post, get},
