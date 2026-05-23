@@ -155,6 +155,17 @@ fn print_conflict_report(report: &conflicts::ConflictReport) {
     }
 }
 
+fn save_conflict_report(report: &conflicts::ConflictReport, path: &str) {
+    match serde_json::to_string_pretty(report) {
+        Ok(json) => {
+            if let Err(err) = std::fs::write(path, json) {
+                eprintln!("[!] Не удалось сохранить {}: {}", path, err);
+            }
+        }
+        Err(err) => eprintln!("[!] Не удалось сериализовать conflict report: {}", err),
+    }
+}
+
 #[tokio::main]
 async fn main() {
     println!("==================================================");
@@ -202,6 +213,7 @@ async fn main() {
     scoring::evaluate_profile(&mut engine_instance.final_profile);
     let conflict_report = conflicts::ConflictEngine::analyze(&engine_instance.final_profile);
     print_conflict_report(&conflict_report);
+    save_conflict_report(&conflict_report, "conflict_report.json");
 
     // 3. ВОЗВРАЩАЕМ ИИ-АНАЛИТИКА MISTRAL
     println!("\n[*] Запуск ИИ-аналитика (Mistral:7b) для составления сводки...");
@@ -258,6 +270,7 @@ async fn main() {
         scoring::evaluate_profile(&mut engine_instance.final_profile);
         let conflict_report = conflicts::ConflictEngine::analyze(&engine_instance.final_profile);
         print_conflict_report(&conflict_report);
+        save_conflict_report(&conflict_report, "conflict_report.json");
         crate::visualizer::generate_html_report(&engine_instance.final_profile, "report.html");
     }
 
