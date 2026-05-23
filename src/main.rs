@@ -19,6 +19,7 @@ mod conflicts;
 mod analysis_report;
 mod telegram_export;
 mod discovery;
+mod public_search;
 
 use axum::{
     routing::{post, get},
@@ -236,6 +237,26 @@ async fn add_public_discovery_seeds(seeds: &mut Vec<models::EntityNode>) {
     seeds.extend(nodes);
 }
 
+async fn add_public_search_seeds(seeds: &mut Vec<models::EntityNode>) {
+    println!("\n[*] Public Search Adapters MVP");
+    let report = public_search::run_public_search_for_seeds(seeds).await;
+    println!(
+        "  tasks={} | executed={} | findings={} | api_errors={}",
+        report.stats.tasks_planned,
+        report.stats.tasks_executed,
+        report.stats.findings_count,
+        report.stats.api_errors
+    );
+
+    if let Err(err) = public_search::save_public_search_report(&report, "public_search_report.json") {
+        eprintln!("  [!] Не удалось сохранить public_search_report.json: {}", err);
+    }
+
+    let nodes = public_search::observations_as_entity_nodes(&report, 100);
+    println!("  [+] Добавлено public-search селекторов: {}", nodes.len());
+    seeds.extend(nodes);
+}
+
 #[tokio::main]
 async fn main() {
     println!("==================================================");
@@ -258,6 +279,7 @@ async fn main() {
     }
 
     add_public_discovery_seeds(&mut seeds).await;
+    add_public_search_seeds(&mut seeds).await;
 
     let mut registry = connectors::ConnectorRegistry::new();
     let mut connector_seeds = Vec::new();
