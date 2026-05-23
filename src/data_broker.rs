@@ -49,10 +49,14 @@ impl DataBroker {
                 continue;
             }
             let url = provider.endpoint_url.replace("{value}", value);
-            let mut headers: Vec<(&str, &str)> = Vec::new();
+            let mut header_store: Vec<(String, String)> = Vec::new();
             if let Some(token) = &provider.auth_token {
-                headers.push(("Authorization", &format!("Bearer {}", token)));
+                header_store.push(("Authorization".to_string(), format!("Bearer {}", token)));
             }
+            let headers: Vec<(&str, &str)> = header_store
+                .iter()
+                .map(|(k, v)| (k.as_str(), v.as_str()))
+                .collect();
 
             // Эфемерный запрос через Docker
             if let Some(body) = sandbox_runner::execute_ephemeral(&url, "GET", &headers) {

@@ -7,7 +7,7 @@ pub fn execute_ephemeral(url: &str, method: &str, headers: &[(&str, &str)]) -> O
         cmd.push_str(&format!(" -H '{}: {}'", k, v));
     }
 
-    let container_name = format!("xgen_blackout_{}", rand::thread_rng().gen::<u64>());
+    let container_name = format!("xgen_blackout_{}", rand::thread_rng().r#gen::<u64>());
     let output = Command::new("docker")
         .args([
             "run", "--rm",

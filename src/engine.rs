@@ -7,6 +7,10 @@ use reqwest::Client;
 use serde_json::Value;
 use crate::ai_core::AiCore;
 use crate::data_broker::DataBroker;
+use crate::connectors::EmailBreachConnector;
+use crate::connectors::PhoneIntelConnector;
+use crate::connectors::TelegramConnector;
+use crate::connectors::BrokerConnector;
 
 pub struct AnalysisEngine {
     pub task_queue: VecDeque<EntityNode>,
@@ -315,37 +319,30 @@ impl AnalysisEngine {
                 println!("  [Telegram] Запрос для {} (ожидание может занять до 30 сек)...", search_value);
                 let tg_info = self.check_telegram(search_value).await;
                 if !tg_info.is_empty() {
+                    let tg_connector = TelegramConnector;
                     let tg_meta = SourceMetadata {
                         source_id: "Telegram_API".to_string(),
                         class: SourceClass::PublicOSINT,
                         import_timestamp: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs(),
                         data_actual_year: 2026,
                     };
-                    for info in &tg_info {
-                        if info.starts_with("tg_phone:") {
-                            let phone_val = info.replace("tg_phone:", "");
-                            println!("    [+] 📱 ТЕЛЕГРАМ РАСКРЫЛ НОМЕР ТЕЛЕФОНА: {}", phone_val);
-                            let node = EntityNode { value: phone_val.clone(), entity_type: EntityType::Phone, first_seen: tg_meta.import_timestamp };
-                            if !self.visited_pool.contains(&Self::normalize_for_search(&phone_val, &EntityType::Phone)) {
-                                self.task_queue.push_back(node.clone());
-                            }
-                            self.final_profile.associated_nodes.insert(phone_val.clone(), node.clone());
-                            self.final_profile.active_links.push(crate::models::EntityLink {
-                                source_node_value: current_node.value.clone(),
-                                target_node_value: phone_val,
-                                weight_modifier: 30,
-                                metadata: tg_meta.clone(),
-                            });
-                        } else {
-                            let node = EntityNode { value: info.clone(), entity_type: EntityType::Nickname, first_seen: tg_meta.import_timestamp };
-                            self.final_profile.associated_nodes.insert(node.value.clone(), node.clone());
-                            self.final_profile.active_links.push(crate::models::EntityLink {
-                                source_node_value: current_node.value.clone(),
-                                target_node_value: node.value,
-                                weight_modifier: 10,
-                                metadata: tg_meta.clone(),
-                            });
+                    let observations = tg_connector.collect_telegram_info(&tg_info, tg_meta.import_timestamp);
+                    for obs in observations {
+                        if obs.entity_type == EntityType::Phone {
+                            println!("    [+] 📱 ТЕЛЕГРАМ РАСКРЫЛ НОМЕР ТЕЛЕФОНА: {}", obs.value);
                         }
+                        let node = obs.to_entity_node();
+                        if (node.entity_type == EntityType::Phone || node.entity_type == EntityType::Email)
+                            && !self.visited_pool.contains(&Self::normalize_for_search(&node.value, &node.entity_type)) {
+                            self.task_queue.push_back(node.clone());
+                        }
+                        self.final_profile.associated_nodes.insert(node.value.clone(), node.clone());
+                        self.final_profile.active_links.push(crate::models::EntityLink {
+                            source_node_value: current_node.value.clone(),
+                            target_node_value: node.value,
+                            weight_modifier: if node.entity_type == EntityType::Phone { 30 } else { 10 },
+                            metadata: tg_meta.clone(),
+                        });
                     }
                 }
             }
@@ -354,14 +351,16 @@ impl AnalysisEngine {
             if current_node.entity_type == EntityType::Email {
                 let breaches = self.check_hibp(&current_node.value).await;
                 if !breaches.is_empty() {
+                    let email_connector = EmailBreachConnector;
                     let hibp_meta = SourceMetadata {
                         source_id: "HIBP_API".to_string(),
                         class: SourceClass::VerifiedRegistry,
                         import_timestamp: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs(),
                         data_actual_year: 2026,
                     };
-                    for breach_name in &breaches {
-                        let node = EntityNode { value: format!("breach:{}", breach_name), entity_type: EntityType::Nickname, first_seen: hibp_meta.import_timestamp };
+                    let observations = email_connector.collect_breaches(&current_node.value, &breaches, hibp_meta.import_timestamp);
+                    for obs in observations {
+                        let node = obs.to_entity_node();
                         self.final_profile.associated_nodes.insert(node.value.clone(), node.clone());
                         self.final_profile.active_links.push(crate::models::EntityLink {
                             source_node_value: current_node.value.clone(),
@@ -374,8 +373,11 @@ impl AnalysisEngine {
 
                 println!("  [DataBroker] Запрос к теневым источникам для {}", current_node.value);
                 let broker_results = self.data_broker.query("email", &current_node.value).await;
+                let broker_connector = BrokerConnector;
                 for result in broker_results {
-                    for node in result.nodes {
+                    let observations = broker_connector.collect_nodes(&result.nodes, &result.source_meta.source_id, result.source_meta.import_timestamp);
+                    for obs in observations {
+                        let node = obs.to_entity_node();
                         println!("    [Broker] Найдена сущность: {} ({:?})", node.value, node.entity_type);
                         if !self.visited_pool.contains(&Self::normalize_for_search(&node.value, &node.entity_type)) {
                             self.task_queue.push_back(node.clone());
@@ -395,14 +397,16 @@ impl AnalysisEngine {
             if current_node.entity_type == EntityType::Phone {
                 let phone_info = self.check_phone(&current_node.value).await;
                 if !phone_info.is_empty() {
+                    let phone_connector = PhoneIntelConnector;
                     let phone_meta = SourceMetadata {
                         source_id: "NumVerify_API".to_string(),
                         class: SourceClass::VerifiedRegistry,
                         import_timestamp: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs(),
                         data_actual_year: 2026,
                     };
-                    for info in &phone_info {
-                        let node = EntityNode { value: info.clone(), entity_type: EntityType::Nickname, first_seen: phone_meta.import_timestamp };
+                    let observations = phone_connector.collect_phone_traits(&phone_info, phone_meta.import_timestamp);
+                    for obs in observations {
+                        let node = obs.to_entity_node();
                         self.final_profile.associated_nodes.insert(node.value.clone(), node.clone());
                         self.final_profile.active_links.push(crate::models::EntityLink {
                             source_node_value: current_node.value.clone(),
@@ -415,8 +419,11 @@ impl AnalysisEngine {
 
                 println!("  [DataBroker] Запрос к теневым источникам для {}", current_node.value);
                 let broker_results = self.data_broker.query("phone", &current_node.value).await;
+                let broker_connector = BrokerConnector;
                 for result in broker_results {
-                    for node in result.nodes {
+                    let observations = broker_connector.collect_nodes(&result.nodes, &result.source_meta.source_id, result.source_meta.import_timestamp);
+                    for obs in observations {
+                        let node = obs.to_entity_node();
                         println!("    [Broker] Найдена сущность: {} ({:?})", node.value, node.entity_type);
                         if !self.visited_pool.contains(&Self::normalize_for_search(&node.value, &node.entity_type)) {
                             self.task_queue.push_back(node.clone());
