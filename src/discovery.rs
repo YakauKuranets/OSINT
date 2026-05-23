@@ -1,5 +1,6 @@
 use crate::evidence::{build_evidence_observation, EvidenceInput};
 use crate::models::{EntityNode, EntityType, EvidenceRecord, ObservationRecord, SensitivityClass, SourceClass};
+use crate::runtime_profile;
 use crate::sanitize::{sanitize_text, SanitizeOptions};
 use reqwest::{Client, redirect::Policy};
 use serde::{Deserialize, Serialize};
@@ -74,13 +75,8 @@ pub async fn run_public_discovery_for_seeds(seeds: &[EntityNode]) -> DiscoveryRe
         }
     }
 
-    let max_tasks = std::env::var("OSINT_DISCOVERY_MAX_TASKS")
-        .ok()
-        .and_then(|v| v.parse::<usize>().ok())
-        .unwrap_or(40);
-    let fetch_enabled = std::env::var("OSINT_DISCOVERY_FETCH")
-        .map(|v| v == "1" || v.eq_ignore_ascii_case("true") || v.eq_ignore_ascii_case("yes"))
-        .unwrap_or(true);
+    let max_tasks = runtime_profile::discovery_max_tasks();
+    let fetch_enabled = runtime_profile::discovery_fetch();
 
     let client = build_discovery_client();
     let mut report = DiscoveryReport {
@@ -92,7 +88,7 @@ pub async fn run_public_discovery_for_seeds(seeds: &[EntityNode]) -> DiscoveryRe
         observations: Vec::new(),
     };
 
-    if !fetch_enabled {
+    if !fetch_enabled || max_tasks == 0 {
         return report;
     }
 
@@ -254,10 +250,7 @@ fn build_discovery_client() -> Client {
 }
 
 async fn fetch_public_page(client: &Client, url: &str) -> Result<String, reqwest::Error> {
-    let max_bytes = std::env::var("OSINT_DISCOVERY_MAX_BYTES")
-        .ok()
-        .and_then(|v| v.parse::<usize>().ok())
-        .unwrap_or(512 * 1024);
+    let max_bytes = runtime_profile::discovery_max_bytes();
     let resp = client
         .get(url)
         .header("User-Agent", "XGEN-PublicDiscovery/1.0 (+local research)")
