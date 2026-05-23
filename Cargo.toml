@@ -13,5 +13,6 @@ memmap2 = "0.9"
 levenshtein = "1.0"
 rand = "0.8"
 md5 = "0.7"
+sha2 = "0.10"
 axum = { version = "0.7", features = ["macros"] }
 tower-http = { version = "0.5", features = ["fs"] }
