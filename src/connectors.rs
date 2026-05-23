@@ -290,6 +290,31 @@ impl BrokerConnector {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn throttle_policy_uses_default_interval() {
+        unsafe {
+            std::env::set_var("OSINT_CONNECTOR_INTERVAL_DEFAULT", "7");
+            std::env::remove_var("OSINT_CONNECTOR_INTERVAL_SOCIAL_SPIDER");
+        }
+        let value = ThrottlePolicy::interval_for_connector("social_spider");
+        assert_eq!(value, 7);
+    }
+
+    #[test]
+    fn throttle_policy_prefers_connector_specific_interval() {
+        unsafe {
+            std::env::set_var("OSINT_CONNECTOR_INTERVAL_DEFAULT", "7");
+            std::env::set_var("OSINT_CONNECTOR_INTERVAL_SOCIAL_SPIDER", "3");
+        }
+        let value = ThrottlePolicy::interval_for_connector("social_spider");
+        assert_eq!(value, 3);
+    }
+}
+
 impl SocialSpiderConnector {
     pub fn collect(
         &self,

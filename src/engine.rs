@@ -89,9 +89,18 @@ impl AnalysisEngine {
     fn should_run_connector(&mut self, connector_id: &str, now: u64) -> bool {
         let interval = crate::connectors::ThrottlePolicy::interval_for_connector(connector_id);
         match self.connector_last_run.get(connector_id) {
-            Some(prev) if now.saturating_sub(*prev) < interval => false,
+            Some(prev) if now.saturating_sub(*prev) < interval => {
+                println!(
+                    "  [Throttle] {} skipped (elapsed={}s < interval={}s)",
+                    connector_id,
+                    now.saturating_sub(*prev),
+                    interval
+                );
+                false
+            }
             _ => {
                 self.connector_last_run.insert(connector_id.to_string(), now);
+                println!("  [Throttle] {} allowed (interval={}s)", connector_id, interval);
                 true
             }
         }
