@@ -24,6 +24,7 @@ mod autopilot;
 mod checkers;
 mod confidence;
 mod noise_rules;
+mod runtime_profile;
 
 use axum::{
     routing::{post, get},
@@ -300,6 +301,21 @@ async fn main() {
     println!("==================================================");
     println!("     📊 X-GEN OSINT PLATFORM v3.0 [NEURO]         ");
     println!("==================================================");
+
+    let profile = runtime_profile::init_runtime_profile();
+    println!(
+        "[*] Run profile: {} | discovery_tasks={} | public_search_tasks={} | cycles={} | dns={} | github={} | fetch={}",
+        profile.label,
+        profile.discovery_max_tasks,
+        profile.public_search_max_tasks,
+        profile.autopilot_cycles,
+        profile.dns_check,
+        profile.github_search,
+        profile.discovery_fetch
+    );
+    if let Err(err) = runtime_profile::save_run_profile_report("run_profile_report.json") {
+        eprintln!("[!] Не удалось сохранить run_profile_report.json: {}", err);
+    }
 
     // 1. СБОР ИСХОДНЫХ СЕЛЕКТОРОВ
     let selectors = collect_selectors();
