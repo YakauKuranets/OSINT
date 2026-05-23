@@ -6,6 +6,7 @@ pub enum EntityType {
     Nickname,
     Email,
     Phone,
+    Country,
     BankIdentifier,
     DateOfBirth,
     FullName,
@@ -61,4 +62,20 @@ pub struct IdentityProfile {
     pub associated_nodes: HashMap<String, EntityNode>,
     pub active_links: Vec<EntityLink>,
     pub calculated_confidence: u8,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResolutionEvidence {
+    pub signal: String,
+    pub weight: i16,
+    pub source_id: String,
+    pub note: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResolutionReport {
+    pub score: u8,
+    pub level: String,
+    pub matched_selectors: Vec<String>,
+    pub evidences: Vec<ResolutionEvidence>,
 }

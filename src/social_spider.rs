@@ -1,5 +1,7 @@
 use crate::models::{EntityNode, EntityType, SourceMetadata, SourceClass};
 use reqwest::{Client, redirect::Policy};
+use serde::Deserialize;
+use std::collections::HashSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Clone, Debug)]
@@ -10,8 +12,47 @@ pub struct TargetSite {
     pub success_indicator: Option<String>,
 }
 
+
+#[derive(Deserialize)]
+struct SiteConfigEntry {
+    name: String,
+    check_url: String,
+    error_indicator: Option<String>,
+    success_indicator: Option<String>,
+    requires_tor: Option<bool>,
+}
+
+fn load_sites_from_json(path: &str) -> Vec<TargetSite> {
+    let allow_onion = std::env::var("OSINT_ENABLE_ONION")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true") || v.eq_ignore_ascii_case("yes"))
+        .unwrap_or(false);
+
+    let data = match std::fs::read_to_string(path) {
+        Ok(v) => v,
+        Err(_) => return Vec::new(),
+    };
+
+    let parsed: Vec<SiteConfigEntry> = serde_json::from_str(&data).unwrap_or_default();
+    parsed
+        .into_iter()
+        .filter(|s| !s.name.trim().is_empty() && s.check_url.contains("{username}"))
+        .filter(|s| {
+            let is_tor = s.requires_tor.unwrap_or(false) || s.check_url.contains(".onion");
+            allow_onion || !is_tor
+        })
+        .map(|s| TargetSite {
+            name: s.name,
+            check_url: s.check_url.replace("{username}", "{}"),
+            error_indicator: s.error_indicator,
+            success_indicator: s.success_indicator,
+        })
+        .collect()
+}
+
 pub fn get_default_sites() -> Vec<TargetSite> {
-    vec![
+    let mut sites = priority_cis_social_sites();
+
+    sites.extend(vec![
         // --- Социальные сети и медиа ---
         TargetSite {
             name: "GitHub".to_string(),
@@ -245,16 +286,71 @@ pub fn get_default_sites() -> Vec<TargetSite> {
             error_indicator: Some("Not Found".to_string()),
             success_indicator: Some("profile-pic".to_string()),
         },
-    ]
+    ]);
+
+    for site in extra_social_sites() {
+        sites.push(site);
+    }
+
+    let mut known: HashSet<String> = sites.iter().map(|s| s.name.to_lowercase()).collect();
+    for external in load_sites_from_json("sites.json") {
+        let key = external.name.to_lowercase();
+        if !known.contains(&key) {
+            known.insert(key);
+            sites.push(external);
+        }
+    }
+
+    sites
 }
 
 // 🔥 СТРОГИЙ КЛИЕНТ: НИКАКИХ РЕДИРЕКТОВ 🔥
+
+
+fn extra_social_sites() -> Vec<TargetSite> {
+    vec![
+        TargetSite { name: "Threads".to_string(), check_url: "https://www.threads.net/@{}".to_string(), error_indicator: Some("Sorry, this page isn't available".to_string()), success_indicator: None },
+        TargetSite { name: "Bluesky".to_string(), check_url: "https://bsky.app/profile/{}".to_string(), error_indicator: Some("Profile not found".to_string()), success_indicator: Some("did:plc:".to_string()) },
+        TargetSite { name: "Mastodon.social".to_string(), check_url: "https://mastodon.social/@{}".to_string(), error_indicator: Some("Record not found".to_string()), success_indicator: Some("@".to_string()) },
+        TargetSite { name: "GitLab".to_string(), check_url: "https://gitlab.com/{}".to_string(), error_indicator: Some("404 Page not found".to_string()), success_indicator: Some("profile-page".to_string()) },
+        TargetSite { name: "Bitbucket".to_string(), check_url: "https://bitbucket.org/{}/".to_string(), error_indicator: Some("Page not found".to_string()), success_indicator: Some("profile".to_string()) },
+        TargetSite { name: "Kaggle".to_string(), check_url: "https://www.kaggle.com/{}".to_string(), error_indicator: Some("404 - Not Found".to_string()), success_indicator: Some("profile".to_string()) },
+        TargetSite { name: "Goodreads".to_string(), check_url: "https://www.goodreads.com/{}".to_string(), error_indicator: Some("Page not found".to_string()), success_indicator: Some("profile".to_string()) },
+        TargetSite { name: "Letterboxd".to_string(), check_url: "https://letterboxd.com/{}/".to_string(), error_indicator: Some("Sorry, we can’t find the page you’ve requested".to_string()), success_indicator: Some("profile".to_string()) },
+        TargetSite { name: "Last.fm".to_string(), check_url: "https://www.last.fm/user/{}".to_string(), error_indicator: Some("Page not found".to_string()), success_indicator: Some("header-new-title".to_string()) },
+        TargetSite { name: "Deezer".to_string(), check_url: "https://www.deezer.com/en/profile/{}".to_string(), error_indicator: Some("404".to_string()), success_indicator: Some("profile".to_string()) },
+        TargetSite { name: "Tripadvisor".to_string(), check_url: "https://www.tripadvisor.com/members/{}".to_string(), error_indicator: Some("Page Not Found".to_string()), success_indicator: Some("member".to_string()) },
+        TargetSite { name: "Strava".to_string(), check_url: "https://www.strava.com/athletes/{}".to_string(), error_indicator: Some("Page Not Found".to_string()), success_indicator: Some("athlete-name".to_string()) },
+        TargetSite { name: "Chess.com".to_string(), check_url: "https://www.chess.com/member/{}".to_string(), error_indicator: Some("Page not found".to_string()), success_indicator: Some("profile".to_string()) },
+        TargetSite { name: "Lichess".to_string(), check_url: "https://lichess.org/@/{}".to_string(), error_indicator: Some("404".to_string()), success_indicator: Some("user-show".to_string()) },
+    ]
+}
+
+
+fn priority_cis_social_sites() -> Vec<TargetSite> {
+    vec![
+        TargetSite { name: "VK".to_string(), check_url: "https://vk.com/{}".to_string(), error_indicator: Some("Page not found".to_string()), success_indicator: Some("profile_photo".to_string()) },
+        TargetSite { name: "Telegram".to_string(), check_url: "https://t.me/{}".to_string(), error_indicator: None, success_indicator: Some("tgme_page_title".to_string()) },
+        TargetSite { name: "TikTok".to_string(), check_url: "https://www.tiktok.com/@{}".to_string(), error_indicator: Some("Couldn't find this account".to_string()), success_indicator: Some("uniqueId".to_string()) },
+        TargetSite { name: "Instagram".to_string(), check_url: "https://www.instagram.com/{}/".to_string(), error_indicator: Some("Sorry, this page isn't available".to_string()), success_indicator: Some("www.instagram.com/{}/channel/".to_string()) },
+        TargetSite { name: "YouTube".to_string(), check_url: "https://www.youtube.com/@{}".to_string(), error_indicator: Some("This channel does not exist".to_string()), success_indicator: Some("canonical".to_string()) },
+        // У Viber нет стабильных публичных username-страниц для профилей; используем web-поиск как источник зацепок.
+        TargetSite { name: "Viber (web mentions)".to_string(), check_url: "https://www.google.com/search?q=site%3Aviber.com+{}".to_string(), error_indicator: None, success_indicator: None },
+    ]
+}
+
 fn build_strict_client() -> Client {
-    Client::builder()
+    let mut builder = Client::builder()
         .timeout(std::time::Duration::from_secs(8))
-        .redirect(Policy::none()) // Блокирует Soft 404
-        .build()
-        .unwrap()
+        .redirect(Policy::none()); // Блокирует Soft 404
+
+    if let Ok(proxy_url) = std::env::var("OSINT_TOR_PROXY") {
+        if let Ok(proxy) = reqwest::Proxy::all(&proxy_url) {
+            builder = builder.proxy(proxy);
+        }
+    }
+
+    builder.build().unwrap()
 }
 
 /// Извлекает дополнительные данные из УЖЕ скачанного HTML (без лишних запросов)
@@ -327,6 +423,7 @@ pub async fn hunt_social_profiles(
 
     let username = raw_username.trim_start_matches('@').trim();
 
+    println!("  [Spider] Приоритетный охват: VK, Telegram, TikTok, Instagram, YouTube, Viber mentions");
     println!("  [Spider] Жесткая проверка {} сайтов для {}", sites.len(), username);
     for site in sites {
         let url = site.check_url.replace("{}", username);

@@ -7,6 +7,10 @@ mod dork_generator;
 mod social_spider;
 mod ai_core;
 mod enumerator;
+mod data_broker;
+mod sandbox_runner;
+mod connectors;
+mod case_store;
 
 use axum::{
     routing::{post, get},
@@ -30,6 +34,46 @@ struct AppState {
 #[derive(Deserialize)]
 struct ExpandRequest {
     target: String
+}
+
+#[derive(Default)]
+struct InputSelectors {
+    phone: Option<String>,
+    email: Option<String>,
+    nickname: Option<String>,
+    full_name: Option<String>,
+    dob: Option<String>,
+    country: Option<String>,
+}
+
+fn ask_optional(prompt: &str) -> Option<String> {
+    print!("{}", prompt);
+    io::stdout().flush().ok()?;
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).ok()?;
+    let value = input.trim().to_string();
+    if value.is_empty() { None } else { Some(value) }
+}
+
+fn collect_selectors() -> InputSelectors {
+    println!("\n[?] Введите максимум исходных данных (можно пропускать поля):");
+    InputSelectors {
+        phone: ask_optional("  Телефон: "),
+        email: ask_optional("  Email: "),
+        nickname: ask_optional("  Никнейм: "),
+        full_name: ask_optional("  ФИО: "),
+        dob: ask_optional("  Дата рождения (ДД.ММ.ГГГГ): "),
+        country: ask_optional("  Страна: "),
+    }
+}
+
+fn ask_case_id() -> Option<String> {
+    print!("[?] Открыть ранее сохраненный кейс? Введите case_id (или Enter чтобы пропустить): ");
+    io::stdout().flush().ok()?;
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).ok()?;
+    let value = input.trim().to_string();
+    if value.is_empty() { None } else { Some(value) }
 }
 
 // --- STIX-структуры ---
@@ -87,41 +131,67 @@ fn profile_to_stix(profile: &models::IdentityProfile) -> (Vec<StixIndicator>, Ve
 #[tokio::main]
 async fn main() {
     println!("==================================================");
+    let history = case_store::recent_cases(5);
+    if !history.is_empty() {
+        println!("[*] Последние кейсы:");
+        for line in history {
+            println!("  - {}", line);
+        }
+        println!("--------------------------------------------------");
+    }
+
+    if let Some(case_id) = ask_case_id() {
+        match case_store::read_case_snapshot(&case_id) {
+            Some(snapshot) => {
+                println!("[*] Найден кейс {}", case_id);
+                println!("{}", snapshot);
+                println!("--------------------------------------------------");
+            }
+            None => println!("[!] Кейс {} не найден.", case_id),
+        }
+    }
     println!("     📊 X-GEN OSINT PLATFORM v3.0 [NEURO]         ");
     println!("==================================================");
 
-    // 1. ВОЗВРАЩАЕМ РУЧНОЙ ВВОД ЦЕЛИ
-    print!("\n[?] Введите цель (никнейм, телефон или email): ");
-    io::stdout().flush().unwrap();
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).expect("Не удалось прочитать строку");
-    let value = input.trim().to_string();
+    // 1. СБОР ИСХОДНЫХ СЕЛЕКТОРОВ
+    let selectors = collect_selectors();
 
-    if value.is_empty() {
-        println!("[!] Ошибка: Пустой ввод. Завершение работы.");
+    let mut seeds: Vec<models::EntityNode> = Vec::new();
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
+    if let Some(v) = selectors.phone.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Phone, first_seen: now }); }
+    if let Some(v) = selectors.email.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Email, first_seen: now }); }
+    if let Some(v) = selectors.nickname.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Nickname, first_seen: now }); }
+    if let Some(v) = selectors.full_name.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::FullName, first_seen: now }); }
+    if let Some(v) = selectors.dob.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::DateOfBirth, first_seen: now }); }
+    if let Some(v) = selectors.country.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Country, first_seen: now }); }
+
+    let mut registry = connectors::ConnectorRegistry::new();
+    let mut connector_seeds = Vec::new();
+    let observations = registry.collect_seed_observations(&seeds, now);
+    for obs in observations {
+        connector_seeds.push(obs.to_entity_node());
+    }
+    seeds.extend(connector_seeds);
+
+    if seeds.is_empty() {
+        println!("[!] Ошибка: не введено ни одного валидного селектора. Завершение работы.");
         return;
     }
 
-    let entity_type = if value.starts_with('+') || (value.chars().all(|c| c.is_numeric()) && value.len() >= 10) {
-        models::EntityType::Phone
-    } else if value.contains('@') && value.contains('.') {
-        models::EntityType::Email
-    } else {
-        models::EntityType::Nickname
-    };
-
-    println!("[*] Автоматически определен тип селектора: {:?}", entity_type);
     println!("--------------------------------------------------");
     println!("[+] X-GEN Absolute OSINT Protocol активирован. Нейро-ядро разблокировано.");
-    println!("[*] Запуск сквозного каскадного поиска для: {}\n", value);
+    println!("[*] Запуск сквозного каскадного поиска для {} стартовых селекторов\n", seeds.len());
 
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
-    let start_target = models::EntityNode { value: value.clone(), entity_type, first_seen: now };
+    let start_target = seeds.remove(0);
 
     let mut engine_instance = engine::AnalysisEngine::new(start_target, "dumps");
+    for seed in seeds {
+        engine_instance.task_queue.push_back(seed);
+    }
 
     // 2. Первичный прогон
     engine_instance.resolve_cascade().await;
+    scoring::evaluate_profile(&mut engine_instance.final_profile);
 
     // 3. ВОЗВРАЩАЕМ ИИ-АНАЛИТИКА MISTRAL
     println!("\n[*] Запуск ИИ-аналитика (Mistral:7b) для составления сводки...");
@@ -146,8 +216,42 @@ async fn main() {
     if let Ok(json_str) = serde_json::to_string_pretty(&stix_bundle) {
         let _ = std::fs::write("stix_report.json", &json_str);
     }
-    let _ = crate::dork_generator::generate_dorks(&engine_instance.final_profile, "dorks.txt");
+    let _ = crate::dork_generator::DorkGenerator::generate_dorks(&engine_instance.final_profile, "dorks.txt");
     crate::visualizer::generate_html_report(&engine_instance.final_profile, "report.html");
+    let resolution_report = scoring::build_resolution_report(&engine_instance.final_profile);
+    if let Ok(report_json) = serde_json::to_string_pretty(&resolution_report) {
+        let _ = std::fs::write("resolution_report.json", report_json);
+    }
+
+    if let Some(case_id) = case_store::persist_case_snapshot(&engine_instance.final_profile) {
+        println!("[*] Case snapshot сохранен: {}", case_id);
+    }
+
+    let next_steps = scoring::suggest_next_steps(&engine_instance.final_profile);
+    println!("\n[*] Рекомендованные следующие шаги:");
+    for (idx, step) in next_steps.iter().enumerate() {
+        println!("  {}. {}", idx + 1, step);
+    }
+
+    let source_health = scoring::source_health_summary(&engine_instance.final_profile);
+    println!("\n[*] Надежность источников (top-5):");
+    for src in source_health.iter().take(5) {
+        println!(
+            "  - {} | links={} | avg_weight={:.1} | reliability={}",
+            src.source_id, src.links, src.avg_weight, src.reliability
+        );
+    }
+
+    println!("\n[?] Найдено связей: {} | confidence: {}", engine_instance.final_profile.active_links.len(), engine_instance.final_profile.calculated_confidence);
+    print!("[?] Продолжить поиск по найденным корреляциям? (yes/no): ");
+    io::stdout().flush().unwrap();
+    let mut decision = String::new();
+    io::stdin().read_line(&mut decision).ok();
+    if decision.trim().eq_ignore_ascii_case("yes") {
+        engine_instance.resolve_cascade().await;
+        scoring::evaluate_profile(&mut engine_instance.final_profile);
+        crate::visualizer::generate_html_report(&engine_instance.final_profile, "report.html");
+    }
 
     // 4. ЗАПУСК WEB-СЕРВЕРА
     let shared_state = Arc::new(AppState {
