@@ -2,6 +2,7 @@ use crate::models::{
     DirtyDataPolicy, EntityType, EvidenceRecord, ObservationRecord, ObservationStatus,
     SensitivityClass, SourceClass,
 };
+use crate::sanitize::{sanitize_text, SanitizeOptions};
 use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -52,24 +53,12 @@ fn make_id(prefix: &str, seed: &str) -> String {
 }
 
 fn sanitize_snippet(context: &str, sensitivity: SensitivityClass) -> String {
-    let compact = context
-        .chars()
-        .filter(|c| !c.is_control() || *c == '\n' || *c == '\t')
-        .collect::<String>()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
-
-    let shortened = if compact.chars().count() > 240 {
-        compact.chars().take(240).collect::<String>()
-    } else {
-        compact
-    };
+    let sanitized = sanitize_text(context, &SanitizeOptions::default());
 
     if DirtyDataPolicy::must_mask_raw_value(sensitivity) {
-        DirtyDataPolicy::mask_value(&shortened, sensitivity)
+        DirtyDataPolicy::mask_value(&sanitized.value, sensitivity)
     } else {
-        shortened
+        sanitized.value
     }
 }
 
@@ -176,5 +165,22 @@ mod tests {
 
         assert_eq!(pair.observation.value_masked, "[secret-redacted]");
         assert!(pair.observation.normalized_value.is_empty());
+    }
+
+    #[test]
+    fn evidence_snippet_masks_token_like_context() {
+        let pair = build_evidence_observation(EvidenceInput {
+            source_id: "local_test".to_string(),
+            source_class: SourceClass::LocalImport,
+            entity_type: EntityType::Email,
+            raw_value: "user@example.com".to_string(),
+            raw_context: "email=user@example.com password=supersecret".to_string(),
+            confidence: 40,
+            sensitivity: SensitivityClass::PublicLow,
+            tags: vec![],
+        });
+
+        assert!(pair.evidence.normalized_snippet.contains("password=[redacted]"));
+        assert!(!pair.evidence.normalized_snippet.contains("supersecret"));
     }
 }
