@@ -282,6 +282,10 @@ pub fn get_default_sites() -> Vec<TargetSite> {
         },
     ];
 
+    for site in extra_social_sites() {
+        sites.push(site);
+    }
+
     let mut known: HashSet<String> = sites.iter().map(|s| s.name.to_lowercase()).collect();
     for external in load_sites_from_json("sites.json") {
         let key = external.name.to_lowercase();
@@ -295,6 +299,27 @@ pub fn get_default_sites() -> Vec<TargetSite> {
 }
 
 // 🔥 СТРОГИЙ КЛИЕНТ: НИКАКИХ РЕДИРЕКТОВ 🔥
+
+
+fn extra_social_sites() -> Vec<TargetSite> {
+    vec![
+        TargetSite { name: "Threads".to_string(), check_url: "https://www.threads.net/@{}".to_string(), error_indicator: Some("Sorry, this page isn't available".to_string()), success_indicator: None },
+        TargetSite { name: "Bluesky".to_string(), check_url: "https://bsky.app/profile/{}".to_string(), error_indicator: Some("Profile not found".to_string()), success_indicator: Some("did:plc:".to_string()) },
+        TargetSite { name: "Mastodon.social".to_string(), check_url: "https://mastodon.social/@{}".to_string(), error_indicator: Some("Record not found".to_string()), success_indicator: Some("@".to_string()) },
+        TargetSite { name: "GitLab".to_string(), check_url: "https://gitlab.com/{}".to_string(), error_indicator: Some("404 Page not found".to_string()), success_indicator: Some("profile-page".to_string()) },
+        TargetSite { name: "Bitbucket".to_string(), check_url: "https://bitbucket.org/{}/".to_string(), error_indicator: Some("Page not found".to_string()), success_indicator: Some("profile".to_string()) },
+        TargetSite { name: "Kaggle".to_string(), check_url: "https://www.kaggle.com/{}".to_string(), error_indicator: Some("404 - Not Found".to_string()), success_indicator: Some("profile".to_string()) },
+        TargetSite { name: "Goodreads".to_string(), check_url: "https://www.goodreads.com/{}".to_string(), error_indicator: Some("Page not found".to_string()), success_indicator: Some("profile".to_string()) },
+        TargetSite { name: "Letterboxd".to_string(), check_url: "https://letterboxd.com/{}/".to_string(), error_indicator: Some("Sorry, we can’t find the page you’ve requested".to_string()), success_indicator: Some("profile".to_string()) },
+        TargetSite { name: "Last.fm".to_string(), check_url: "https://www.last.fm/user/{}".to_string(), error_indicator: Some("Page not found".to_string()), success_indicator: Some("header-new-title".to_string()) },
+        TargetSite { name: "Deezer".to_string(), check_url: "https://www.deezer.com/en/profile/{}".to_string(), error_indicator: Some("404".to_string()), success_indicator: Some("profile".to_string()) },
+        TargetSite { name: "Tripadvisor".to_string(), check_url: "https://www.tripadvisor.com/members/{}".to_string(), error_indicator: Some("Page Not Found".to_string()), success_indicator: Some("member".to_string()) },
+        TargetSite { name: "Strava".to_string(), check_url: "https://www.strava.com/athletes/{}".to_string(), error_indicator: Some("Page Not Found".to_string()), success_indicator: Some("athlete-name".to_string()) },
+        TargetSite { name: "Chess.com".to_string(), check_url: "https://www.chess.com/member/{}".to_string(), error_indicator: Some("Page not found".to_string()), success_indicator: Some("profile".to_string()) },
+        TargetSite { name: "Lichess".to_string(), check_url: "https://lichess.org/@/{}".to_string(), error_indicator: Some("404".to_string()), success_indicator: Some("user-show".to_string()) },
+    ]
+}
+
 fn build_strict_client() -> Client {
     Client::builder()
         .timeout(std::time::Duration::from_secs(8))
