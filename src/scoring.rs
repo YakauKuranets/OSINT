@@ -1,6 +1,7 @@
 use crate::models::{IdentityProfile, ResolutionEvidence, ResolutionReport, SourceClass};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SourceHealth {
     pub source_id: String,
     pub links: usize,
