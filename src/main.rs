@@ -12,6 +12,7 @@ mod sandbox_runner;
 mod connectors;
 mod evidence;
 mod source_registry;
+mod intake;
 
 use axum::{
     routing::{post, get},
