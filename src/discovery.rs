@@ -561,13 +561,28 @@ fn username_from_at_token(token: &str) -> Option<String> {
 }
 
 fn phone_from_token(token: &str) -> Option<String> {
-    let has_phone_hint = token.starts_with('+') || token.chars().any(|c| matches!(c, '-' | '(' | ')'));
-    let digits: String = token.chars().filter(|c| c.is_ascii_digit()).collect();
-    if (7..=15).contains(&digits.len()) && (has_phone_hint || digits.starts_with("375") || digits.starts_with("80")) {
-        Some(digits)
-    } else {
-        None
+    let trimmed = token.trim();
+    let has_phone_hint = trimmed.starts_with('+') || trimmed.contains("tel:") || trimmed.contains("phone") || trimmed.contains("тел") || trimmed.chars().any(|c| matches!(c, '-' | '(' | ')'));
+    let digits: String = trimmed.chars().filter(|c| c.is_ascii_digit()).collect();
+
+    if digits.len() < 7 || digits.len() > 15 {
+        return None;
     }
+
+    let plausible_country_code = digits.starts_with("375") || digits.starts_with("80") || digits.starts_with("7") || digits.starts_with("48") || digits.starts_with("380");
+    if !plausible_country_code {
+        return None;
+    }
+
+    if digits.len() >= 13 && !has_phone_hint && !digits.starts_with("375") {
+        return None;
+    }
+
+    if digits.chars().collect::<HashSet<_>>().len() <= 2 {
+        return None;
+    }
+
+    Some(digits)
 }
 
 fn normalize_item_value(value: &str, entity_type: &EntityType) -> String {
@@ -623,5 +638,11 @@ mod tests {
         assert!(findings.iter().any(|f| f.entity_type == EntityType::Email));
         assert!(findings.iter().any(|f| f.entity_type == EntityType::Username && f.value == "other"));
         assert!(findings.iter().any(|f| f.entity_type == EntityType::Phone));
+    }
+
+    #[test]
+    fn rejects_svg_numeric_ids_as_phone() {
+        assert_eq!(phone_from_token("898673820315537"), None);
+        assert_eq!(phone_from_token("124287537499132"), None);
     }
 }
