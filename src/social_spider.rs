@@ -1,5 +1,7 @@
 use crate::models::{EntityNode, EntityType, SourceMetadata, SourceClass};
 use reqwest::{Client, redirect::Policy};
+use serde::Deserialize;
+use std::collections::HashSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Clone, Debug)]
@@ -10,8 +12,41 @@ pub struct TargetSite {
     pub success_indicator: Option<String>,
 }
 
+
+#[derive(Deserialize)]
+struct SiteConfigEntry {
+    name: String,
+    check_url: String,
+    error_indicator: Option<String>,
+    success_indicator: Option<String>,
+    requires_tor: Option<bool>,
+}
+
+fn load_sites_from_json(path: &str) -> Vec<TargetSite> {
+    let data = match std::fs::read_to_string(path) {
+        Ok(v) => v,
+        Err(_) => return Vec::new(),
+    };
+
+    let parsed: Vec<SiteConfigEntry> = serde_json::from_str(&data).unwrap_or_default();
+    parsed
+        .into_iter()
+        .filter(|s| !s.name.trim().is_empty() && s.check_url.contains("{username}"))
+        .filter(|s| {
+            let is_tor = s.requires_tor.unwrap_or(false) || s.check_url.contains(".onion");
+            !is_tor
+        })
+        .map(|s| TargetSite {
+            name: s.name,
+            check_url: s.check_url.replace("{username}", "{}"),
+            error_indicator: s.error_indicator,
+            success_indicator: s.success_indicator,
+        })
+        .collect()
+}
+
 pub fn get_default_sites() -> Vec<TargetSite> {
-    vec![
+    let mut sites = vec![
         // --- Социальные сети и медиа ---
         TargetSite {
             name: "GitHub".to_string(),
@@ -245,7 +280,18 @@ pub fn get_default_sites() -> Vec<TargetSite> {
             error_indicator: Some("Not Found".to_string()),
             success_indicator: Some("profile-pic".to_string()),
         },
-    ]
+    ];
+
+    let mut known: HashSet<String> = sites.iter().map(|s| s.name.to_lowercase()).collect();
+    for external in load_sites_from_json("sites.json") {
+        let key = external.name.to_lowercase();
+        if !known.contains(&key) {
+            known.insert(key);
+            sites.push(external);
+        }
+    }
+
+    sites
 }
 
 // 🔥 СТРОГИЙ КЛИЕНТ: НИКАКИХ РЕДИРЕКТОВ 🔥
