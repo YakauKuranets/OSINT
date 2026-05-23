@@ -2889,5 +2889,3197 @@
     "check_url": "https://www.curseforge.com/members/{username}/projects",
     "method": "StatusCode",
     "error_indicator": null
+  },
+  {
+    "name": "21buttons",
+    "check_url": "https://www.21buttons.com/buttoner/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "247CTF",
+    "check_url": "https://247ctf.com/progress/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "247sports",
+    "check_url": "https://247sports.com/User/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "35photo",
+    "check_url": "https://35photo.pro/@{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "3DNews",
+    "check_url": "https://forum.3dnews.tech/member.php?username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "3dtoday",
+    "check_url": "https://3dtoday.ru/blogs/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "7cup",
+    "check_url": "https://www.7cups.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "7dach",
+    "check_url": "https://7dach.ru/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ACF",
+    "check_url": "https://support.advancedcustomfields.com/forums/users/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Adult_Forum",
+    "check_url": "https://adultforum.gr/{username}-glamour-escorts/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "adultism",
+    "check_url": "https://www.adultism.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ADVFN",
+    "check_url": "https://uk.advfn.com/forum/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Airline_Pilot_Life",
+    "check_url": "https://airlinepilot.life/u/{username}.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Albicla",
+    "check_url": "https://albicla.com/{username}/post/1",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "alik",
+    "check_url": "https://www.alik.cz/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Alura",
+    "check_url": "https://cursos.alura.com.br/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Ameblo",
+    "check_url": "https://ameblo.jp/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "AmericanThinker",
+    "check_url": "https://www.americanthinker.com/author/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "anonup",
+    "check_url": "https://anonup.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Apex Legends",
+    "check_url": "https://api.tracker.gg/api/v2/apex/standard/profile/origin/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Appian",
+    "check_url": "https://community.appian.com/members/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Arch Linux GitLab",
+    "check_url": "https://gitlab.archlinux.org/api/v4/users?username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Archive Of Our Own Account",
+    "check_url": "https://archiveofourown.org/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ArchWiki",
+    "check_url": "https://wiki.archlinux.org/api.php?action=query&format=json&list=users&ususers={username}&usprop=cancreate&formatversion=2&errorformat=html&errorsuselocal=true&uselang=en",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Arduino (Forum)",
+    "check_url": "https://forum.arduino.cc/u/{username}.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Arduino (Project Hub)",
+    "check_url": "https://projecthub.arduino.cc/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ArmorGames",
+    "check_url": "https://armorgames.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Arsmate",
+    "check_url": "https://arsmate.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ArtBreeder",
+    "check_url": "https://www.artbreeder.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Artists & Clients",
+    "check_url": "https://artistsnclients.com/people/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "au.ru",
+    "check_url": "https://au.ru/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Avid Community",
+    "check_url": "https://community.avid.com/members/{username}/default.aspx",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "babepedia",
+    "check_url": "https://www.babepedia.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BabyPips",
+    "check_url": "https://forums.babypips.com/u/{username}.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bandlab",
+    "check_url": "https://www.bandlab.com/api/v1.3/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "bblog_ru",
+    "check_url": "https://www.babyblog.ru/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BDSMLR",
+    "check_url": "https://{username}.bdsmlr.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "bdsmsingles",
+    "check_url": "https://www.bdsmsingles.com/members/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Beacons",
+    "check_url": "https://beacons.ai/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bentbox",
+    "check_url": "https://bentbox.co/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bento",
+    "check_url": "https://bento.me/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BIGO Live",
+    "check_url": "https://www.bigo.tv/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bikemap",
+    "check_url": "https://www.bikemap.net/en/u/{username}/routes/created/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bimpos",
+    "check_url": "https://ask.bimpos.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bio Sites",
+    "check_url": "https://bio.site/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "biolink",
+    "check_url": "https://bio.link/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "blogi.pl",
+    "check_url": "https://www.blogi.pl/osoba,{username}.html",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Blogmarks",
+    "check_url": "http://blogmarks.net/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Blogspot",
+    "check_url": "http://{username}.blogspot.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bluesky 1",
+    "check_url": "https://bsky.app/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bluesky 2",
+    "check_url": "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor={username}.bsky.social",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BodyBuilding.com",
+    "check_url": "http://api.bodybuilding.com/api-proxy/bbc/get?slug={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "bonga_cams",
+    "check_url": "https://pt.bongacams.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Booknode",
+    "check_url": "https://booknode.com/profil/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Boosty",
+    "check_url": "https://api.boosty.to/v1/blog/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Brickset",
+    "check_url": "https://brickset.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bunpro",
+    "check_url": "https://community.bunpro.jp/u/{username}.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "cafecito",
+    "check_url": "https://cafecito.app/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Calendy",
+    "check_url": "https://calendly.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Cameo",
+    "check_url": "https://www.cameo.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "carrd.co",
+    "check_url": "https://{username}.carrd.co",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "CastingCallClub",
+    "check_url": "https://www.castingcall.club/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "CD-Action",
+    "check_url": "https://cdaction.pl/uzytkownicy/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "cda.pl",
+    "check_url": "https://www.cda.pl/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Cent",
+    "check_url": "https://beta.cent.co/data/user/profile?userHandles={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "cfx.re",
+    "check_url": "https://forum.cfx.re/u/{username}.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Chamsko",
+    "check_url": "https://www.chamsko.pl/profil/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "chatango.com",
+    "check_url": "https://{username}.chatango.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "cHEEZburger",
+    "check_url": "https://profile.cheezburger.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Chess.com",
+    "check_url": "https://api.chess.com/pub/player/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Chomikuj.pl",
+    "check_url": "https://chomikuj.pl/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Chyoa",
+    "check_url": "https://chyoa.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Cloudflare",
+    "check_url": "https://community.cloudflare.com/u/{username}/card.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Coda",
+    "check_url": "https://coda.io/@{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Code Project",
+    "check_url": "https://www.codeproject.com/Members/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "codementor",
+    "check_url": "https://www.codementor.io/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Community Adobe",
+    "check_url": "https://community.adobe.com/t5/forums/searchpage/tab/user?q={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Coub",
+    "check_url": "https://coub.com/api/v2/channels/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "cowboys4angels",
+    "check_url": "https://cowboys4angels.com/cowboy/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Cropty",
+    "check_url": "https://api.cropty.io/v1/auth/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Cytoid",
+    "check_url": "https://cytoid.io/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Daily Kos",
+    "check_url": "https://www.dailykos.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "darudar",
+    "check_url": "https://darudar.org/users/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "dateinasia",
+    "check_url": "https://www.dateinasia.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "datezone",
+    "check_url": "https://www.datezone.com/users/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Dating.ru",
+    "check_url": "https://dating.ru/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "DDoSecrets",
+    "check_url": "https://search.ddosecrets.com/search?q={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Demotywatory",
+    "check_url": "https://demotywatory.pl/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "depop",
+    "check_url": "https://www.depop.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Designspriation",
+    "check_url": "https://www.designspiration.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "destream",
+    "check_url": "https://api.destream.net/siteapi/v2/live/details/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Destructoid",
+    "check_url": "https://www.destructoid.com/?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "dev.to",
+    "check_url": "https://dev.to/api/users/by_username?url={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "dfgames",
+    "check_url": "https://www.dfgames.com.br/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Diablo",
+    "check_url": "https://diablo2.io/member/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "DIBIZ",
+    "check_url": "https://www.dibiz.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "diigo",
+    "check_url": "https://www.diigo.com/interact_api/load_profile_info?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Discord (Invite)",
+    "check_url": "https://discord.com/api/v9/invites/{username}?with_counts=true&with_expiration=true",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Discourse",
+    "check_url": "https://meta.discourse.org/u/{username}/summary.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Dissenter",
+    "check_url": "https://dissenter.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Docker Hub (Organization)",
+    "check_url": "https://hub.docker.com/v2/orgs/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Docker Hub (User)",
+    "check_url": "https://hub.docker.com/v2/users/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Dojoverse",
+    "check_url": "https://dojoverse.com/members/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "donate.stream",
+    "check_url": "https://donate.stream/api/v1/streamer.get?path={username}&app=9f4e793cec820015d511dbc77b20c5c1",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Donatello",
+    "check_url": "https://donatello.to/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Donatik",
+    "check_url": "https://{username}.donatik.io/en",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Donation Alerts",
+    "check_url": "https://www.donationalerts.com/api/v1/user/{username}/donationpagesettings",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Donatty",
+    "check_url": "https://api.donatty.com/users/find/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "dot.cards",
+    "check_url": "https://dot.cards/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Dota2.ru",
+    "check_url": "https://dota2.ru/forum/search/?type=user&keywords={username}&sort_by=username",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "DOTAFire",
+    "check_url": "https://www.dotafire.com/ajax/searchSite?text={username}&search=members",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "DOU",
+    "check_url": "https://dou.ua/users/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "DRIVE2.RU",
+    "check_url": "https://www.drive2.ru/users/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Droners",
+    "check_url": "https://droners.io/accounts/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "easyen",
+    "check_url": "https://easyen.ru/index/8-0-{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "eBay",
+    "check_url": "https://www.ebay.com/usr/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ebay_stores",
+    "check_url": "https://www.ebay.com/str/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Engadget",
+    "check_url": "https://www.engadget.com/about/editors/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Etoro",
+    "check_url": "https://www.etoro.com/api/logininfo/v1.1/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Etsy",
+    "check_url": "https://www.etsy.com/people/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Evolution CMS",
+    "check_url": "https://community.evocms.ru/users/?search={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Expressional.social (Mastodon Instance)",
+    "check_url": "https://expressional.social/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Fabswingers",
+    "check_url": "https://www.fabswingers.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Facebook",
+    "check_url": "https://www.facebook.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "FACEIT",
+    "check_url": "https://www.faceit.com/api/users/v1/nicknames/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Faktopedia",
+    "check_url": "https://faktopedia.pl/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "FanCentro",
+    "check_url": "https://fancentro.com/api/profile.get?profileAlias={username}&limit=1",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Fanslist (OnlyFans)",
+    "check_url": "https://fanslist.com/search?q={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Fansly",
+    "check_url": "https://apiv3.fansly.com/api/v1/account?usernames={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Fark",
+    "check_url": "https://www.fark.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "FatSecret",
+    "check_url": "https://www.fatsecret.com/member/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Federated.press (Mastodon Instance)",
+    "check_url": "https://federated.press/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Figma",
+    "check_url": "https://www.figma.com/api/profile/handle/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Filmot Channel Search",
+    "check_url": "https://filmot.com/channelsearch/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Filmot Unlisted Videos",
+    "check_url": "https://filmot.com/unlistedSearch?channelQuery={username}&sortField=uploaddate&sortOrder=desc&",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Filmweb",
+    "check_url": "https://www.filmweb.pl/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "fine_art_america",
+    "check_url": "https://fineartamerica.com/profiles/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "FL.ru",
+    "check_url": "https://www.fl.ru/users/{username}/portfolio/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "flowcode",
+    "check_url": "https://www.flowcode.com/page/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Fodors Forum",
+    "check_url": "https://www.fodors.com/community/profile/{username}/forum-activity",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Folkd",
+    "check_url": "https://www.folkd.com/?app=core&module=system&controller=ajax&do=usernameExists&input={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Fortnite Tracker",
+    "check_url": "https://fortnitetracker.com/profile/all/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "forumprawne.org",
+    "check_url": "https://forumprawne.org/members/{username}.html",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Fosstodon.org (Mastodon Instance)",
+    "check_url": "https://fosstodon.org/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "fotka",
+    "check_url": "https://api.fotka.com/v2/user/dataStatic?login={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Fotolog Archived Profile",
+    "check_url": "https://archive.org/wayback/available?url=https://www.fotolog.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Foursquare",
+    "check_url": "https://foursquare.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Freelance.RU",
+    "check_url": "https://freelance.ru/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Freelance.ua",
+    "check_url": "https://freelance.ua/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Freelancehunt (Employer)",
+    "check_url": "https://freelancehunt.com/en/employer/{username}.html",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Freelancehunt (Freelancer)",
+    "check_url": "https://freelancehunt.com/en/freelancer/{username}.html",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "FreeSteamKeys",
+    "check_url": "https://www.freesteamkeys.com/members/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "FriendFinder",
+    "check_url": "https://friendfinder.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "FriendFinder-X",
+    "check_url": "https://www.friendfinder-x.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Fur Affinity",
+    "check_url": "https://www.furaffinity.net/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Gab",
+    "check_url": "https://gab.com/api/v1/account_by_username/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Game Jolt",
+    "check_url": "https://gamejolt.com/site-api/web/profile/@{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "game_debate",
+    "check_url": "https://www.game-debate.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Gamer DVR",
+    "check_url": "https://gamerdvr.com/gamer/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Garmin connect",
+    "check_url": "https://connect.garmin.com/modern/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GDBrowser",
+    "check_url": "https://gdbrowser.com/api/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Genius (Artist)",
+    "check_url": "https://genius.com/artists/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Genius (User)",
+    "check_url": "https://genius.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "getmonero",
+    "check_url": "https://forum.getmonero.org/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Gettr",
+    "check_url": "https://gettr.com/api/s/uinf/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Gigapan",
+    "check_url": "https://www.gigapan.com/profiles/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Giphy (Channel)",
+    "check_url": "https://giphy.com/channel/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GitHub (Gists)",
+    "check_url": "https://api.github.com/users/{username}/gists",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GitHub (User)",
+    "check_url": "https://api.github.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "gloria.tv",
+    "check_url": "https://gloria.tv/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GNOME (GitLab)",
+    "check_url": "https://gitlab.gnome.org/api/v4/users?username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GNOME (Shell Extensions)",
+    "check_url": "https://extensions.gnome.org/accounts/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GOG",
+    "check_url": "https://www.gog.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Goodgame_Russia",
+    "check_url": "https://goodgame.ru/channel/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "gpodder.net",
+    "check_url": "https://gpodder.net/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "grandprof",
+    "check_url": "https://grandprof.org/communaute/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Graphics.social (Mastodon Instance)",
+    "check_url": "https://graphics.social/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Greasy Fork",
+    "check_url": "https://greasyfork.org/en/users?q={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GTAinside.com",
+    "check_url": "https://www.gtainside.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Habbo.com",
+    "check_url": "https://www.habbo.com/api/public/users?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Habbo.com.br",
+    "check_url": "https://www.habbo.com.br/api/public/users?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Habbo.com.tr",
+    "check_url": "https://www.habbo.com.tr/api/public/users?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Habbo.de",
+    "check_url": "https://www.habbo.de/api/public/users?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Habbo.es",
+    "check_url": "https://www.habbo.es/api/public/users?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Habbo.fi",
+    "check_url": "https://www.habbo.fi/api/public/users?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Habbo.fr",
+    "check_url": "https://www.habbo.fr/api/public/users?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Habbo.it",
+    "check_url": "https://www.habbo.it/api/public/users?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Habbo.nl",
+    "check_url": "https://www.habbo.nl/api/public/users?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Habr (Q&A)",
+    "check_url": "https://qna.habr.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Habr (User)",
+    "check_url": "https://habr.com/ru/users/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Habtium",
+    "check_url": "https://habtium.es/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Hackaday.io",
+    "check_url": "https://hackaday.io/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Hackadvisor",
+    "check_url": "https://hackadvisor.io/api/v2/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Hacker News",
+    "check_url": "https://news.ycombinator.com/user?id={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Hackernoon",
+    "check_url": "https://hackernoon.com/_next/data/foL6JC7ro2FEEMD-gMKgQ/u/{username}.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "hamaha",
+    "check_url": "https://hamaha.net/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Hanime",
+    "check_url": "https://hanime.tv/channels/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Hcommons.social (Mastodon Instance)",
+    "check_url": "https://hcommons.social/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Heylink",
+    "check_url": "https://heylink.me/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "hiberworld",
+    "check_url": "https://hiberworld.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "HiHello",
+    "check_url": "https://www.hihello.me/author/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "HomeDesign3D",
+    "check_url": "https://en.homedesign3d.net/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Hometech.social (Mastodon Instance)",
+    "check_url": "https://hometech.social/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "hoo.be",
+    "check_url": "https://hoo.be/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Hostux.social (Mastodon Instance)",
+    "check_url": "https://hostux.social/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "HuggingFace",
+    "check_url": "https://huggingface.co/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "HulkShare",
+    "check_url": "https://www.hulkshare.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Iconfinder",
+    "check_url": "https://www.iconfinder.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "icq-chat",
+    "check_url": "https://icq.icqchat.co/members/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ilovegrowingmarijuana",
+    "check_url": "https://support.ilovegrowingmarijuana.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "imagefap",
+    "check_url": "https://www.imagefap.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ImageShack",
+    "check_url": "https://imageshack.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "iMGSRC.RU",
+    "check_url": "https://imgsrc.ru/main/user.php?lang=ru&user={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "inaturalist",
+    "check_url": "https://api.inaturalist.org/v1/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Independent academia",
+    "check_url": "https://independent.academia.edu/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "InkBunny",
+    "check_url": "https://inkbunny.net/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "InsaneJournal",
+    "check_url": "https://{username}.insanejournal.com/profile",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Instagram (Imginn)",
+    "check_url": "https://imginn.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Instagram_archives",
+    "check_url": "https://archive.org/wayback/available?url=https://instagram.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Internet Archive User Contribution Search",
+    "check_url": "https://archive.org/advancedsearch.php?q=creator:{username}&output=json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Internet Archive Username Mentions",
+    "check_url": "https://archive.org/advancedsearch.php?q={username}&output=json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "iXBT Forum",
+    "check_url": "https://forum.ixbt.com/users.cgi?id=info:{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Japandict",
+    "check_url": "https://forum.japandict.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "JBZD",
+    "check_url": "https://jbzd.com.pl/uzytkownik/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "jeja.pl",
+    "check_url": "https://www.jeja.pl/user,{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Joe Monster",
+    "check_url": "https://joemonster.org/bojownik/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "JSFiddle",
+    "check_url": "https://jsfiddle.net/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Justforfans",
+    "check_url": "https://justfor.fans/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Kickstarter",
+    "check_url": "https://www.kickstarter.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "kipin",
+    "check_url": "https://kipin.app/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "KnowYourMeme",
+    "check_url": "https://knowyourmeme.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Ko-Fi",
+    "check_url": "https://ko-fi.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "komi",
+    "check_url": "https://api.komi.io/api/talent/usernames/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Kotburger",
+    "check_url": "https://kotburger.pl/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Kwai",
+    "check_url": "https://www.kwai.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "kwejk.pl",
+    "check_url": "https://kwejk.pl/uzytkownik/{username}#/tablica/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "LeakIX",
+    "check_url": "https://leakix.net/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Lemon8",
+    "check_url": "https://www.lemon8-app.com/{username}?region=us",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "LevelBlue",
+    "check_url": "https://otx.alienvault.com/otxapi/auth/validate?username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Liberapay",
+    "check_url": "https://liberapay.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Libretooth.gr (Mastodon Instance)",
+    "check_url": "https://libretooth.gr/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "lichess.org",
+    "check_url": "https://lichess.org/api/player/autocomplete?term={username}&exists=1",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "LINE",
+    "check_url": "https://line.me/R/ti/p/@{username}?from=page",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "linux.org.ru",
+    "check_url": "https://www.linux.org.ru/people/{username}/profile",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "livemaster.ru",
+    "check_url": "https://www.livemaster.ru/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "lobste.rs",
+    "check_url": "https://lobste.rs/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "LoLProfile",
+    "check_url": "https://lolprofile.net/search/world/{username}-world",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Lor.sh (Mastodon Instance)",
+    "check_url": "https://lor.sh/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "lowcygier.pl",
+    "check_url": "https://bazar.lowcygier.pl/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MAGABOOK",
+    "check_url": "https://magabook.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Magix",
+    "check_url": "https://www.magix.info/us/users/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Malpedia Actors",
+    "check_url": "https://malpedia.caad.fkie.fraunhofer.de/actor/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MapMyTracks",
+    "check_url": "https://www.mapmytracks.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mapstodon.space (Mastodon Instance)",
+    "check_url": "https://mapstodon.space/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Maroc_nl",
+    "check_url": "https://www.maroc.nl/forums/members/{username}.html",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Marshmallow",
+    "check_url": "https://marshmallow-qa.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Martech",
+    "check_url": "https://martech.org/author/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Massage Anywhere",
+    "check_url": "https://www.massageanywhere.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "masto.ai",
+    "check_url": "https://masto.ai/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Masto.nyc (Mastodon Instance)",
+    "check_url": "https://masto.nyc/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon API",
+    "check_url": "https://mastodon.social/api/v2/search?q={username}&limit=1&type=accounts",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon-101010.pl",
+    "check_url": "https://101010.pl/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon-C.IM",
+    "check_url": "https://c.im/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon-Chaos.social",
+    "check_url": "https://chaos.social/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon-climatejustice.rocks",
+    "check_url": "https://climatejustice.rocks/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon-Defcon",
+    "check_url": "https://defcon.social/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon-mastodon",
+    "check_url": "https://mastodon.social/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon-meow.social",
+    "check_url": "https://meow.social/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon-mstdn.io",
+    "check_url": "https://mstdn.io/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon-rigcz.club",
+    "check_url": "https://rigcz.club/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon-social_tchncs",
+    "check_url": "https://social.tchncs.de/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon-Toot.Community",
+    "check_url": "https://toot.community/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodon.online",
+    "check_url": "https://mastodon.online/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mastodonbooks.net (Mastodon Instance)",
+    "check_url": "https://mastodonbooks.net/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MCName (Minecraft)",
+    "check_url": "https://mcname.info/en/search?q={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MCUUID (Minecraft)",
+    "check_url": "https://playerdb.co/api/player/minecraft/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "medyczka.pl",
+    "check_url": "http://medyczka.pl/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "meet me",
+    "check_url": "https://www.meetme.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Meta-Wiki (Wikimedia)",
+    "check_url": "https://meta.wikimedia.org/wiki/Special:CentralAuth?target={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Metacritic",
+    "check_url": "https://www.metacritic.com/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Minecraft List",
+    "check_url": "https://minecraftlist.com/players/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "mintme",
+    "check_url": "https://www.mintme.com/token/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mistrzowie",
+    "check_url": "https://mistrzowie.org/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mix",
+    "check_url": "https://mix.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mixi",
+    "check_url": "https://mixi.jp/view_community.pl?id={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mixlr",
+    "check_url": "https://api.mixlr.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mmorpg",
+    "check_url": "https://forums.mmorpg.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MobileGTA.net",
+    "check_url": "https://www.mobilegta.net/en/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mod DB",
+    "check_url": "https://www.moddb.com/html/scripts/autocomplete.php?a=username&q={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MODX.im",
+    "check_url": "https://modx.evo.im/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Moto Trip",
+    "check_url": "https://moto-trip.com/profil/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Motokiller",
+    "check_url": "https://mklr.pl/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Moxfield",
+    "check_url": "https://api2.moxfield.com/v1/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "mssg.me",
+    "check_url": "https://{username}.mssg.me/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Muck Rack",
+    "check_url": "https://muckrack.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Musician.social (Mastodon Instance)",
+    "check_url": "https://musician.social/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "musictraveler",
+    "check_url": "https://www.musictraveler.com/en/users/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MUYZORRAS",
+    "check_url": "https://www.muyzorras.com/usuarios/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "my_instants",
+    "check_url": "https://www.myinstants.com/en/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MyBuilder.com",
+    "check_url": "https://www.mybuilder.com/profile/view/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MyFitnessPal Author",
+    "check_url": "https://blog.myfitnesspal.com/author/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MyFitnessPal Community",
+    "check_url": "https://community.myfitnesspal.com/en/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MyLot",
+    "check_url": "https://www.mylot.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MYM",
+    "check_url": "https://mym.fans/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "MyNickname",
+    "check_url": "https://mynickname.com/en/search?q={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "myportfolio",
+    "check_url": "https://{username}.myportfolio.com/work",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Myspreadshop",
+    "check_url": "https://myspreadshop.de/{username}/shopData/list",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "myWishBoard",
+    "check_url": "https://mywishboard.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "naija_planet",
+    "check_url": "https://naijaplanet.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "nairaland",
+    "check_url": "https://www.nairaland.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "NaturalNews",
+    "check_url": "https://naturalnews.com/author/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Neocities",
+    "check_url": "https://neocities.org/site/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "netvibes",
+    "check_url": "https://www.netvibes.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "newmeet",
+    "check_url": "https://www.newmeet.com/en/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Nifty Gateway",
+    "check_url": "https://api.niftygateway.com/user/profile-and-offchain-nifties-by-url/?profile_url={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "nihbuatjajan",
+    "check_url": "https://www.nihbuatjajan.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Nitecrew (Mastodon Instance)",
+    "check_url": "https://nitecrew.rip/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "NotABug",
+    "check_url": "https://notabug.org/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "oglaszamy24h.pl",
+    "check_url": "https://oglaszamy24h.pl/profil,{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "okidoki",
+    "check_url": "https://m.okidoki.ee/ru/users/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Opencollective",
+    "check_url": "https://opencollective.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "OpenStreetMap Wiki",
+    "check_url": "https://wiki.openstreetmap.org/w/api.php?action=query&format=json&list=users&ususers={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Oper.ru",
+    "check_url": "https://oper.ru/visitors/info.php?t={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "OPGG",
+    "check_url": "https://eune.op.gg/summoners/eune/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Orbys",
+    "check_url": "https://orbys.net/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Origins.Habbo.com",
+    "check_url": "https://origins.habbo.com/api/public/users?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Origins.Habbo.com.br",
+    "check_url": "https://origins.habbo.com.br/api/public/users?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Origins.Habbo.es",
+    "check_url": "https://origins.habbo.es/api/public/users?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Our Freedom Book",
+    "check_url": "https://www.ourfreedombook.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ow.ly",
+    "check_url": "http://ow.ly/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "palnet",
+    "check_url": "https://www.palnet.io/@{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Parler",
+    "check_url": "https://parler.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Parler archived posts",
+    "check_url": "http://archive.org/wayback/available?url=https://parler.com/profile/{username}/posts",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Parler archived profile",
+    "check_url": "http://archive.org/wayback/available?url=https://parler.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "patch",
+    "check_url": "https://patch.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "PatientsLikeMe",
+    "check_url": "https://www.patientslikeme.com/members/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Patriots Win",
+    "check_url": "https://patriots.win/u/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Patronite",
+    "check_url": "https://patronite.pl/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Paypal",
+    "check_url": "https://www.paypal.com/paypalme/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "PCPartPicker",
+    "check_url": "https://pcpartpicker.com/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Peerlist",
+    "check_url": "https://peerlist.io/api/v1/users/profile/tldr?handle={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pewex",
+    "check_url": "https://retro.pewex.pl/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Picsart",
+    "check_url": "https://api.picsart.com/users/show/{username}.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Piekielni",
+    "check_url": "https://piekielni.pl/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pillowfort",
+    "check_url": "https://www.pillowfort.social/{username}/json/?p=1",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Playstation Network",
+    "check_url": "https://psnprofiles.com/xhr/search/users?q={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Plink",
+    "check_url": "https://plink.gg/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Poe.com",
+    "check_url": "https://poe.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pokec",
+    "check_url": "https://pokec.azet.sk/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "pokemonshowdown",
+    "check_url": "https://pokemonshowdown.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Polchat.pl",
+    "check_url": "https://polczat.pl/forum/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "policja2009",
+    "check_url": "http://www.policja2009.fora.pl/search.php?search_author={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Poll Everywhere",
+    "check_url": "https://pollev.com/proxy/api/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "popl",
+    "check_url": "https://poplme.co/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pornhub (Model)",
+    "check_url": "https://www.pornhub.com/model/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pornhub (Pornstar)",
+    "check_url": "https://www.pornhub.com/pornstar/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pornhub (User)",
+    "check_url": "https://www.pornhub.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Poshmark",
+    "check_url": "https://poshmark.com/closet/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "postcrossing",
+    "check_url": "https://www.postcrossing.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Poweredbygay.social (Mastodon Instance)",
+    "check_url": "https://poweredbygay.social/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pravda.me",
+    "check_url": "https://pravda.me/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Privacy Guides",
+    "check_url": "https://discuss.privacyguides.net/u/{username}.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pronouny",
+    "check_url": "https://pronouny.xyz/api/users/profile/username/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Prose",
+    "check_url": "https://prose.astral.camp/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "prv.pl",
+    "check_url": "https://www.prv.pl/osoba/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Public.com",
+    "check_url": "https://public.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "QUEER PL",
+    "check_url": "https://queer.pl/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "quitter.pl",
+    "check_url": "https://quitter.pl/api/v1/accounts/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Quizlet",
+    "check_url": "https://quizlet.com/webapi/3.2/users/check-username?username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Quora",
+    "check_url": "https://www.quora.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Raddle.me",
+    "check_url": "https://raddle.me/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Rant.li",
+    "check_url": "https://rant.li/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "RedGIFs",
+    "check_url": "https://api.redgifs.com/v1/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Refsheet",
+    "check_url": "https://refsheet.net/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Replit",
+    "check_url": "https://replit.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "resumes_actorsaccess",
+    "check_url": "https://resumes.actorsaccess.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Revolut",
+    "check_url": "https://revolut.me/api/web-profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "risk.ru",
+    "check_url": "https://risk.ru/people/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "RoutineHub",
+    "check_url": "https://routinehub.co/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "rsi",
+    "check_url": "https://robertsspaceindustries.com/citizens/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ru_123rf",
+    "check_url": "https://ru.123rf.com/profile_{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "RubyGems.org",
+    "check_url": "https://rubygems.org/api/v1/profiles/{username}.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "RumbleChannel",
+    "check_url": "https://rumble.com/c/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "RumbleUser",
+    "check_url": "https://rumble.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "RuTracker.org",
+    "check_url": "https://rutracker.org/forum/profile.php?mode=viewprofile&u={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ruVoIP.net",
+    "check_url": "https://ruvoip.net/members/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Salon24",
+    "check_url": "https://www.salon24.pl/u/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Scammer.info",
+    "check_url": "https://scammer.info/u/{username}.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Scored",
+    "check_url": "https://scored.co/api/v2/user/about.json?user={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "ScoutWiki",
+    "check_url": "https://en.scoutwiki.org/User:{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Scribd (Document)",
+    "check_url": "https://www.scribd.com/search/query?query={username}&verbatim=true",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Searchengines",
+    "check_url": "https://searchengines.guru/ru/search?keyword=&author={username}&sortByDate=true",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "secure_donation",
+    "check_url": "https://secure.donationpay.org/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "sedisp@ce",
+    "check_url": "https://sedispace.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Seneporno",
+    "check_url": "https://seneporno.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "sentimente",
+    "check_url": "https://www.sentimente.com/amp/{username}.html",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SEOClerks",
+    "check_url": "https://www.seoclerks.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "setlist.fm",
+    "check_url": "https://www.setlist.fm/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SFD",
+    "check_url": "https://www.sfd.pl/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Shesfreaky",
+    "check_url": "https://www.shesfreaky.com/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "shopify",
+    "check_url": "https://{username}.myshopify.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Showup.tv",
+    "check_url": "https://showup.tv/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "shutterstock",
+    "check_url": "https://www.shutterstock.com/g/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SimplePlanes",
+    "check_url": "https://www.simpleplanes.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "skeb",
+    "check_url": "https://skeb.jp/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SlackHoles",
+    "check_url": "https://slackholes.com/actor/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SmashRun",
+    "check_url": "https://smashrun.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "smelsy",
+    "check_url": "https://www.smelsy.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Snipfeed",
+    "check_url": "https://snipfeed.co/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "soc.citizen4.eu",
+    "check_url": "https://soc.citizen4.eu/profile/{username}/profile",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "social.bund.de",
+    "check_url": "https://social.bund.de/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "social_msdn",
+    "check_url": "https://social.msdn.microsoft.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "sofurry",
+    "check_url": "https://{username}.sofurry.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "solo.to",
+    "check_url": "https://solo.to/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Soup",
+    "check_url": "https://www.soup.io/author/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Speaker Deck",
+    "check_url": "https://speakerdeck.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "speedrun",
+    "check_url": "https://www.speedrun.com/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SpiceWorks",
+    "check_url": "https://community.spiceworks.com/people/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SPOJ",
+    "check_url": "https://www.spoj.com/users/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Sports Tracker",
+    "check_url": "https://api.sports-tracker.com/apiserver/v1/user/name/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "StackOverflow",
+    "check_url": "https://api.stackexchange.com/2.3/users?order=desc&sort=name&inname={username}&site=stackoverflow",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "StackShare",
+    "check_url": "https://stackshare.io/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Statuspage",
+    "check_url": "https://{username}.statuspage.io/api/v2/status.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "SteamGifts",
+    "check_url": "https://www.steamgifts.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "steller",
+    "check_url": "https://steller.co/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "StoryCorps",
+    "check_url": "https://archive.storycorps.org/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "StreamElements",
+    "check_url": "https://api.streamelements.com/kappa/v2/channels/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "StreamLabs",
+    "check_url": "https://streamlabs.com/api/v6/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Stripchat",
+    "check_url": "https://stripchat.com/api/front/users/checkUsername?username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Subscribestar",
+    "check_url": "https://subscribestar.adult/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "sukebei.nyaa.si",
+    "check_url": "https://sukebei.nyaa.si/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Suzuri",
+    "check_url": "https://suzuri.jp/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "szmer.info",
+    "check_url": "https://szmer.info/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "tabletoptournament",
+    "check_url": "https://www.tabletoptournaments.net/eu/player/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Tagged",
+    "check_url": "https://secure.tagged.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TamTam",
+    "check_url": "https://tamtam.chat/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Tanuki.pl",
+    "check_url": "https://tanuki.pl/profil/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TAPiTAG",
+    "check_url": "https://account.tapitag.co/tapitag/api/v1/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Tappy",
+    "check_url": "https://api.tappy.tech/api/profile/username/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Taringa",
+    "check_url": "https://www.taringa.net/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Taringa Archived Profile",
+    "check_url": "https://archive.org/wayback/available?url=https://www.taringa.net/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "taskrabbit",
+    "check_url": "https://www.taskrabbit.com/profile/{username}/about",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Teamtreehouse",
+    "check_url": "https://teamtreehouse.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Teespring",
+    "check_url": "https://commerce.teespring.com/v1/stores?slug={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Teknik",
+    "check_url": "https://user.teknik.io/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Teletype",
+    "check_url": "https://teletype.in/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Tellonym",
+    "check_url": "https://api.tellonym.me/profiles/name/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TF2 Backpack Examiner",
+    "check_url": "http://www.tf2items.com/id/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "thegatewaypundit",
+    "check_url": "https://www.thegatewaypundit.com/author/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "theguardian",
+    "check_url": "https://www.theguardian.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Thetattooforum",
+    "check_url": "https://www.thetattooforum.com/members/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "thoughts",
+    "check_url": "https://thoughts.com/members/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Tilde.zone (Mastodon Instance)",
+    "check_url": "https://tilde.zone/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Tinder",
+    "check_url": "https://tinder.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TipeeeStream",
+    "check_url": "https://www.tipeeestream.com/v3.0/pages/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Tooting.ch (Mastodon Instance)",
+    "check_url": "https://tooting.ch/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "toyhou.se",
+    "check_url": "https://toyhou.se/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "tripadvisor",
+    "check_url": "https://www.tripadvisor.com/Profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TruckersMP",
+    "check_url": "https://truckersmp.com/user/search?search={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TruckersMP.Ru",
+    "check_url": "https://truckersmp.ru/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Truth Social",
+    "check_url": "https://truthsocial.com/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Tryst",
+    "check_url": "https://tryst.link/escort/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "tunefind",
+    "check_url": "https://www.tunefind.com/api-request/account/profile?userName={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Twitcasting",
+    "check_url": "https://twitcasting.tv/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Twitter archived profile",
+    "check_url": "http://archive.org/wayback/available?url=https://twitter.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Twitter archived tweets",
+    "check_url": "http://archive.org/wayback/available?url=https://twitter.com/{username}/status/*",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "twpro",
+    "check_url": "https://twpro.jp/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Ubisoft",
+    "check_url": "https://discussions.ubisoft.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Udemy",
+    "check_url": "https://www.udemy.com/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "UEF CONNECT",
+    "check_url": "https://uefconnect.uef.fi/en/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Ultimate Guitar",
+    "check_url": "https://www.ultimate-guitar.com/u/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Ultras Diary",
+    "check_url": "http://ultrasdiary.pl/u/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Unlisted Videos",
+    "check_url": "https://unlistedvideos.com/search.php?user={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "USA Life",
+    "check_url": "https://usa.life/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "utip.io",
+    "check_url": "https://utip.io/creator/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "uwu.ai",
+    "check_url": "https://{username}.uwu.ai/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Uwumarket",
+    "check_url": "https://uwumarket.us/collections/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "vapenews",
+    "check_url": "https://vapenews.ru/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "vibilagare",
+    "check_url": "https://www.vibilagare.se/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "VIEWBUG",
+    "check_url": "https://www.viewbug.com/member/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Vine",
+    "check_url": "https://vine.co/api/users/profiles/vanity/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "VIP-blog",
+    "check_url": "http://{username}.vip-blog.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "visnesscard",
+    "check_url": "https://my.visnesscard.com/Home/GetCard/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Vivino",
+    "check_url": "https://www.vivino.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Vkl.world (Mastodon Instance)",
+    "check_url": "https://vkl.world/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Vmst.io (Mastodon Instance)",
+    "check_url": "https://vmst.io/api/v1/accounts/lookup?acct={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Voice123",
+    "check_url": "https://voice123.com/api/providers/search/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Voices.com",
+    "check_url": "https://www.voices.com/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "W3Schools",
+    "check_url": "https://pathfinder-api.kai.w3spaces.com/public-profile-api/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Warmerise",
+    "check_url": "https://warmerise.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "warriorforum",
+    "check_url": "https://www.warriorforum.com/members/{username}.html",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "watchmemore.com",
+    "check_url": "https://api.watchmemore.com/api4/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Watchmyfeed",
+    "check_url": "https://watchmyfeed.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "waytohey",
+    "check_url": "https://waytohey.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Weasyl",
+    "check_url": "https://www.weasyl.com/~{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Weblancer",
+    "check_url": "https://www.weblancer.net/users/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "wego",
+    "check_url": "https://wego.social/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "weheartit",
+    "check_url": "https://weheartit.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Weibo",
+    "check_url": "https://weibo.com/ajax/profile/info?custom={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "WeTransfer",
+    "check_url": "https://{username}.wetransfer.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wikimapia",
+    "check_url": "https://wikimapia.org/user/register/?check=username&value={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wimkin-PublicProfile",
+    "check_url": "https://wimkin.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wireclub",
+    "check_url": "https://www.wireclub.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wishlistr",
+    "check_url": "https://www.wishlistr.com/sign-up/?rs=checkUserName&rsargs[]={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "WordPress.com (Deleted)",
+    "check_url": "https://public-api.wordpress.com/rest/v1.1/sites/{username}.wordpress.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "WordPress.com (Private)",
+    "check_url": "https://public-api.wordpress.com/rest/v1.1/sites/{username}.wordpress.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "WordPress.com (Public)",
+    "check_url": "https://public-api.wordpress.com/rest/v1.1/sites/{username}.wordpress.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "WordPress.org (Forums)",
+    "check_url": "https://login.wordpress.org/wp-json/wporg/v1/username-available/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "WordPress.org (Profiles)",
+    "check_url": "https://login.wordpress.org/wp-json/wporg/v1/username-available/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "X",
+    "check_url": "https://api.x.com/i/users/username_available.json?username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Xakep.ru",
+    "check_url": "https://xakep.ru/author/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Xanga",
+    "check_url": "http://{username}.xanga.com/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Xing",
+    "check_url": "https://www.xing.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "XNXX",
+    "check_url": "https://www.xnxx.com/mobile/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Yahoo! JAPAN Auction",
+    "check_url": "https://auctions.yahoo.co.jp/follow/list/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "yapishu",
+    "check_url": "https://yapishu.net/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Yazawaj",
+    "check_url": "https://www.yazawaj.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "YesWeHack",
+    "check_url": "https://api.yeswehack.com/hunters/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "YouTube Channel",
+    "check_url": "https://www.youtube.com/c/{username}/about",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "YouTube User",
+    "check_url": "https://www.youtube.com/user/{username}/about",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "YouTube User2",
+    "check_url": "https://www.youtube.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Zbiornik",
+    "check_url": "https://mini.zbiornik.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Zenn",
+    "check_url": "https://zenn.dev/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Zepeto",
+    "check_url": "https://gw-napi.zepeto.io/profiles/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "zhihu",
+    "check_url": "https://api.zhihu.com/books/people/{username}/publications?offset=0&limit=5",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Zillow",
+    "check_url": "https://www.zillow.com/profile/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "zmarsa.com",
+    "check_url": "https://zmarsa.com/uzytkownik/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Znanija",
+    "check_url": "https://znanija.com/graphql/ru?operationName=NickAvailability&query=query%20NickAvailability%28%24nick%3AString%21%29%7BnickAvailability%28nick%3A%24nick%29%7BisAvailable%7D%7D&variables=%7B%22nick%22%3A%22{username}%22%7D",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Zomato",
+    "check_url": "https://www.zomato.com/{username}/reviews",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "zoomitir",
+    "check_url": "https://www.zoomit.ir/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Военное обозрение",
+    "check_url": "https://topwar.ru/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Чатовка.net",
+    "check_url": "https://chatovka.net/search?user_nick=+{username}&user_sex_m=on&user_sex_f=on",
+    "method": "StatusCode",
+    "error_indicator": null
   }
 ]
