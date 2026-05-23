@@ -1,0 +1,47 @@
+[
+  {
+    "name": "CheckLeaked_API",
+    "endpoint_url": "https://checkleaked.cc/api/v2/check?token=CCCC461D-A70C-4894-A782-E4206B0D8572&value={value}",
+    "auth_token": null,
+    "query_type": "email",
+    "response_mapping": {
+      "emails_path": "results.emails",
+      "phones_path": "results.phones",
+      "passwords_path": "results.passwords",
+      "nicknames_path": "results.usernames"
+    }
+  },
+  {
+    "name": "LeakCheck_API",
+    "endpoint_url": "https://leakcheck.io/api?key=92434c47cca71212a67bbcb38a627676f2c424ac&check={value}",
+    "auth_token": null,
+    "query_type": "email",
+    "response_mapping": {
+      "emails_path": "result.emails",
+      "phones_path": "result.phones",
+      "passwords_path": "result.passwords",
+      "nicknames_path": "result.sources"
+    }
+  },
+  {
+    "name": "GlazBog_Bot",
+    "endpoint_url": "https://api.telegram.org/botYOUR_BOT_TOKEN/sendMessage?chat_id=YOUR_CHAT_ID&text=/search_phone {value}",
+    "auth_token": null,
+    "query_type": "phone",
+    "response_mapping": {
+      "emails_path": "result.contacts.email",
+      "phones_path": "result.contacts.phones",
+      "nicknames_path": "result.contacts.social_networks"
+    }
+  },
+  {
+    "name": "SnusBase_API",
+    "endpoint_url": "https://snusbase.com/api/v1/search?term={value}",
+    "auth_token": "YOUR_SNUSBASE_KEY",
+    "query_type": "email",
+    "response_mapping": {
+      "emails_path": "results.emails",
+      "passwords_path": "results.passwords"
+    }
+  }
+]

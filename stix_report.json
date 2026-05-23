@@ -1,0 +1,170 @@
+{
+  "objects": {
+    "identities": [
+      {
+        "created": "1779480725",
+        "description": "Root entity Email",
+        "id": "identity--kuranets42@gmail.com",
+        "identity_class": "individual",
+        "modified": "1779480725",
+        "name": "kuranets42@gmail.com",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779480725",
+        "description": "Associated entity Nickname",
+        "id": "identity--registered:firefox.com",
+        "identity_class": "individual",
+        "modified": "1779480725",
+        "name": "registered:firefox.com",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779480725",
+        "description": "Associated entity Nickname",
+        "id": "identity--registered:twitter.com",
+        "identity_class": "individual",
+        "modified": "1779480725",
+        "name": "registered:twitter.com",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779480725",
+        "description": "Associated entity Nickname",
+        "id": "identity--registered:email_used,_[-]_email_not_used,_[x]_rate_limit",
+        "identity_class": "individual",
+        "modified": "1779480725",
+        "name": "registered:email_used,_[-]_email_not_used,_[x]_rate_limit",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779480725",
+        "description": "Associated entity Nickname",
+        "id": "identity--registered:office365.com",
+        "identity_class": "individual",
+        "modified": "1779480725",
+        "name": "registered:office365.com",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779480725",
+        "description": "Associated entity Nickname",
+        "id": "identity--registered:spotify.com",
+        "identity_class": "individual",
+        "modified": "1779480725",
+        "name": "registered:spotify.com",
+        "spec_version": "2.1"
+      }
+    ],
+    "indicators": [
+      {
+        "created": "1779480725",
+        "id": "indicator--0",
+        "labels": [
+          "Nickname"
+        ],
+        "modified": "1779480725",
+        "name": "Indicator for registered:firefox.com",
+        "pattern": "[entity:value = 'registered:firefox.com']",
+        "pattern_type": "stix",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779480725",
+        "id": "indicator--1",
+        "labels": [
+          "Nickname"
+        ],
+        "modified": "1779480725",
+        "name": "Indicator for registered:twitter.com",
+        "pattern": "[entity:value = 'registered:twitter.com']",
+        "pattern_type": "stix",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779480725",
+        "id": "indicator--2",
+        "labels": [
+          "Nickname"
+        ],
+        "modified": "1779480725",
+        "name": "Indicator for registered:email_used,_[-]_email_not_used,_[x]_rate_limit",
+        "pattern": "[entity:value = 'registered:email_used,_[-]_email_not_used,_[x]_rate_limit']",
+        "pattern_type": "stix",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779480725",
+        "id": "indicator--3",
+        "labels": [
+          "Nickname"
+        ],
+        "modified": "1779480725",
+        "name": "Indicator for registered:office365.com",
+        "pattern": "[entity:value = 'registered:office365.com']",
+        "pattern_type": "stix",
+        "spec_version": "2.1"
+      },
+      {
+        "created": "1779480725",
+        "id": "indicator--4",
+        "labels": [
+          "Nickname"
+        ],
+        "modified": "1779480725",
+        "name": "Indicator for registered:spotify.com",
+        "pattern": "[entity:value = 'registered:spotify.com']",
+        "pattern_type": "stix",
+        "spec_version": "2.1"
+      }
+    ],
+    "relationships": [
+      {
+        "created": "1779480725",
+        "id": "relationship--0",
+        "modified": "1779480725",
+        "relationship_type": "related-to",
+        "source_ref": "identity--kuranets42@gmail.com",
+        "spec_version": "2.1",
+        "target_ref": "identity--registered:firefox.com"
+      },
+      {
+        "created": "1779480725",
+        "id": "relationship--1",
+        "modified": "1779480725",
+        "relationship_type": "related-to",
+        "source_ref": "identity--kuranets42@gmail.com",
+        "spec_version": "2.1",
+        "target_ref": "identity--registered:twitter.com"
+      },
+      {
+        "created": "1779480725",
+        "id": "relationship--2",
+        "modified": "1779480725",
+        "relationship_type": "related-to",
+        "source_ref": "identity--kuranets42@gmail.com",
+        "spec_version": "2.1",
+        "target_ref": "identity--registered:email_used,_[-]_email_not_used,_[x]_rate_limit"
+      },
+      {
+        "created": "1779480725",
+        "id": "relationship--3",
+        "modified": "1779480725",
+        "relationship_type": "related-to",
+        "source_ref": "identity--kuranets42@gmail.com",
+        "spec_version": "2.1",
+        "target_ref": "identity--registered:office365.com"
+      },
+      {
+        "created": "1779480725",
+        "id": "relationship--4",
+        "modified": "1779480725",
+        "relationship_type": "related-to",
+        "source_ref": "identity--kuranets42@gmail.com",
+        "spec_version": "2.1",
+        "target_ref": "identity--registered:spotify.com"
+      }
+    ]
+  },
+  "type": "bundle"
+}

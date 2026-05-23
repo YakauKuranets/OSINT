@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>X-GEN OSINT Graph</title>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #1a1a1a; color: white; }
+        #graph { width: 100vw; height: 90vh; }
+        .info-panel { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #444; }
+        button { background: #2B7CE9; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; margin-top: 10px; }
+        button:hover { background: #1A56B8; }
+    </style>
+</head>
+<body>
+<div id="graph"></div>
+<div id="info" class="info-panel" style="display:none;"></div>
+<script>
+    var nodes = new vis.DataSet([{id: 'kuranets42@gmail.com', label: 'kuranets42@gmail.com', group: 'Email'},{id: 'registered:firefox.com', label: 'registered:firefox.com', group: 'Nickname'},{id: 'registered:twitter.com', label: 'registered:twitter.com', group: 'Nickname'},{id: 'registered:email_used,_[-]_email_not_used,_[x]_rate_limit', label: 'registered:email_used,_[-]_email_not_used,_[x]_rate_limit', group: 'Nickname'},{id: 'registered:office365.com', label: 'registered:office365.com', group: 'Nickname'},{id: 'registered:spotify.com', label: 'registered:spotify.com', group: 'Nickname'}]);
+    var edges = new vis.DataSet([{from: 'kuranets42@gmail.com', to: 'registered:firefox.com', label: 'Holehe_API'},{from: 'kuranets42@gmail.com', to: 'registered:office365.com', label: 'Holehe_API'},{from: 'kuranets42@gmail.com', to: 'registered:spotify.com', label: 'Holehe_API'},{from: 'kuranets42@gmail.com', to: 'registered:twitter.com', label: 'Holehe_API'},{from: 'kuranets42@gmail.com', to: 'registered:email_used,_[-]_email_not_used,_[x]_rate_limit', label: 'Holehe_API'}]);
+    var container = document.getElementById('graph');
+    var data = { nodes: nodes, edges: edges };
+    var options = {
+        nodes: { shape: 'dot', size: 20, font: { color: '#fff' } },
+        groups: {
+            Nickname: { color: '#FF9900' }, Email: { color: '#2B7CE9' },
+            Phone: { color: '#41A317' }, FullName: { color: '#E3319D' }
+        }
+    };
+    var network = new vis.Network(container, data, options);
+
+    network.on('click', function(params) {
+        if (params.nodes.length > 0) {
+            var id = params.nodes[0];
+            var infoDiv = document.getElementById('info');
+            infoDiv.style.display = 'block';
+            infoDiv.innerHTML = '<b>Узел:</b> ' + id + '<br><button onclick="expandNode(\'' + id + '\')">🔍 Искать связи</button>';
+        }
+    });
+
+    function expandNode(nodeId) {
+        fetch('/expand', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target: nodeId })
+        }).then(response => {
+            if(response.ok) alert('Запрос на поиск связей для ' + nodeId + ' отправлен!');
+        });
+    }
+</script>
+</body>
+</html>

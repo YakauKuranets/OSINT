@@ -1,0 +1,20 @@
+"kuranets42@gmail.com" "@gmail.com" OR "@yandex.ru"
+"kuranets42@gmail.com" filetype:pdf
+"kuranets42@gmail.com" intitle:resume
+"kuranets42@gmail.com" site:linkedin.com
+intext:"kuranets42@gmail.com" "password" OR "pass"
+registered:email_used,_[-]_email_not_used,_[x]_rate_limit intitle:"forum" OR intitle:"board"
+registered:email_used,_[-]_email_not_used,_[x]_rate_limit site:github.com
+registered:email_used,_[-]_email_not_used,_[x]_rate_limit site:pastebin.com
+registered:firefox.com intitle:"forum" OR intitle:"board"
+registered:firefox.com site:github.com
+registered:firefox.com site:pastebin.com
+registered:office365.com intitle:"forum" OR intitle:"board"
+registered:office365.com site:github.com
+registered:office365.com site:pastebin.com
+registered:spotify.com intitle:"forum" OR intitle:"board"
+registered:spotify.com site:github.com
+registered:spotify.com site:pastebin.com
+registered:twitter.com intitle:"forum" OR intitle:"board"
+registered:twitter.com site:github.com
+registered:twitter.com site:pastebin.com
