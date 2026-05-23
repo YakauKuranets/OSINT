@@ -9,6 +9,7 @@ use crate::ai_core::AiCore;
 use crate::data_broker::DataBroker;
 use crate::connectors::EmailBreachConnector;
 use crate::connectors::PhoneIntelConnector;
+use crate::connectors::TelegramConnector;
 
 pub struct AnalysisEngine {
     pub task_queue: VecDeque<EntityNode>,
@@ -317,37 +318,30 @@ impl AnalysisEngine {
                 println!("  [Telegram] Запрос для {} (ожидание может занять до 30 сек)...", search_value);
                 let tg_info = self.check_telegram(search_value).await;
                 if !tg_info.is_empty() {
+                    let tg_connector = TelegramConnector;
                     let tg_meta = SourceMetadata {
                         source_id: "Telegram_API".to_string(),
                         class: SourceClass::PublicOSINT,
                         import_timestamp: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs(),
                         data_actual_year: 2026,
                     };
-                    for info in &tg_info {
-                        if info.starts_with("tg_phone:") {
-                            let phone_val = info.replace("tg_phone:", "");
-                            println!("    [+] 📱 ТЕЛЕГРАМ РАСКРЫЛ НОМЕР ТЕЛЕФОНА: {}", phone_val);
-                            let node = EntityNode { value: phone_val.clone(), entity_type: EntityType::Phone, first_seen: tg_meta.import_timestamp };
-                            if !self.visited_pool.contains(&Self::normalize_for_search(&phone_val, &EntityType::Phone)) {
-                                self.task_queue.push_back(node.clone());
-                            }
-                            self.final_profile.associated_nodes.insert(phone_val.clone(), node.clone());
-                            self.final_profile.active_links.push(crate::models::EntityLink {
-                                source_node_value: current_node.value.clone(),
-                                target_node_value: phone_val,
-                                weight_modifier: 30,
-                                metadata: tg_meta.clone(),
-                            });
-                        } else {
-                            let node = EntityNode { value: info.clone(), entity_type: EntityType::Nickname, first_seen: tg_meta.import_timestamp };
-                            self.final_profile.associated_nodes.insert(node.value.clone(), node.clone());
-                            self.final_profile.active_links.push(crate::models::EntityLink {
-                                source_node_value: current_node.value.clone(),
-                                target_node_value: node.value,
-                                weight_modifier: 10,
-                                metadata: tg_meta.clone(),
-                            });
+                    let observations = tg_connector.collect_telegram_info(&tg_info, tg_meta.import_timestamp);
+                    for obs in observations {
+                        if obs.entity_type == EntityType::Phone {
+                            println!("    [+] 📱 ТЕЛЕГРАМ РАСКРЫЛ НОМЕР ТЕЛЕФОНА: {}", obs.value);
                         }
+                        let node = obs.to_entity_node();
+                        if (node.entity_type == EntityType::Phone || node.entity_type == EntityType::Email)
+                            && !self.visited_pool.contains(&Self::normalize_for_search(&node.value, &node.entity_type)) {
+                            self.task_queue.push_back(node.clone());
+                        }
+                        self.final_profile.associated_nodes.insert(node.value.clone(), node.clone());
+                        self.final_profile.active_links.push(crate::models::EntityLink {
+                            source_node_value: current_node.value.clone(),
+                            target_node_value: node.value,
+                            weight_modifier: if node.entity_type == EntityType::Phone { 30 } else { 10 },
+                            metadata: tg_meta.clone(),
+                        });
                     }
                 }
             }

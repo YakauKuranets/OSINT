@@ -126,6 +126,52 @@ impl PhoneIntelConnector {
     }
 }
 
+pub struct TelegramConnector;
+
+impl Connector for TelegramConnector {
+    fn id(&self) -> &'static str {
+        "telegram"
+    }
+
+    fn kind(&self) -> &'static str {
+        "messenger"
+    }
+
+    fn supports(&self, entity_type: &EntityType) -> bool {
+        matches!(entity_type, EntityType::Nickname | EntityType::Phone)
+    }
+}
+
+impl TelegramConnector {
+    pub fn collect_telegram_info(&self, info: &[String], timestamp: u64) -> Vec<Observation> {
+        info.iter()
+            .map(|entry| {
+                let entity_type = if entry.starts_with("tg_phone:") {
+                    EntityType::Phone
+                } else {
+                    EntityType::Nickname
+                };
+
+                let value = if let Some(stripped) = entry.strip_prefix("tg_phone:") {
+                    stripped.to_string()
+                } else {
+                    entry.clone()
+                };
+
+                Observation {
+                    value,
+                    entity_type,
+                    source_id: self.id().to_string(),
+                    timestamp,
+                    confidence: 70,
+                    evidence_snippet: entry.clone(),
+                    connector_kind: self.kind().to_string(),
+                }
+            })
+            .collect()
+    }
+}
+
 impl SocialSpiderConnector {
     pub fn collect(
         &self,
