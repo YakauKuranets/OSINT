@@ -27,6 +27,33 @@ pub trait Connector {
     fn supports(&self, entity_type: &EntityType) -> bool;
 }
 
+pub struct ConnectorRegistry {
+    social: SocialSpiderConnector,
+    email: EmailBreachConnector,
+}
+
+impl ConnectorRegistry {
+    pub fn new() -> Self {
+        Self {
+            social: SocialSpiderConnector,
+            email: EmailBreachConnector,
+        }
+    }
+
+    pub fn collect_seed_observations(&self, seeds: &[EntityNode], timestamp: u64) -> Vec<Observation> {
+        let mut observations = Vec::new();
+        for seed in seeds {
+            if self.social.supports(&seed.entity_type) {
+                observations.extend(self.social.collect(&seed.value, timestamp));
+            }
+            if self.email.supports(&seed.entity_type) {
+                observations.extend(self.email.collect(&seed.value, timestamp));
+            }
+        }
+        observations
+    }
+}
+
 pub struct SocialSpiderConnector;
 
 impl Connector for SocialSpiderConnector {

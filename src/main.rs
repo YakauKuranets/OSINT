@@ -24,7 +24,6 @@ use tokio::sync::Mutex;
 use tokio::net::TcpListener;
 use std::io::{self, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::connectors::Connector;
 
 // Состояние приложения: движок под защитой асинхронного Mutex
 struct AppState {
@@ -137,22 +136,11 @@ async fn main() {
     if let Some(v) = selectors.dob.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::DateOfBirth, first_seen: now }); }
     if let Some(v) = selectors.country.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Country, first_seen: now }); }
 
-    let social_connector = connectors::SocialSpiderConnector;
-    let email_connector = connectors::EmailBreachConnector;
+    let registry = connectors::ConnectorRegistry::new();
     let mut connector_seeds = Vec::new();
-    for seed in &seeds {
-        if social_connector.supports(&seed.entity_type) {
-            let observations = social_connector.collect(&seed.value, now);
-            for obs in observations {
-                connector_seeds.push(obs.to_entity_node());
-            }
-        }
-        if email_connector.supports(&seed.entity_type) {
-            let observations = email_connector.collect(&seed.value, now);
-            for obs in observations {
-                connector_seeds.push(obs.to_entity_node());
-            }
-        }
+    let observations = registry.collect_seed_observations(&seeds, now);
+    for obs in observations {
+        connector_seeds.push(obs.to_entity_node());
     }
     seeds.extend(connector_seeds);
 
