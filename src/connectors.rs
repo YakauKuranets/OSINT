@@ -51,6 +51,23 @@ pub struct ConnectorRegistry {
     last_run_by_connector: std::collections::HashMap<&'static str, u64>,
 }
 
+pub struct ThrottlePolicy;
+
+impl ThrottlePolicy {
+    pub fn interval_for_connector(connector_id: &str) -> u64 {
+        let env_key = format!("OSINT_CONNECTOR_INTERVAL_{}", connector_id.to_uppercase());
+        std::env::var(&env_key)
+            .ok()
+            .and_then(|v| v.parse::<u64>().ok())
+            .or_else(|| {
+                std::env::var("OSINT_CONNECTOR_INTERVAL_DEFAULT")
+                    .ok()
+                    .and_then(|v| v.parse::<u64>().ok())
+            })
+            .unwrap_or(1)
+    }
+}
+
 impl ConnectorRegistry {
     pub fn new() -> Self {
         Self {
@@ -70,29 +87,16 @@ impl ConnectorRegistry {
         }
     }
 
-    pub fn interval_for_connector(connector_id: &str) -> u64 {
-        let env_key = format!("OSINT_CONNECTOR_INTERVAL_{}", connector_id.to_uppercase());
-        std::env::var(&env_key)
-            .ok()
-            .and_then(|v| v.parse::<u64>().ok())
-            .or_else(|| {
-                std::env::var("OSINT_CONNECTOR_INTERVAL_DEFAULT")
-                    .ok()
-                    .and_then(|v| v.parse::<u64>().ok())
-            })
-            .unwrap_or(1)
-    }
-
     pub fn collect_seed_observations(&mut self, seeds: &[EntityNode], timestamp: u64) -> Vec<Observation> {
         let mut observations = Vec::new();
         for seed in seeds {
-            let social_interval = Self::interval_for_connector(self.social.id());
+            let social_interval = ThrottlePolicy::interval_for_connector(self.social.id());
             if self.social.supports(&seed.entity_type)
                 && self.allow_run(self.social.id(), timestamp, social_interval)
             {
                 observations.extend(self.social.collect(&seed.value, timestamp));
             }
-            let email_interval = Self::interval_for_connector(self.email.id());
+            let email_interval = ThrottlePolicy::interval_for_connector(self.email.id());
             if self.email.supports(&seed.entity_type)
                 && self.allow_run(self.email.id(), timestamp, email_interval)
             {

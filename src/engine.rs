@@ -87,7 +87,7 @@ impl AnalysisEngine {
     }
 
     fn should_run_connector(&mut self, connector_id: &str, now: u64) -> bool {
-        let interval = crate::connectors::ConnectorRegistry::interval_for_connector(connector_id);
+        let interval = crate::connectors::ThrottlePolicy::interval_for_connector(connector_id);
         match self.connector_last_run.get(connector_id) {
             Some(prev) if now.saturating_sub(*prev) < interval => false,
             _ => {
