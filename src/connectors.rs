@@ -13,11 +13,18 @@ pub struct Observation {
 
 impl Observation {
     pub fn source_tag(&self) -> String {
+        let evidence_mark = self
+            .evidence_snippet
+            .chars()
+            .take(24)
+            .collect::<String>()
+            .replace(' ', "_");
         format!(
-            "{}::{}::c{}",
+            "{}::{}::c{}::{}",
             self.connector_kind,
             self.source_id,
-            self.confidence
+            self.confidence,
+            evidence_mark
         )
     }
 }
