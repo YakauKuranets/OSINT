@@ -10,6 +10,29 @@ pub struct SourceHealth {
 
 const CURRENT_YEAR: u32 = 2026;
 
+fn source_class_modifier(source_class: SourceClass) -> i32 {
+    match source_class {
+        SourceClass::VerifiedOfficial => 15,
+        SourceClass::VerifiedRegistry => 10,
+        SourceClass::AuthorizedExport => 8,
+        SourceClass::PublicOSINT => 0,
+        SourceClass::LocalImport => -2,
+        SourceClass::AIDerived => -10,
+        SourceClass::DirtyPublicData => -15,
+        SourceClass::UnverifiedDump => -15,
+    }
+}
+
+fn source_class_reliability(source_class: SourceClass) -> &'static str {
+    match source_class {
+        SourceClass::VerifiedOfficial | SourceClass::VerifiedRegistry => "high",
+        SourceClass::AuthorizedExport | SourceClass::PublicOSINT => "medium",
+        SourceClass::LocalImport => "local",
+        SourceClass::AIDerived => "ai-derived",
+        SourceClass::DirtyPublicData | SourceClass::UnverifiedDump => "low-dirty",
+    }
+}
+
 pub fn evaluate_profile(profile: &mut IdentityProfile) {
     if profile.associated_nodes.is_empty() {
         profile.calculated_confidence = 0;
@@ -23,17 +46,12 @@ pub fn evaluate_profile(profile: &mut IdentityProfile) {
     for link in &profile.active_links {
         unique_sources.insert(link.metadata.source_id.clone());
     }
-    total_score += (unique_sources.len() as i32) * 20; // увеличили бонус до 20
+    total_score += (unique_sources.len() as i32) * 20;
 
     // 2. Анализ каждой связи
     for link in &profile.active_links {
         total_score += link.weight_modifier as i32;
-
-        match link.metadata.class {
-            SourceClass::VerifiedRegistry => total_score += 10,
-            SourceClass::PublicOSINT => total_score += 0,
-            SourceClass::UnverifiedDump => total_score -= 5, // было -15, стало -5
-        }
+        total_score += source_class_modifier(link.metadata.class);
 
         if link.metadata.data_actual_year > 0 && link.metadata.data_actual_year <= CURRENT_YEAR {
             let data_age = CURRENT_YEAR - link.metadata.data_actual_year;
@@ -61,8 +79,10 @@ pub fn build_resolution_report(profile: &IdentityProfile) -> ResolutionReport {
             weight: link.weight_modifier,
             source_id: link.metadata.source_id.clone(),
             note: format!(
-                "class={:?}, year={}",
-                link.metadata.class, link.metadata.data_actual_year
+                "class={:?}, reliability={}, year={}",
+                link.metadata.class,
+                source_class_reliability(link.metadata.class),
+                link.metadata.data_actual_year
             ),
         });
     }
@@ -93,7 +113,7 @@ pub fn suggest_next_steps(profile: &IdentityProfile) -> Vec<String> {
         match node.entity_type {
             crate::models::EntityType::Email => has_email = true,
             crate::models::EntityType::Phone => has_phone = true,
-            crate::models::EntityType::Nickname => has_nickname = true,
+            crate::models::EntityType::Nickname | crate::models::EntityType::Username => has_nickname = true,
             crate::models::EntityType::FullName => has_full_name = true,
             crate::models::EntityType::Country => has_country = true,
             _ => {}
@@ -102,7 +122,7 @@ pub fn suggest_next_steps(profile: &IdentityProfile) -> Vec<String> {
 
     let mut steps = Vec::new();
     if has_nickname && !has_email {
-        steps.push("Расширить поиск по никнейму в соцсетях, чтобы найти email/контакты".to_string());
+        steps.push("Расширить поиск по никнейму/username в публичных источниках, чтобы найти email/контакты".to_string());
     }
     if has_email && !has_phone {
         steps.push("Проверить email через утечки/регистрации для извлечения связанных телефонов".to_string());
@@ -124,7 +144,7 @@ pub fn source_health_summary(profile: &IdentityProfile) -> Vec<SourceHealth> {
     for link in &profile.active_links {
         let entry = stats.entry(link.metadata.source_id.clone()).or_insert((0, 0));
         entry.0 += 1;
-        entry.1 += link.weight_modifier as i32;
+        entry.1 += link.weight_modifier as i32 + source_class_modifier(link.metadata.class);
     }
 
     let mut items: Vec<SourceHealth> = stats
@@ -135,6 +155,8 @@ pub fn source_health_summary(profile: &IdentityProfile) -> Vec<SourceHealth> {
                 "high"
             } else if links >= 3 && avg_weight >= 10.0 {
                 "medium"
+            } else if avg_weight < 0.0 {
+                "low-dirty"
             } else {
                 "low"
             }
@@ -155,4 +177,21 @@ pub fn source_health_summary(profile: &IdentityProfile) -> Vec<SourceHealth> {
             .then_with(|| b.avg_weight.partial_cmp(&a.avg_weight).unwrap_or(std::cmp::Ordering::Equal))
     });
     items
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dirty_public_data_has_negative_modifier() {
+        assert!(source_class_modifier(SourceClass::DirtyPublicData) < 0);
+        assert_eq!(source_class_reliability(SourceClass::DirtyPublicData), "low-dirty");
+    }
+
+    #[test]
+    fn verified_official_has_high_reliability() {
+        assert!(source_class_modifier(SourceClass::VerifiedOfficial) > 0);
+        assert_eq!(source_class_reliability(SourceClass::VerifiedOfficial), "high");
+    }
 }
