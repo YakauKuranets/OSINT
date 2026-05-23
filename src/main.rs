@@ -437,9 +437,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/expand", post(expand_handler))
-        .route("/", get(|| async {
-            axum::response::Html(include_str!("../report.html"))
-        }))
+        .route("/", get(report_handler))
         .with_state(shared_state);
 
     println!("\n==================================================");
@@ -449,6 +447,13 @@ async fn main() {
 
     let listener = TcpListener::bind("127.0.0.1:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
+}
+
+async fn report_handler() -> impl IntoResponse {
+    let html = std::fs::read_to_string("report.html").unwrap_or_else(|_| {
+        "<html><body><h1>report.html не найден</h1><p>Сначала запусти анализ.</p></body></html>".to_string()
+    });
+    axum::response::Html(html)
 }
 
 #[axum::debug_handler]
