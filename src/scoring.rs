@@ -111,7 +111,7 @@ pub fn suggest_next_steps(profile: &IdentityProfile) -> Vec<String> {
     let mut has_country = false;
 
     for node in profile.associated_nodes.values() {
-        match node.entity_type {
+        match &node.entity_type {
             crate::models::EntityType::Email => has_email = true,
             crate::models::EntityType::Phone => has_phone = true,
             crate::models::EntityType::Nickname | crate::models::EntityType::Username => has_nickname = true,
