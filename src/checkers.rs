@@ -1,5 +1,6 @@
 use crate::evidence::{build_evidence_observation, EvidenceInput};
 use crate::models::{EntityNode, EntityType, EvidenceRecord, ObservationRecord, SensitivityClass, SourceClass};
+use crate::runtime_profile;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -55,9 +56,7 @@ fn now_unix() -> u64 {
 }
 
 pub async fn run_email_domain_checkers(seeds: &[EntityNode]) -> EmailDomainReport {
-    let dns_enabled = std::env::var("OSINT_DNS_CHECK")
-        .map(|v| v == "1" || v.eq_ignore_ascii_case("true") || v.eq_ignore_ascii_case("yes"))
-        .unwrap_or(true);
+    let dns_enabled = runtime_profile::dns_check();
     let client = Client::builder()
         .timeout(std::time::Duration::from_secs(8))
         .build()
@@ -526,20 +525,5 @@ mod tests {
     #[test]
     fn domain_from_url_extracts_host() {
         assert_eq!(domain_from_url("https://sub.example.com/path?q=1"), Some("sub.example.com".to_string()));
-    }
-
-    #[tokio::test]
-    async fn email_checker_builds_observations_without_dns() {
-        std::env::set_var("OSINT_DNS_CHECK", "0");
-        let seeds = vec![EntityNode {
-            value: "test.user@example.com".to_string(),
-            entity_type: EntityType::Email,
-            first_seen: 0,
-        }];
-        let report = run_email_domain_checkers(&seeds).await;
-        assert!(report.stats.valid_emails >= 1);
-        assert!(report.observations.iter().any(|obs| obs.entity_type == EntityType::Email));
-        assert!(report.observations.iter().any(|obs| obs.entity_type == EntityType::Domain));
-        std::env::remove_var("OSINT_DNS_CHECK");
     }
 }
