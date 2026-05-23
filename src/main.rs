@@ -15,6 +15,7 @@ mod case_store;
 use axum::{
     routing::{post, get},
     extract::State,
+    extract::Path,
     Json,
     Router,
     response::IntoResponse,
@@ -260,6 +261,8 @@ async fn main() {
 
     let app = Router::new()
         .route("/expand", post(expand_handler))
+        .route("/cases", get(cases_handler))
+        .route("/cases/:case_id", get(case_by_id_handler))
         .route("/", get(|| async {
             axum::response::Html(include_str!("../report.html"))
         }))
@@ -272,6 +275,25 @@ async fn main() {
 
     let listener = TcpListener::bind("127.0.0.1:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
+}
+
+#[axum::debug_handler]
+async fn cases_handler() -> impl IntoResponse {
+    let items = case_store::recent_cases_struct(50);
+    Json(serde_json::json!({ "cases": items }))
+}
+
+#[axum::debug_handler]
+async fn case_by_id_handler(
+    Path(case_id): Path<String>
+) -> impl IntoResponse {
+    match case_store::read_case_snapshot(&case_id) {
+        Some(raw) => {
+            let parsed = serde_json::from_str::<serde_json::Value>(&raw).unwrap_or(serde_json::json!({ "raw": raw }));
+            Json(serde_json::json!({ "status": "ok", "case": parsed }))
+        }
+        None => Json(serde_json::json!({ "status": "not_found", "case_id": case_id })),
+    }
 }
 
 #[axum::debug_handler]
