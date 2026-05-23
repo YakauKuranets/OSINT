@@ -9,6 +9,7 @@ mod ai_core;
 mod enumerator;
 mod data_broker;
 mod sandbox_runner;
+mod connectors;
 
 use axum::{
     routing::{post, get},
