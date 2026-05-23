@@ -1,6 +1,7 @@
 use crate::discovery::{self, DiscoveryReport};
 use crate::models::{EntityNode, EntityType};
 use crate::public_search::{self, PublicSearchReport};
+use crate::runtime_profile;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -34,15 +35,8 @@ fn now_unix() -> u64 {
 }
 
 pub async fn run_autonomous_osint(seeds: &mut Vec<EntityNode>) -> AutopilotReport {
-    let max_cycles = std::env::var("OSINT_AUTOPILOT_CYCLES")
-        .ok()
-        .and_then(|v| v.parse::<usize>().ok())
-        .unwrap_or(2)
-        .clamp(1, 5);
-    let per_cycle_new_limit = std::env::var("OSINT_AUTOPILOT_NEW_LIMIT")
-        .ok()
-        .and_then(|v| v.parse::<usize>().ok())
-        .unwrap_or(80);
+    let max_cycles = runtime_profile::autopilot_cycles();
+    let per_cycle_new_limit = runtime_profile::autopilot_new_limit();
 
     let initial_seed_count = seeds.len();
     let mut seen = HashSet::new();
