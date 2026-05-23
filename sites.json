@@ -6081,5 +6081,611 @@
     "check_url": "https://chatovka.net/search?user_nick=+{username}&user_sex_m=on&user_sex_f=on",
     "method": "StatusCode",
     "error_indicator": null
+  },
+  {
+    "name": "GitHub (sherlock-2)",
+    "check_url": "https://www.github.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Instagram (sherlock-2)",
+    "check_url": "https://instagram.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Reddit (sherlock-2)",
+    "check_url": "https://www.reddit.com/user/{username}",
+    "method": "StringMatch",
+    "error_indicator": "Sorry, nobody on Reddit goes by that name."
+  },
+  {
+    "name": "Twitter (sherlock-2)",
+    "check_url": "https://x.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "AdmireMe.VIP (whatsmyname-2)",
+    "check_url": "https://admireme.vip/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Airliners (whatsmyname-2)",
+    "check_url": "https://www.airliners.net/user/{username}/profile",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bandcamp (whatsmyname-2)",
+    "check_url": "https://bandcamp.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bitbucket (whatsmyname-2)",
+    "check_url": "https://bitbucket.org/!api/2.0/repositories/{username}?page=1&pagelen=25&sort=-updated_on&q=&fields=-values.owner%2C-values.workspace",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Blogger (whatsmyname-2)",
+    "check_url": "https://www.blogger.com/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BoardGameGeek (whatsmyname-2)",
+    "check_url": "https://api.geekdo.com/api/accounts/validate/username?username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Bookcrossing (whatsmyname-2)",
+    "check_url": "https://www.bookcrossing.com/mybookshelf/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BugCrowd (whatsmyname-2)",
+    "check_url": "https://bugcrowd.com/{username}/profile_widgets",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "BuzzFeed (whatsmyname-2)",
+    "check_url": "https://www.buzzfeed.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Carbonmade (whatsmyname-2)",
+    "check_url": "https://{username}.carbonmade.com/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "championat (whatsmyname-2)",
+    "check_url": "https://www.championat.com/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "chaturbate (whatsmyname-2)",
+    "check_url": "https://chaturbate.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Codeberg (whatsmyname-2)",
+    "check_url": "https://codeberg.org/api/v1/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Codeforces (whatsmyname-2)",
+    "check_url": "https://codeforces.com/api/user.info?handles={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Coderwall (whatsmyname-2)",
+    "check_url": "https://coderwall.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "CodeSandbox (whatsmyname-2)",
+    "check_url": "https://codesandbox.io/api/v1/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Codewars (whatsmyname-2)",
+    "check_url": "https://www.codewars.com/api/v1/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Cracked (whatsmyname-2)",
+    "check_url": "https://www.cracked.com/members/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "crevado (whatsmyname-2)",
+    "check_url": "https://{username}.crevado.com/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "devRant (whatsmyname-2)",
+    "check_url": "https://devrant.com/api/get-user-id?app=3&username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Digitalspy (whatsmyname-2)",
+    "check_url": "https://forums.digitalspy.com/profile/discussions/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Discogs (whatsmyname-2)",
+    "check_url": "https://api.discogs.com/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Disqus (whatsmyname-2)",
+    "check_url": "https://disqus.com/api/3.0/users/details?user=username:{username}&api_key=E8Uh5l5fHZ6gD8U3KycjAIAk46f68Zw7C6eW8WSjZvCLXebZ7p0r1yrYDrLilk2F",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Duolingo (whatsmyname-2)",
+    "check_url": "https://www.duolingo.com/2017-06-30/users?username={username}&_=1628308619574",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Flickr (whatsmyname-2)",
+    "check_url": "https://www.flickr.com/photos/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Flightradar24 (whatsmyname-2)",
+    "check_url": "https://my.flightradar24.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "freeCodeCamp (whatsmyname-2)",
+    "check_url": "https://api.freecodecamp.org/users/get-public-profile?username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Freelancer (whatsmyname-2)",
+    "check_url": "https://www.freelancer.com/api/users/0.1/users?usernames%5B%5D={username}&compact=true",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "freesound (whatsmyname-2)",
+    "check_url": "https://freesound.org/people/{username}/section/stats/?ajax=1",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Gamespot (whatsmyname-2)",
+    "check_url": "https://www.gamespot.com/profile/{username}/summary/activity/?ajax",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GeeksForGeeks (whatsmyname-2)",
+    "check_url": "https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Geocaching (whatsmyname-2)",
+    "check_url": "https://www.geocaching.com/p/?u={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Gitea (whatsmyname-2)",
+    "check_url": "https://gitea.com/api/v1/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "GitLab (whatsmyname-2)",
+    "check_url": "https://gitlab.com/api/v4/users?username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Gravatar (whatsmyname-2)",
+    "check_url": "https://en.gravatar.com/{username}.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "gumroad (whatsmyname-2)",
+    "check_url": "https://{username}.gumroad.com/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "hackerearth (whatsmyname-2)",
+    "check_url": "https://www.hackerearth.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "HackerRank (whatsmyname-2)",
+    "check_url": "https://www.hackerrank.com/rest/contests/master/hackers/{username}/profile",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Houzz (whatsmyname-2)",
+    "check_url": "https://www.houzz.com/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "IFTTT (whatsmyname-2)",
+    "check_url": "https://ifttt.com/p/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Imgur (whatsmyname-2)",
+    "check_url": "https://api.imgur.com/account/v1/accounts/{username}?client_id=546c25a59c58ad7",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Instructables (whatsmyname-2)",
+    "check_url": "https://www.instructables.com/json-api/showAuthorExists?screenName={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Intigriti (whatsmyname-2)",
+    "check_url": "https://app.intigriti.com/api/user/public/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Issuu (whatsmyname-2)",
+    "check_url": "https://issuu.com/call/signup/v2/check-username/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "itch.io (whatsmyname-2)",
+    "check_url": "https://itch.io/profile/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Jeuxvideo (whatsmyname-2)",
+    "check_url": "https://www.jeuxvideo.com/profil/{username}?mode=infos",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Keybase (whatsmyname-2)",
+    "check_url": "https://keybase.io/_/api/1.0/user/lookup.json?usernames={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Kick (whatsmyname-2)",
+    "check_url": "https://kick.com/api/v2/channels/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Kwork (whatsmyname-2)",
+    "check_url": "https://kwork.ru/user_kworks/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Last.fm (whatsmyname-2)",
+    "check_url": "https://www.last.fm/user/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Letterboxd (whatsmyname-2)",
+    "check_url": "https://letterboxd.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Medium (whatsmyname-2)",
+    "check_url": "https://medium.com/@{username}/about",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Minds (whatsmyname-2)",
+    "check_url": "https://www.minds.com/api/v3/register/validate?username={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Mixcloud (whatsmyname-2)",
+    "check_url": "https://api.mixcloud.com/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Monkeytype (whatsmyname-2)",
+    "check_url": "https://api.monkeytype.com/users/{username}/profile",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Newgrounds (whatsmyname-2)",
+    "check_url": "https://{username}.newgrounds.com/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Nightbot (whatsmyname-2)",
+    "check_url": "https://api.nightbot.tv/1/channels/t/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "nnru (whatsmyname-2)",
+    "check_url": "https://{username}.www.nn.ru",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "omg.lol (whatsmyname-2)",
+    "check_url": "https://api.omg.lol/address/{username}/info",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "PCGamer (whatsmyname-2)",
+    "check_url": "https://forums.pcgamer.com/members/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Periscope (whatsmyname-2)",
+    "check_url": "https://www.periscope.tv/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "pixelfed.social (whatsmyname-2)",
+    "check_url": "https://pixelfed.social/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Polarsteps (whatsmyname-2)",
+    "check_url": "https://api.polarsteps.com/users/byusername/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pr0gramm (whatsmyname-2)",
+    "check_url": "https://pr0gramm.com/api/profile/info?name={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Pronouns.Page (whatsmyname-2)",
+    "check_url": "https://pronouns.page/api/profile/get/{username}?version=2",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "pypi (whatsmyname-2)",
+    "check_url": "https://pypi.org/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "redbubble (whatsmyname-2)",
+    "check_url": "https://www.redbubble.com/people/{username}/shop",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Reddit (whatsmyname-2)",
+    "check_url": "https://www.reddit.com/user/{username}/about.json",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Roblox (whatsmyname-2)",
+    "check_url": "https://auth.roblox.com/v1/usernames/validate?username={username}&birthday=2019-12-31T23:00:00.000Z",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "RuneScape (whatsmyname-2)",
+    "check_url": "https://apps.runescape.com/runemetrics/profile/profile?user={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Scratch (whatsmyname-2)",
+    "check_url": "https://api.scratch.mit.edu/accounts/checkusername/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Slideshare (whatsmyname-2)",
+    "check_url": "https://www.slideshare.net/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "smule (whatsmyname-2)",
+    "check_url": "https://www.smule.com/api/profile/?handle={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Snapchat (whatsmyname-2)",
+    "check_url": "https://www.snapchat.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Sourceforge (whatsmyname-2)",
+    "check_url": "https://sourceforge.net/rest/u/{username}/profile",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "sporcle (whatsmyname-2)",
+    "check_url": "https://www.sporcle.com/user/{username}/people/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Substack (whatsmyname-2)",
+    "check_url": "https://substack.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TETR.IO (whatsmyname-2)",
+    "check_url": "https://ch.tetr.io/api/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Threads (whatsmyname-2)",
+    "check_url": "https://www.threads.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TikTok (whatsmyname-2)",
+    "check_url": "https://www.tiktok.com/oembed?url=https://www.tiktok.com/@{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Topcoder (whatsmyname-2)",
+    "check_url": "https://api.topcoder.com/v5/members/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "trakt (whatsmyname-2)",
+    "check_url": "https://trakt.tv/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Trello (whatsmyname-2)",
+    "check_url": "https://trello.com/1/Members/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "TryHackMe (whatsmyname-2)",
+    "check_url": "https://tryhackme.com/api/user/exist/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "tumblr (whatsmyname-2)",
+    "check_url": "https://{username}.tumblr.com",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Twitch (whatsmyname-2)",
+    "check_url": "https://twitchtracker.com/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Untappd (whatsmyname-2)",
+    "check_url": "https://untappd.com/user/{username}/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "VirusTotal (whatsmyname-2)",
+    "check_url": "https://www.virustotal.com/ui/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "vsco (whatsmyname-2)",
+    "check_url": "https://vsco.co/{username}/gallery",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wakatime (whatsmyname-2)",
+    "check_url": "https://wakatime.com/api/v1/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wattpad (whatsmyname-2)",
+    "check_url": "https://www.wattpad.com/api/v3/users/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wowhead (whatsmyname-2)",
+    "check_url": "https://www.wowhead.com/user={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Wykop (whatsmyname-2)",
+    "check_url": "https://wykop.pl/ludzie/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "Xbox Gamertag (whatsmyname-2)",
+    "check_url": "https://www.xboxgamertag.com/search/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "XVideos (whatsmyname-2)",
+    "check_url": "https://www.xvideos.com/profiles/{username}/feed/",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "YouNow (whatsmyname-2)",
+    "check_url": "https://api.younow.com/php/api/broadcast/info/user={username}",
+    "method": "StatusCode",
+    "error_indicator": null
+  },
+  {
+    "name": "youpic (whatsmyname-2)",
+    "check_url": "https://youpic.com/photographer/{username}",
+    "method": "StatusCode",
+    "error_indicator": null
   }
 ]
