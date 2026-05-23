@@ -11,6 +11,7 @@ mod data_broker;
 mod sandbox_runner;
 mod connectors;
 mod evidence;
+mod source_registry;
 
 use axum::{
     routing::{post, get},
