@@ -6687,5 +6687,47 @@
     "check_url": "https://youpic.com/photographer/{username}",
     "method": "StatusCode",
     "error_indicator": null
+  },
+  {
+    "name": "Ahmia Onion Search",
+    "check_url": "https://ahmia.fi/search/?q={username}",
+    "method": "StringMatch",
+    "error_indicator": "No results",
+    "requires_tor": false
+  },
+  {
+    "name": "OnionLand Search",
+    "check_url": "https://onionlandsearchengine.com/search?q={username}",
+    "method": "StatusCode",
+    "error_indicator": null,
+    "requires_tor": false
+  },
+  {
+    "name": "DarkSearch (onion)",
+    "check_url": "http://darksearchenginexxx.onion/search?q={username}",
+    "method": "StringMatch",
+    "error_indicator": "No results",
+    "requires_tor": true
+  },
+  {
+    "name": "Torch (onion)",
+    "check_url": "http://xmh57jrzrnw6insl.onion/?q={username}",
+    "method": "StatusCode",
+    "error_indicator": null,
+    "requires_tor": true
+  },
+  {
+    "name": "Haystak (onion)",
+    "check_url": "http://haystak5njsmn2hqkewecpaxetahtwhsbsa64jom2k22z5afxhnpxfid.onion/?q={username}",
+    "method": "StatusCode",
+    "error_indicator": null,
+    "requires_tor": true
+  },
+  {
+    "name": "The Hidden Wiki (onion)",
+    "check_url": "http://zqktlwi4fecvo6ri.onion/wiki/index.php?search={username}",
+    "method": "StatusCode",
+    "error_indicator": null,
+    "requires_tor": true
   }
 ]
