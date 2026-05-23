@@ -62,10 +62,18 @@ pub fn evaluate_noise(input: &NoiseDecisionInput) -> NoiseDecision {
         if !is_valid_username_like(value) {
             return NoiseDecision::block("invalid username-like value");
         }
+        if is_generic_platform_username(value) && !source_id.contains("user_input") {
+            return NoiseDecision::block("generic platform username is infrastructure noise");
+        }
     }
 
-    if matches!(input.entity_type, EntityType::Url) && !is_safe_public_url(value) {
-        return NoiseDecision::block("unsafe or non-public URL");
+    if matches!(input.entity_type, EntityType::Url) {
+        if !is_safe_public_url(value) {
+            return NoiseDecision::block("unsafe or non-public URL");
+        }
+        if is_infrastructure_or_asset_url(value) || is_infrastructure_or_asset_url(&url_lower) {
+            return NoiseDecision::block("platform infrastructure/static asset URL is not identity evidence");
+        }
     }
 
     if source_id.contains("viber") || note.contains("viber") {
@@ -118,6 +126,38 @@ fn is_valid_username_like(value: &str) -> bool {
     v.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.' || c == '-')
 }
 
+fn is_generic_platform_username(value: &str) -> bool {
+    let v = value.trim().trim_start_matches('@').to_lowercase();
+    matches!(
+        v.as_str(),
+        "telegram" | "github" | "gitlab" | "instagram" | "tiktok" | "youtube" | "reddit" | "vk" | "twitter" | "x" | "facebook" | "meta" | "support" | "help" | "admin" | "login" | "web"
+    )
+}
+
+fn is_infrastructure_or_asset_url(url: &str) -> bool {
+    let lower = url.to_lowercase();
+    if lower.is_empty() {
+        return false;
+    }
+
+    let infra_markers = [
+        "web.telegram.org",
+        "telegram.org/img/",
+        "telegram.org/css/",
+        "telegram.org/js/",
+        "w3.org/2000/svg",
+        "schema.org",
+        "ogp.me",
+    ];
+    if infra_markers.iter().any(|marker| lower.contains(marker)) {
+        return true;
+    }
+
+    let static_suffixes = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".css", ".js", ".map", ".woff", ".woff2", ".ttf"];
+    let clean = lower.split(['?', '#']).next().unwrap_or(&lower);
+    static_suffixes.iter().any(|suffix| clean.ends_with(suffix))
+}
+
 fn is_safe_public_url(url: &str) -> bool {
     let lower = url.to_lowercase();
     (lower.starts_with("https://") || lower.starts_with("http://"))
@@ -160,6 +200,18 @@ mod tests {
     #[test]
     fn blocks_unsafe_urls() {
         let decision = evaluate_noise(&input("test", "note", EntityType::Url, "http://127.0.0.1/admin"));
+        assert_eq!(decision.action, NoiseAction::Block);
+    }
+
+    #[test]
+    fn blocks_static_asset_urls() {
+        let decision = evaluate_noise(&input("telegram_public_profile", "url_in_public_page", EntityType::Url, "https://telegram.org/img/t_logo_2x.png"));
+        assert_eq!(decision.action, NoiseAction::Block);
+    }
+
+    #[test]
+    fn blocks_generic_platform_username() {
+        let decision = evaluate_noise(&input("telegram_public_profile", "username_from_url", EntityType::Username, "telegram"));
         assert_eq!(decision.action, NoiseAction::Block);
     }
 }
