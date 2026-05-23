@@ -46,7 +46,9 @@ fn load_sites_from_json(path: &str) -> Vec<TargetSite> {
 }
 
 pub fn get_default_sites() -> Vec<TargetSite> {
-    let mut sites = vec![
+    let mut sites = priority_cis_social_sites();
+
+    sites.extend(vec![
         // --- Социальные сети и медиа ---
         TargetSite {
             name: "GitHub".to_string(),
@@ -280,7 +282,7 @@ pub fn get_default_sites() -> Vec<TargetSite> {
             error_indicator: Some("Not Found".to_string()),
             success_indicator: Some("profile-pic".to_string()),
         },
-    ];
+    ]);
 
     for site in extra_social_sites() {
         sites.push(site);
@@ -317,6 +319,19 @@ fn extra_social_sites() -> Vec<TargetSite> {
         TargetSite { name: "Strava".to_string(), check_url: "https://www.strava.com/athletes/{}".to_string(), error_indicator: Some("Page Not Found".to_string()), success_indicator: Some("athlete-name".to_string()) },
         TargetSite { name: "Chess.com".to_string(), check_url: "https://www.chess.com/member/{}".to_string(), error_indicator: Some("Page not found".to_string()), success_indicator: Some("profile".to_string()) },
         TargetSite { name: "Lichess".to_string(), check_url: "https://lichess.org/@/{}".to_string(), error_indicator: Some("404".to_string()), success_indicator: Some("user-show".to_string()) },
+    ]
+}
+
+
+fn priority_cis_social_sites() -> Vec<TargetSite> {
+    vec![
+        TargetSite { name: "VK".to_string(), check_url: "https://vk.com/{}".to_string(), error_indicator: Some("Page not found".to_string()), success_indicator: Some("profile_photo".to_string()) },
+        TargetSite { name: "Telegram".to_string(), check_url: "https://t.me/{}".to_string(), error_indicator: None, success_indicator: Some("tgme_page_title".to_string()) },
+        TargetSite { name: "TikTok".to_string(), check_url: "https://www.tiktok.com/@{}".to_string(), error_indicator: Some("Couldn't find this account".to_string()), success_indicator: Some("uniqueId".to_string()) },
+        TargetSite { name: "Instagram".to_string(), check_url: "https://www.instagram.com/{}/".to_string(), error_indicator: Some("Sorry, this page isn't available".to_string()), success_indicator: Some("www.instagram.com/{}/channel/".to_string()) },
+        TargetSite { name: "YouTube".to_string(), check_url: "https://www.youtube.com/@{}".to_string(), error_indicator: Some("This channel does not exist".to_string()), success_indicator: Some("canonical".to_string()) },
+        // У Viber нет стабильных публичных username-страниц для профилей; используем web-поиск как источник зацепок.
+        TargetSite { name: "Viber (web mentions)".to_string(), check_url: "https://www.google.com/search?q=site%3Aviber.com+{}".to_string(), error_indicator: None, success_indicator: None },
     ]
 }
 
@@ -398,6 +413,7 @@ pub async fn hunt_social_profiles(
 
     let username = raw_username.trim_start_matches('@').trim();
 
+    println!("  [Spider] Приоритетный охват: VK, Telegram, TikTok, Instagram, YouTube, Viber mentions");
     println!("  [Spider] Жесткая проверка {} сайтов для {}", sites.len(), username);
     for site in sites {
         let url = site.check_url.replace("{}", username);
