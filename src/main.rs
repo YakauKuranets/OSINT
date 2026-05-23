@@ -16,6 +16,7 @@ mod intake;
 mod sanitize;
 mod hashing;
 mod conflicts;
+mod analysis_report;
 
 use axum::{
     routing::{post, get},
@@ -166,6 +167,26 @@ fn save_conflict_report(report: &conflicts::ConflictReport, path: &str) {
     }
 }
 
+fn save_full_analysis_report(
+    profile: &models::IdentityProfile,
+    resolution_report: models::ResolutionReport,
+    conflict_report: conflicts::ConflictReport,
+    source_health: Vec<scoring::SourceHealth>,
+    next_steps: Vec<String>,
+) {
+    let report = analysis_report::build_analysis_report(
+        profile,
+        resolution_report,
+        conflict_report,
+        source_health,
+        next_steps,
+    );
+
+    if let Err(err) = analysis_report::save_analysis_report(&report, "analysis_report.json") {
+        eprintln!("[!] Не удалось сохранить analysis_report.json: {}", err);
+    }
+}
+
 #[tokio::main]
 async fn main() {
     println!("==================================================");
@@ -260,6 +281,14 @@ async fn main() {
         );
     }
 
+    save_full_analysis_report(
+        &engine_instance.final_profile,
+        resolution_report,
+        conflict_report,
+        source_health,
+        next_steps,
+    );
+
     println!("\n[?] Найдено связей: {} | confidence: {}", engine_instance.final_profile.active_links.len(), engine_instance.final_profile.calculated_confidence);
     print!("[?] Продолжить поиск по найденным корреляциям? (yes/no): ");
     io::stdout().flush().unwrap();
@@ -272,6 +301,17 @@ async fn main() {
         print_conflict_report(&conflict_report);
         save_conflict_report(&conflict_report, "conflict_report.json");
         crate::visualizer::generate_html_report(&engine_instance.final_profile, "report.html");
+
+        let resolution_report = scoring::build_resolution_report(&engine_instance.final_profile);
+        let next_steps = scoring::suggest_next_steps(&engine_instance.final_profile);
+        let source_health = scoring::source_health_summary(&engine_instance.final_profile);
+        save_full_analysis_report(
+            &engine_instance.final_profile,
+            resolution_report,
+            conflict_report,
+            source_health,
+            next_steps,
+        );
     }
 
     // 4. ЗАПУСК WEB-СЕРВЕРА
