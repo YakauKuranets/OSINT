@@ -183,7 +183,7 @@ pub fn build_public_search_tasks(seeds: &[EntityNode]) -> Vec<PublicSearchTask> 
                         kind,
                         seed_type: seed.entity_type.clone(),
                         seed_value: seed.value.clone(),
-                        query: term,
+                        query: term.clone(),
                         source_id: source_id.to_string(),
                     });
                 }
