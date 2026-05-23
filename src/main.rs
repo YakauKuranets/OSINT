@@ -18,6 +18,7 @@ mod hashing;
 mod conflicts;
 mod analysis_report;
 mod telegram_export;
+mod discovery;
 
 use axum::{
     routing::{post, get},
@@ -215,6 +216,26 @@ fn add_telegram_export_seeds(seeds: &mut Vec<models::EntityNode>, path: &str) {
     }
 }
 
+async fn add_public_discovery_seeds(seeds: &mut Vec<models::EntityNode>) {
+    println!("\n[*] Public Discovery Engine MVP");
+    let report = discovery::run_public_discovery_for_seeds(seeds).await;
+    println!(
+        "  tasks={} | fetched={} | findings={} | errors={}",
+        report.stats.tasks_planned,
+        report.stats.tasks_fetched,
+        report.stats.findings_count,
+        report.stats.fetch_errors
+    );
+
+    if let Err(err) = discovery::save_discovery_report(&report, "discovery_report.json") {
+        eprintln!("  [!] Не удалось сохранить discovery_report.json: {}", err);
+    }
+
+    let nodes = discovery::observations_as_entity_nodes(&report, 100);
+    println!("  [+] Добавлено public-discovery селекторов: {}", nodes.len());
+    seeds.extend(nodes);
+}
+
 #[tokio::main]
 async fn main() {
     println!("==================================================");
@@ -235,6 +256,8 @@ async fn main() {
     if let Some(path) = selectors.telegram_export_path.as_deref() {
         add_telegram_export_seeds(&mut seeds, path);
     }
+
+    add_public_discovery_seeds(&mut seeds).await;
 
     let mut registry = connectors::ConnectorRegistry::new();
     let mut connector_seeds = Vec::new();
