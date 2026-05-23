@@ -27,12 +27,21 @@ pub struct MasterSummary {
     pub run_profile: Option<String>,
     pub autopilot_cycles: Option<u64>,
     pub autopilot_new_nodes: Option<u64>,
+    pub autopilot_email_domain_new_nodes: Option<u64>,
+    pub autopilot_discovery_new_nodes: Option<u64>,
+    pub autopilot_public_search_new_nodes: Option<u64>,
     pub discovery_findings: Option<u64>,
+    pub discovery_blocked: Option<u64>,
+    pub discovery_downranked: Option<u64>,
     pub public_search_findings: Option<u64>,
     pub public_search_blocked: Option<u64>,
     pub public_search_downranked: Option<u64>,
     pub email_valid_count: Option<u64>,
     pub email_domain_count: Option<u64>,
+    pub email_username_candidates: Option<u64>,
+    pub email_free_mail_domains: Option<u64>,
+    pub email_corporate_domains: Option<u64>,
+    pub email_suspicious_domains: Option<u64>,
     pub conflict_count: Option<u64>,
     pub active_links: Option<u64>,
     pub associated_nodes: Option<u64>,
@@ -56,6 +65,7 @@ fn now_unix() -> u64 {
 pub fn build_master_report() -> MasterReport {
     let report_paths = vec![
         ("run_profile", "run_profile_report.json"),
+        ("preflight", "preflight_report.json"),
         ("autopilot", "autopilot_report.json"),
         ("discovery", "discovery_report.json"),
         ("public_search", "public_search_report.json"),
@@ -88,12 +98,13 @@ pub fn build_master_report() -> MasterReport {
         reports,
         missing_reports,
         recommended_review_order: vec![
+            "master_report.json".to_string(),
             "confidence_report.json".to_string(),
             "conflict_report.json".to_string(),
-            "public_search_report.json".to_string(),
-            "discovery_report.json".to_string(),
-            "autopilot_report.json".to_string(),
             "email_domain_report.json".to_string(),
+            "discovery_report.json".to_string(),
+            "public_search_report.json".to_string(),
+            "autopilot_report.json".to_string(),
             "analysis_report.json".to_string(),
             "report.html".to_string(),
         ],
@@ -152,8 +163,17 @@ fn build_summary(reports: &BTreeMap<String, ReportSlot>) -> MasterSummary {
         autopilot_new_nodes: get_report(reports, "autopilot")
             .and_then(|v| v.get("total_new_nodes"))
             .and_then(Value::as_u64),
+        autopilot_email_domain_new_nodes: sum_cycle_field(reports, "new_email_domain_nodes"),
+        autopilot_discovery_new_nodes: sum_cycle_field(reports, "new_discovery_nodes"),
+        autopilot_public_search_new_nodes: sum_cycle_field(reports, "new_public_search_nodes"),
         discovery_findings: get_report(reports, "discovery")
             .and_then(|v| v.pointer("/stats/findings_count"))
+            .and_then(Value::as_u64),
+        discovery_blocked: get_report(reports, "discovery")
+            .and_then(|v| v.pointer("/stats/blocked_by_noise_rules"))
+            .and_then(Value::as_u64),
+        discovery_downranked: get_report(reports, "discovery")
+            .and_then(|v| v.pointer("/stats/downranked_by_noise_rules"))
             .and_then(Value::as_u64),
         public_search_findings: get_report(reports, "public_search")
             .and_then(|v| v.pointer("/stats/findings_count"))
@@ -169,6 +189,18 @@ fn build_summary(reports: &BTreeMap<String, ReportSlot>) -> MasterSummary {
             .and_then(Value::as_u64),
         email_domain_count: get_report(reports, "email_domain")
             .and_then(|v| v.pointer("/stats/domains_checked"))
+            .and_then(Value::as_u64),
+        email_username_candidates: get_report(reports, "email_domain")
+            .and_then(|v| v.pointer("/stats/username_candidates"))
+            .and_then(Value::as_u64),
+        email_free_mail_domains: get_report(reports, "email_domain")
+            .and_then(|v| v.pointer("/stats/free_mail_domains"))
+            .and_then(Value::as_u64),
+        email_corporate_domains: get_report(reports, "email_domain")
+            .and_then(|v| v.pointer("/stats/corporate_domains"))
+            .and_then(Value::as_u64),
+        email_suspicious_domains: get_report(reports, "email_domain")
+            .and_then(|v| v.pointer("/stats/suspicious_domains"))
             .and_then(Value::as_u64),
         conflict_count: get_report(reports, "conflicts")
             .and_then(|v| v.get("findings"))
@@ -198,14 +230,15 @@ fn build_verdict(
         .and_then(|v| v.get("high_risk"))
         .and_then(Value::as_bool)
         .unwrap_or(false)
-        || conflict_count > 0;
+        || conflict_count > 0
+        || summary.email_suspicious_domains.unwrap_or(0) > 0;
 
     let mut reasons = Vec::new();
     if !missing_reports.is_empty() {
         reasons.push(format!("{} runtime reports are missing", missing_reports.len()));
     }
     if high_risk {
-        reasons.push("conflict engine reported risk or conflicts".to_string());
+        reasons.push("conflict/risk engine reported review-worthy signals".to_string());
     }
     if let Some(score) = confidence_adjusted {
         if score < 50 {
@@ -216,11 +249,21 @@ fn build_verdict(
     } else {
         reasons.push("confidence report is unavailable".to_string());
     }
-    if summary.public_search_blocked.unwrap_or(0) > 0 || summary.public_search_downranked.unwrap_or(0) > 0 {
-        reasons.push("noise rules blocked or downranked public-search findings".to_string());
+    if summary.public_search_blocked.unwrap_or(0) > 0
+        || summary.public_search_downranked.unwrap_or(0) > 0
+        || summary.discovery_blocked.unwrap_or(0) > 0
+        || summary.discovery_downranked.unwrap_or(0) > 0
+    {
+        reasons.push("noise rules blocked or downranked discovery/search findings".to_string());
     }
     if summary.autopilot_new_nodes.unwrap_or(0) == 0 {
         reasons.push("autopilot did not discover new nodes".to_string());
+    }
+    if summary.autopilot_email_domain_new_nodes.unwrap_or(0) > 0 {
+        reasons.push("autopilot expanded through email/domain-derived nodes".to_string());
+    }
+    if summary.email_suspicious_domains.unwrap_or(0) > 0 {
+        reasons.push("email/domain checker found suspicious domain signals".to_string());
     }
 
     let status = if high_risk {
@@ -247,6 +290,13 @@ fn get_report<'a>(reports: &'a BTreeMap<String, ReportSlot>, key: &str) -> Optio
     reports.get(key)?.data.as_ref()
 }
 
+fn sum_cycle_field(reports: &BTreeMap<String, ReportSlot>, field: &str) -> Option<u64> {
+    let cycles = get_report(reports, "autopilot")?
+        .get("cycles")?
+        .as_array()?;
+    Some(cycles.iter().filter_map(|cycle| cycle.get(field).and_then(Value::as_u64)).sum())
+}
+
 pub fn compact_master_summary(report: &MasterReport) -> Value {
     json!({
         "status": report.verdict.status,
@@ -255,8 +305,15 @@ pub fn compact_master_summary(report: &MasterReport) -> Value {
         "run_profile": report.summary.run_profile,
         "autopilot_cycles": report.summary.autopilot_cycles,
         "autopilot_new_nodes": report.summary.autopilot_new_nodes,
+        "autopilot_email_domain_new_nodes": report.summary.autopilot_email_domain_new_nodes,
+        "autopilot_discovery_new_nodes": report.summary.autopilot_discovery_new_nodes,
+        "autopilot_public_search_new_nodes": report.summary.autopilot_public_search_new_nodes,
         "discovery_findings": report.summary.discovery_findings,
+        "discovery_blocked": report.summary.discovery_blocked,
         "public_search_findings": report.summary.public_search_findings,
+        "public_search_blocked": report.summary.public_search_blocked,
+        "email_username_candidates": report.summary.email_username_candidates,
+        "email_suspicious_domains": report.summary.email_suspicious_domains,
         "conflicts": report.summary.conflict_count,
         "missing_reports": report.missing_reports,
         "review_order": report.recommended_review_order,
