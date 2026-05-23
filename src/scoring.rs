@@ -73,3 +73,40 @@ pub fn build_resolution_report(profile: &IdentityProfile) -> ResolutionReport {
         evidences,
     }
 }
+
+pub fn suggest_next_steps(profile: &IdentityProfile) -> Vec<String> {
+    let mut has_email = false;
+    let mut has_phone = false;
+    let mut has_nickname = false;
+    let mut has_full_name = false;
+    let mut has_country = false;
+
+    for node in profile.associated_nodes.values() {
+        match node.entity_type {
+            crate::models::EntityType::Email => has_email = true,
+            crate::models::EntityType::Phone => has_phone = true,
+            crate::models::EntityType::Nickname => has_nickname = true,
+            crate::models::EntityType::FullName => has_full_name = true,
+            crate::models::EntityType::Country => has_country = true,
+            _ => {}
+        }
+    }
+
+    let mut steps = Vec::new();
+    if has_nickname && !has_email {
+        steps.push("Расширить поиск по никнейму в соцсетях, чтобы найти email/контакты".to_string());
+    }
+    if has_email && !has_phone {
+        steps.push("Проверить email через утечки/регистрации для извлечения связанных телефонов".to_string());
+    }
+    if has_phone && !has_full_name {
+        steps.push("Углубить phone-intel (carrier/geo/профили объявлений) для получения ФИО".to_string());
+    }
+    if has_full_name && !has_country {
+        steps.push("Добавить страну/регион для повышения точности сопоставления личности".to_string());
+    }
+    if steps.is_empty() {
+        steps.push("Запустить второй каскад: у вас уже достаточно связей для глубокой корреляции".to_string());
+    }
+    steps
+}

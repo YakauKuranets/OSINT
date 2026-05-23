@@ -185,6 +185,12 @@ async fn main() {
         let _ = std::fs::write("resolution_report.json", report_json);
     }
 
+    let next_steps = scoring::suggest_next_steps(&engine_instance.final_profile);
+    println!("\n[*] Рекомендованные следующие шаги:");
+    for (idx, step) in next_steps.iter().enumerate() {
+        println!("  {}. {}", idx + 1, step);
+    }
+
     println!("\n[?] Найдено связей: {} | confidence: {}", engine_instance.final_profile.active_links.len(), engine_instance.final_profile.calculated_confidence);
     print!("[?] Продолжить поиск по найденным корреляциям? (yes/no): ");
     io::stdout().flush().unwrap();
