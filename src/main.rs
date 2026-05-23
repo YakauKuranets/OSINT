@@ -21,6 +21,7 @@ mod telegram_export;
 mod discovery;
 mod public_search;
 mod autopilot;
+mod checkers;
 
 use axum::{
     routing::{post, get},
@@ -218,6 +219,29 @@ fn add_telegram_export_seeds(seeds: &mut Vec<models::EntityNode>, path: &str) {
     }
 }
 
+async fn add_email_domain_checker_seeds(seeds: &mut Vec<models::EntityNode>) {
+    println!("\n[*] Email/Domain Checker MVP");
+    let report = checkers::run_email_domain_checkers(seeds).await;
+    println!(
+        "  emails={} valid={} invalid={} domains={} username_candidates={} dns_errors={} findings={}",
+        report.stats.emails_checked,
+        report.stats.valid_emails,
+        report.stats.invalid_emails,
+        report.stats.domains_checked,
+        report.stats.username_candidates,
+        report.stats.dns_errors,
+        report.stats.findings_count
+    );
+
+    if let Err(err) = checkers::save_email_domain_report(&report, "email_domain_report.json") {
+        eprintln!("  [!] Не удалось сохранить email_domain_report.json: {}", err);
+    }
+
+    let nodes = checkers::observations_as_entity_nodes(&report, 100);
+    println!("  [+] Добавлено email/domain селекторов: {}", nodes.len());
+    seeds.extend(nodes);
+}
+
 async fn run_autopilot_seeds(seeds: &mut Vec<models::EntityNode>) {
     println!("\n[*] Autonomous OSINT Autopilot");
     let report = autopilot::run_autonomous_osint(seeds).await;
@@ -271,6 +295,7 @@ async fn main() {
         add_telegram_export_seeds(&mut seeds, path);
     }
 
+    add_email_domain_checker_seeds(&mut seeds).await;
     run_autopilot_seeds(&mut seeds).await;
 
     let mut registry = connectors::ConnectorRegistry::new();
