@@ -1,3 +1,4 @@
+use crate::checkers::{self, EmailDomainReport};
 use crate::discovery::{self, DiscoveryReport};
 use crate::models::{EntityNode, EntityType};
 use crate::public_search::{self, PublicSearchReport};
@@ -10,9 +11,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub struct AutopilotCycleReport {
     pub cycle: usize,
     pub input_seed_count: usize,
+    pub new_email_domain_nodes: usize,
     pub new_discovery_nodes: usize,
     pub new_public_search_nodes: usize,
     pub total_seed_count_after_cycle: usize,
+    pub email_domain_report: EmailDomainReport,
     pub discovery_report: DiscoveryReport,
     pub public_search_report: PublicSearchReport,
 }
@@ -47,9 +50,14 @@ pub async fn run_autonomous_osint(seeds: &mut Vec<EntityNode>) -> AutopilotRepor
 
     for cycle_idx in 1..=max_cycles {
         let input_seed_count = seeds.len();
-        let snapshot = seeds.clone();
 
-        let discovery_report = discovery::run_public_discovery_for_seeds(&snapshot).await;
+        let checker_snapshot = seeds.clone();
+        let email_domain_report = checkers::run_email_domain_checkers(&checker_snapshot).await;
+        let checker_nodes = checkers::observations_as_entity_nodes(&email_domain_report, per_cycle_new_limit);
+        let new_email_domain_nodes = append_unique_nodes(seeds, checker_nodes, &mut seen, per_cycle_new_limit);
+
+        let discovery_snapshot = seeds.clone();
+        let discovery_report = discovery::run_public_discovery_for_seeds(&discovery_snapshot).await;
         let discovery_nodes = discovery::observations_as_entity_nodes(&discovery_report, per_cycle_new_limit);
         let new_discovery_nodes = append_unique_nodes(seeds, discovery_nodes, &mut seen, per_cycle_new_limit);
 
@@ -58,15 +66,17 @@ pub async fn run_autonomous_osint(seeds: &mut Vec<EntityNode>) -> AutopilotRepor
         let public_search_nodes = public_search::observations_as_entity_nodes(&public_search_report, per_cycle_new_limit);
         let new_public_search_nodes = append_unique_nodes(seeds, public_search_nodes, &mut seen, per_cycle_new_limit);
 
-        let cycle_new = new_discovery_nodes + new_public_search_nodes;
+        let cycle_new = new_email_domain_nodes + new_discovery_nodes + new_public_search_nodes;
         total_new_nodes += cycle_new;
 
         cycles.push(AutopilotCycleReport {
             cycle: cycle_idx,
             input_seed_count,
+            new_email_domain_nodes,
             new_discovery_nodes,
             new_public_search_nodes,
             total_seed_count_after_cycle: seeds.len(),
+            email_domain_report,
             discovery_report,
             public_search_report,
         });
