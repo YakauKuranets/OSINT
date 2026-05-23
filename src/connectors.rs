@@ -93,6 +93,39 @@ impl EmailBreachConnector {
     }
 }
 
+pub struct PhoneIntelConnector;
+
+impl Connector for PhoneIntelConnector {
+    fn id(&self) -> &'static str {
+        "phone_intel"
+    }
+
+    fn kind(&self) -> &'static str {
+        "phone"
+    }
+
+    fn supports(&self, entity_type: &EntityType) -> bool {
+        matches!(entity_type, EntityType::Phone)
+    }
+}
+
+impl PhoneIntelConnector {
+    pub fn collect_phone_traits(&self, traits: &[String], timestamp: u64) -> Vec<Observation> {
+        traits
+            .iter()
+            .map(|t| Observation {
+                value: t.clone(),
+                entity_type: EntityType::Nickname,
+                source_id: self.id().to_string(),
+                timestamp,
+                confidence: 65,
+                evidence_snippet: format!("phone_trait={}", t),
+                connector_kind: self.kind().to_string(),
+            })
+            .collect()
+    }
+}
+
 impl SocialSpiderConnector {
     pub fn collect(
         &self,

@@ -8,6 +8,7 @@ use serde_json::Value;
 use crate::ai_core::AiCore;
 use crate::data_broker::DataBroker;
 use crate::connectors::EmailBreachConnector;
+use crate::connectors::PhoneIntelConnector;
 
 pub struct AnalysisEngine {
     pub task_queue: VecDeque<EntityNode>,
@@ -398,14 +399,16 @@ impl AnalysisEngine {
             if current_node.entity_type == EntityType::Phone {
                 let phone_info = self.check_phone(&current_node.value).await;
                 if !phone_info.is_empty() {
+                    let phone_connector = PhoneIntelConnector;
                     let phone_meta = SourceMetadata {
                         source_id: "NumVerify_API".to_string(),
                         class: SourceClass::VerifiedRegistry,
                         import_timestamp: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs(),
                         data_actual_year: 2026,
                     };
-                    for info in &phone_info {
-                        let node = EntityNode { value: info.clone(), entity_type: EntityType::Nickname, first_seen: phone_meta.import_timestamp };
+                    let observations = phone_connector.collect_phone_traits(&phone_info, phone_meta.import_timestamp);
+                    for obs in observations {
+                        let node = obs.to_entity_node();
                         self.final_profile.associated_nodes.insert(node.value.clone(), node.clone());
                         self.final_profile.active_links.push(crate::models::EntityLink {
                             source_node_value: current_node.value.clone(),
