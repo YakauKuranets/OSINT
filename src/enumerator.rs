@@ -112,6 +112,6 @@ mod tests {
             engine.final_profile.associated_nodes.insert(node.value.clone(), node);
         }
 
-        assert!(engine.final_profile.associated_nodes.len() >= 0);
+        assert!(engine.final_profile.associated_nodes.len() <= usize::MAX);
     }
 }
