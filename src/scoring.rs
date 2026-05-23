@@ -1,4 +1,4 @@
-use crate::models::{IdentityProfile, SourceClass};
+use crate::models::{IdentityProfile, ResolutionEvidence, ResolutionReport, SourceClass};
 
 const CURRENT_YEAR: u32 = 2026;
 
@@ -38,4 +38,38 @@ pub fn evaluate_profile(profile: &mut IdentityProfile) {
     }
 
     profile.calculated_confidence = total_score.clamp(0, 100) as u8;
+}
+
+pub fn build_resolution_report(profile: &IdentityProfile) -> ResolutionReport {
+    let mut matched_selectors = std::collections::HashSet::new();
+    let mut evidences = Vec::new();
+
+    for link in &profile.active_links {
+        matched_selectors.insert(link.source_node_value.clone());
+        matched_selectors.insert(link.target_node_value.clone());
+
+        evidences.push(ResolutionEvidence {
+            signal: format!("{:?}->{:?}", link.source_node_value, link.target_node_value),
+            weight: link.weight_modifier,
+            source_id: link.metadata.source_id.clone(),
+            note: format!(
+                "class={:?}, year={}",
+                link.metadata.class, link.metadata.data_actual_year
+            ),
+        });
+    }
+
+    let level = match profile.calculated_confidence {
+        0..=34 => "low",
+        35..=69 => "medium",
+        _ => "high",
+    }
+    .to_string();
+
+    ResolutionReport {
+        score: profile.calculated_confidence,
+        level,
+        matched_selectors: matched_selectors.into_iter().collect(),
+        evidences,
+    }
 }

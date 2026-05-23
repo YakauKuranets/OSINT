@@ -122,6 +122,7 @@ async fn main() {
 
     // 2. Первичный прогон
     engine_instance.resolve_cascade().await;
+    scoring::evaluate_profile(&mut engine_instance.final_profile);
 
     // 3. ВОЗВРАЩАЕМ ИИ-АНАЛИТИКА MISTRAL
     println!("\n[*] Запуск ИИ-аналитика (Mistral:7b) для составления сводки...");
@@ -148,6 +149,10 @@ async fn main() {
     }
     let _ = crate::dork_generator::generate_dorks(&engine_instance.final_profile, "dorks.txt");
     crate::visualizer::generate_html_report(&engine_instance.final_profile, "report.html");
+    let resolution_report = scoring::build_resolution_report(&engine_instance.final_profile);
+    if let Ok(report_json) = serde_json::to_string_pretty(&resolution_report) {
+        let _ = std::fs::write("resolution_report.json", report_json);
+    }
 
     // 4. ЗАПУСК WEB-СЕРВЕРА
     let shared_state = Arc::new(AppState {
