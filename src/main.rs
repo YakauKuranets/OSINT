@@ -10,6 +10,7 @@ mod enumerator;
 mod data_broker;
 mod sandbox_runner;
 mod connectors;
+mod case_store;
 
 use axum::{
     routing::{post, get},
@@ -192,6 +193,10 @@ async fn main() {
     let resolution_report = scoring::build_resolution_report(&engine_instance.final_profile);
     if let Ok(report_json) = serde_json::to_string_pretty(&resolution_report) {
         let _ = std::fs::write("resolution_report.json", report_json);
+    }
+
+    if let Some(case_id) = case_store::persist_case_snapshot(&engine_instance.final_profile) {
+        println!("[*] Case snapshot сохранен: {}", case_id);
     }
 
     let next_steps = scoring::suggest_next_steps(&engine_instance.final_profile);
