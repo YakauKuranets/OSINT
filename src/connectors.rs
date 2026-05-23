@@ -48,6 +48,7 @@ pub trait Connector {
 pub struct ConnectorRegistry {
     social: SocialSpiderConnector,
     email: EmailBreachConnector,
+    last_run_by_connector: std::collections::HashMap<&'static str, u64>,
 }
 
 impl ConnectorRegistry {
@@ -55,16 +56,27 @@ impl ConnectorRegistry {
         Self {
             social: SocialSpiderConnector,
             email: EmailBreachConnector,
+            last_run_by_connector: std::collections::HashMap::new(),
         }
     }
 
-    pub fn collect_seed_observations(&self, seeds: &[EntityNode], timestamp: u64) -> Vec<Observation> {
+    fn allow_run(&mut self, connector_id: &'static str, timestamp: u64, min_interval_secs: u64) -> bool {
+        match self.last_run_by_connector.get(connector_id) {
+            Some(last_ts) if timestamp.saturating_sub(*last_ts) < min_interval_secs => false,
+            _ => {
+                self.last_run_by_connector.insert(connector_id, timestamp);
+                true
+            }
+        }
+    }
+
+    pub fn collect_seed_observations(&mut self, seeds: &[EntityNode], timestamp: u64) -> Vec<Observation> {
         let mut observations = Vec::new();
         for seed in seeds {
-            if self.social.supports(&seed.entity_type) {
+            if self.social.supports(&seed.entity_type) && self.allow_run(self.social.id(), timestamp, 1) {
                 observations.extend(self.social.collect(&seed.value, timestamp));
             }
-            if self.email.supports(&seed.entity_type) {
+            if self.email.supports(&seed.entity_type) && self.allow_run(self.email.id(), timestamp, 1) {
                 observations.extend(self.email.collect(&seed.value, timestamp));
             }
         }

@@ -136,7 +136,7 @@ async fn main() {
     if let Some(v) = selectors.dob.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::DateOfBirth, first_seen: now }); }
     if let Some(v) = selectors.country.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Country, first_seen: now }); }
 
-    let registry = connectors::ConnectorRegistry::new();
+    let mut registry = connectors::ConnectorRegistry::new();
     let mut connector_seeds = Vec::new();
     let observations = registry.collect_seed_observations(&seeds, now);
     for obs in observations {
