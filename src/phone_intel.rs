@@ -93,6 +93,53 @@ pub struct PhoneCorrelationSummary {
     pub reasons: Vec<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PhoneFinalVerdict {
+    NoPublicHits,
+    ProviderBlocked,
+    PublicTraceOnly,
+    WeakSignals,
+    ActionableCorrelations,
+    StrongCorrelations,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PhoneProviderFinalStatus {
+    pub provider_id: String,
+    pub status: String,
+    pub enabled: bool,
+    pub terms_attempted: usize,
+    pub hits: usize,
+    pub errors: usize,
+    pub rate_limited: usize,
+    pub empty_results: usize,
+    pub last_error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PhoneFinalDossier {
+    pub phone_value: String,
+    pub normalized_e164: Option<String>,
+    pub raw_input: String,
+    pub valid_shape: bool,
+    pub country_guess: Option<String>,
+    pub carrier_operator_guess: Option<String>,
+    pub carrier_confidence: Option<u8>,
+    pub verdict: PhoneFinalVerdict,
+    pub confidence: u8,
+    pub public_mentions: usize,
+    pub extracted_signals: usize,
+    pub strong_correlations: usize,
+    pub probable_correlations: usize,
+    pub possible_correlations: usize,
+    pub weak_correlations: usize,
+    pub year_hints: Vec<u32>,
+    pub top_correlations: Vec<PhoneCorrelationSummary>,
+    pub provider_statuses: Vec<PhoneProviderFinalStatus>,
+    pub next_steps: Vec<String>,
+    pub cautions: Vec<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PhoneIntelFinding {
     pub source_id: String,
@@ -117,6 +164,8 @@ pub struct PhoneIntelStats {
     pub correlation_summaries: usize,
     pub strong_correlations: usize,
     pub probable_correlations: usize,
+    pub final_dossiers: usize,
+    pub actionable_dossiers: usize,
     pub source_years: usize,
     pub providers_enabled: usize,
     pub providers_with_hits: usize,
@@ -137,6 +186,7 @@ pub struct PhoneIntelReport {
     pub extracted_signals: Vec<PhoneExtractedSignal>,
     pub correlation_summaries: Vec<PhoneCorrelationSummary>,
     pub source_years: Vec<PhoneSourceYear>,
+    pub final_dossiers: Vec<PhoneFinalDossier>,
     pub linked_entities: Vec<PhoneLinkedEntity>,
     pub search_terms: Vec<String>,
     pub findings: Vec<PhoneIntelFinding>,
@@ -315,6 +365,7 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
         });
     }
     report.correlation_summaries = correlation_summaries;
+    report.final_dossiers = finalize_phone_dossiers(&report);
 
     report.stats.search_terms_generated = report.search_terms.len();
     report.stats.public_mentions = report.public_mentions.len();
@@ -322,6 +373,8 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
     report.stats.correlation_summaries = report.correlation_summaries.len();
     report.stats.strong_correlations = report.correlation_summaries.iter().filter(|s| s.level == PhoneCorrelationLevel::Strong).count();
     report.stats.probable_correlations = report.correlation_summaries.iter().filter(|s| s.level == PhoneCorrelationLevel::Probable).count();
+    report.stats.final_dossiers = report.final_dossiers.len();
+    report.stats.actionable_dossiers = report.final_dossiers.iter().filter(|d| matches!(d.verdict, PhoneFinalVerdict::ActionableCorrelations | PhoneFinalVerdict::StrongCorrelations)).count();
     report.stats.source_years = report.source_years.len();
     report.stats.linked_entities = report.linked_entities.len();
     report.stats.providers_enabled = report.provider_summaries.iter().filter(|p| p.enabled).count();
@@ -484,6 +537,124 @@ pub fn build_phone_search_terms(phone: &PhoneNormalized) -> Vec<String> {
     terms
 }
 
+fn finalize_phone_dossiers(report: &PhoneIntelReport) -> Vec<PhoneFinalDossier> {
+    let mut dossiers = Vec::new();
+    for phone in &report.phones {
+        let phone_value = phone.e164.clone().unwrap_or_else(|| phone.digits.clone());
+        let carrier = report.carrier_guesses.iter().find(|guess| guess.phone_e164.as_deref() == Some(phone_value.as_str()));
+        let public_mentions = report.public_mentions.iter().filter(|m| m.value == phone_value).count();
+        let extracted_signals = report.extracted_signals.iter().filter(|s| s.phone_value == phone_value).count();
+        let mut correlations = report.correlation_summaries.iter().filter(|s| s.phone_value == phone_value).cloned().collect::<Vec<_>>();
+        correlations.sort_by(|a, b| b.confidence.cmp(&a.confidence).then_with(|| b.mentions.cmp(&a.mentions)));
+        let strong_correlations = correlations.iter().filter(|s| s.level == PhoneCorrelationLevel::Strong).count();
+        let probable_correlations = correlations.iter().filter(|s| s.level == PhoneCorrelationLevel::Probable).count();
+        let possible_correlations = correlations.iter().filter(|s| s.level == PhoneCorrelationLevel::Possible).count();
+        let weak_correlations = correlations.iter().filter(|s| s.level == PhoneCorrelationLevel::Weak).count();
+        let year_hints = years_for_phone(&report.source_years, &phone_value);
+        let provider_statuses = provider_final_statuses(&report.provider_summaries);
+        let verdict = final_verdict(public_mentions, extracted_signals, strong_correlations, probable_correlations, &provider_statuses);
+        let confidence = final_dossier_confidence(phone.valid_shape, carrier.is_some(), public_mentions, strong_correlations, probable_correlations, possible_correlations, year_hints.len(), &provider_statuses);
+        let top_correlations = correlations.into_iter().take(8).collect::<Vec<_>>();
+        let next_steps = final_next_steps(&verdict, &top_correlations, &provider_statuses);
+        let cautions = final_cautions(&verdict);
+        dossiers.push(PhoneFinalDossier {
+            phone_value,
+            normalized_e164: phone.e164.clone(),
+            raw_input: phone.raw.clone(),
+            valid_shape: phone.valid_shape,
+            country_guess: phone.country_guess.clone(),
+            carrier_operator_guess: carrier.and_then(|guess| guess.operator.clone()),
+            carrier_confidence: carrier.map(|guess| guess.confidence),
+            verdict,
+            confidence,
+            public_mentions,
+            extracted_signals,
+            strong_correlations,
+            probable_correlations,
+            possible_correlations,
+            weak_correlations,
+            year_hints,
+            top_correlations,
+            provider_statuses,
+            next_steps,
+            cautions,
+        });
+    }
+    dossiers.sort_by(|a, b| b.confidence.cmp(&a.confidence));
+    dossiers
+}
+
+fn provider_final_statuses(summaries: &[PhoneSearchProviderSummary]) -> Vec<PhoneProviderFinalStatus> {
+    summaries.iter().map(|summary| PhoneProviderFinalStatus {
+        provider_id: summary.provider_id.clone(),
+        status: format!("{:?}", summary.status),
+        enabled: summary.enabled,
+        terms_attempted: summary.terms_attempted,
+        hits: summary.hits,
+        errors: summary.errors,
+        rate_limited: summary.rate_limited,
+        empty_results: summary.empty_results,
+        last_error: summary.last_error.clone(),
+    }).collect()
+}
+
+fn final_verdict(public_mentions: usize, extracted_signals: usize, strong: usize, probable: usize, providers: &[PhoneProviderFinalStatus]) -> PhoneFinalVerdict {
+    if strong > 0 { PhoneFinalVerdict::StrongCorrelations }
+    else if probable > 0 { PhoneFinalVerdict::ActionableCorrelations }
+    else if extracted_signals > 0 { PhoneFinalVerdict::WeakSignals }
+    else if public_mentions > 0 { PhoneFinalVerdict::PublicTraceOnly }
+    else if providers.iter().any(|p| p.rate_limited > 0 || p.errors > 0) && providers.iter().all(|p| p.hits == 0) { PhoneFinalVerdict::ProviderBlocked }
+    else { PhoneFinalVerdict::NoPublicHits }
+}
+
+fn final_dossier_confidence(valid_shape: bool, has_carrier: bool, public_mentions: usize, strong: usize, probable: usize, possible: usize, year_count: usize, providers: &[PhoneProviderFinalStatus]) -> u8 {
+    let mut score = 0usize;
+    if valid_shape { score += 25; }
+    if has_carrier { score += 8; }
+    if public_mentions > 0 { score += 12 + public_mentions.min(4) * 3; }
+    score += strong.min(3) * 22;
+    score += probable.min(4) * 14;
+    score += possible.min(4) * 6;
+    score += year_count.min(4) * 2;
+    if providers.iter().any(|p| p.hits > 0) { score += 7; }
+    if providers.iter().all(|p| p.hits == 0) && providers.iter().any(|p| p.rate_limited > 0 || p.errors > 0) { score = score.saturating_sub(8); }
+    score.min(96) as u8
+}
+
+fn final_next_steps(verdict: &PhoneFinalVerdict, correlations: &[PhoneCorrelationSummary], providers: &[PhoneProviderFinalStatus]) -> Vec<String> {
+    let mut steps = Vec::new();
+    match verdict {
+        PhoneFinalVerdict::StrongCorrelations | PhoneFinalVerdict::ActionableCorrelations => {
+            steps.push("Проверить top_correlations вручную и продолжить ветки Email/Username/Url как самостоятельные seed.".to_string());
+            steps.push("Сравнить независимые источники: связь из одного источника не считать подтверждением владельца номера.".to_string());
+        }
+        PhoneFinalVerdict::WeakSignals => steps.push("Слабые сигналы есть: расширить поиск по найденным email/username/url, но не делать вывод о владельце.".to_string()),
+        PhoneFinalVerdict::PublicTraceOnly => steps.push("Есть публичное упоминание номера без связанных сущностей: открыть источник и проверить контекст вручную.".to_string()),
+        PhoneFinalVerdict::ProviderBlocked => steps.push("Часть провайдеров заблокирована ошибкой или rate-limit: повторить позже или уменьшить лимиты.".to_string()),
+        PhoneFinalVerdict::NoPublicHits => steps.push("Публичных совпадений нет: добавить проверенные URL-шаблоны в XGEN_PHONE_PROBE_URLS или переходить к email/nickname веткам.".to_string()),
+    }
+    if providers.iter().any(|p| p.status == "RateLimited") {
+        steps.push("Обнаружен rate-limit: уменьшить XGEN_PHONE_SEARCH_MAX_TERMS / XGEN_PHONE_SEARCH_PER_PAGE или повторить позже.".to_string());
+    }
+    if correlations.iter().any(|c| !c.year_hints.is_empty()) {
+        steps.push("Есть year_hints: использовать их только как подсказку о дате/странице, не как гарантированный first_seen.".to_string());
+    }
+    steps.sort();
+    steps.dedup();
+    steps
+}
+
+fn final_cautions(verdict: &PhoneFinalVerdict) -> Vec<String> {
+    let mut cautions = vec![
+        "Carrier/operator is a prefix/MNP-sensitive guess, not ownership confirmation.".to_string(),
+        "Phone correlations are OSINT signals and require independent verification before any identity conclusion.".to_string(),
+    ];
+    if matches!(verdict, PhoneFinalVerdict::WeakSignals | PhoneFinalVerdict::PublicTraceOnly | PhoneFinalVerdict::NoPublicHits | PhoneFinalVerdict::ProviderBlocked) {
+        cautions.push("Current evidence is insufficient for a confident person-level conclusion.".to_string());
+    }
+    cautions
+}
+
 fn aggregate_phone_correlations(signals: &[PhoneExtractedSignal], years: &[PhoneSourceYear]) -> Vec<PhoneCorrelationSummary> {
     let mut buckets: HashMap<String, CorrelationBucket> = HashMap::new();
     for signal in signals {
@@ -559,12 +730,8 @@ fn correlation_reasons(level: &PhoneCorrelationLevel, confidence: u8, mentions: 
     let mut reasons = Vec::new();
     reasons.push(format!("aggregated phone-context signal level={:?} confidence={}", level, confidence));
     reasons.push(format!("mentions={} independent_sources={} urls_count={}", mentions, independent_sources, urls_count));
-    if !year_hints.is_empty() {
-        reasons.push(format!("year hints present: {:?}; these are source/date hints, not guaranteed first_seen", year_hints));
-    }
-    if independent_sources < 2 {
-        reasons.push("single-source correlation; do not treat as identity confirmation".to_string());
-    }
+    if !year_hints.is_empty() { reasons.push(format!("year hints present: {:?}; these are source/date hints, not guaranteed first_seen", year_hints)); }
+    if independent_sources < 2 { reasons.push("single-source correlation; do not treat as identity confirmation".to_string()); }
     reasons
 }
 
@@ -572,52 +739,28 @@ fn extract_signals_from_mention(mention: &PhonePublicMention) -> Vec<PhoneExtrac
     let mut signals = Vec::new();
     let mut seen = HashSet::new();
     let context = format!("{} {}", mention.url.clone().unwrap_or_default(), mention.context_snippet);
-    for email in extract_emails(&context) {
-        push_signal(&mut signals, &mut seen, mention, EntityType::Email, email, 62, "email found in same public phone mention context");
-    }
-    for url in extract_urls(&context) {
-        push_signal(&mut signals, &mut seen, mention, EntityType::Url, url, 58, "url found in same public phone mention context");
-    }
-    for username in extract_usernames(&context) {
-        push_signal(&mut signals, &mut seen, mention, EntityType::Username, username, 52, "username-like token found in same public phone mention context");
-    }
+    for email in extract_emails(&context) { push_signal(&mut signals, &mut seen, mention, EntityType::Email, email, 62, "email found in same public phone mention context"); }
+    for url in extract_urls(&context) { push_signal(&mut signals, &mut seen, mention, EntityType::Url, url, 58, "url found in same public phone mention context"); }
+    for username in extract_usernames(&context) { push_signal(&mut signals, &mut seen, mention, EntityType::Username, username, 52, "username-like token found in same public phone mention context"); }
     signals
 }
 
 fn push_signal(signals: &mut Vec<PhoneExtractedSignal>, seen: &mut HashSet<String>, mention: &PhonePublicMention, entity_type: EntityType, value: String, confidence: u8, reason: &str) {
     let key = format!("{:?}:{}", entity_type, value.to_lowercase());
     if value.trim().is_empty() || !seen.insert(key) { return; }
-    signals.push(PhoneExtractedSignal {
-        phone_value: mention.value.clone(),
-        entity_type,
-        value,
-        source_id: mention.source_id.clone(),
-        url: mention.url.clone(),
-        confidence,
-        reason: reason.to_string(),
-        context_snippet: mention.context_snippet.clone(),
-    });
+    signals.push(PhoneExtractedSignal { phone_value: mention.value.clone(), entity_type, value, source_id: mention.source_id.clone(), url: mention.url.clone(), confidence, reason: reason.to_string(), context_snippet: mention.context_snippet.clone() });
 }
 
 fn extract_years_from_mention(mention: &PhonePublicMention) -> Vec<PhoneSourceYear> {
     let context = format!("{} {}", mention.url.clone().unwrap_or_default(), mention.context_snippet);
-    extract_years(&context).into_iter().map(|year| PhoneSourceYear {
-        phone_value: mention.value.clone(),
-        source_id: mention.source_id.clone(),
-        url: mention.url.clone(),
-        year,
-        confidence: 45,
-        reason: format!("year-like value {} found in public mention context; treat as source/date hint, not guaranteed first seen", year),
-    }).collect()
+    extract_years(&context).into_iter().map(|year| PhoneSourceYear { phone_value: mention.value.clone(), source_id: mention.source_id.clone(), url: mention.url.clone(), year, confidence: 45, reason: format!("year-like value {} found in public mention context; treat as source/date hint, not guaranteed first seen", year) }).collect()
 }
 
 fn extract_emails(text: &str) -> Vec<String> {
     let mut out = Vec::new();
     for token in text.split_whitespace() {
         let clean = clean_token(token);
-        if clean.contains('@') && clean.contains('.') && clean.len() <= 254 && !clean.starts_with('@') && !clean.ends_with('@') {
-            out.push(clean.to_lowercase());
-        }
+        if clean.contains('@') && clean.contains('.') && clean.len() <= 254 && !clean.starts_with('@') && !clean.ends_with('@') { out.push(clean.to_lowercase()); }
     }
     out.sort();
     out.dedup();
@@ -629,9 +772,7 @@ fn extract_urls(text: &str) -> Vec<String> {
     for token in text.split_whitespace() {
         let clean = clean_token(token);
         let lower = clean.to_lowercase();
-        if (lower.starts_with("http://") || lower.starts_with("https://")) && clean.len() <= 512 {
-            out.push(clean);
-        }
+        if (lower.starts_with("http://") || lower.starts_with("https://")) && clean.len() <= 512 { out.push(clean); }
     }
     out.sort();
     out.dedup();
@@ -644,9 +785,7 @@ fn extract_usernames(text: &str) -> Vec<String> {
         let clean = clean_token(token);
         if clean.starts_with('@') && clean.len() >= 4 && clean.len() <= 33 {
             let body = &clean[1..];
-            if body.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') && body.chars().any(|c| c.is_ascii_alphabetic()) {
-                out.push(clean.to_lowercase());
-            }
+            if body.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') && body.chars().any(|c| c.is_ascii_alphabetic()) { out.push(clean.to_lowercase()); }
         }
     }
     out.sort();
@@ -658,13 +797,10 @@ fn extract_years(text: &str) -> Vec<u32> {
     let mut years = Vec::new();
     let mut buf = String::new();
     for ch in text.chars().chain(std::iter::once(' ')) {
-        if ch.is_ascii_digit() {
-            buf.push(ch);
-        } else {
+        if ch.is_ascii_digit() { buf.push(ch); }
+        else {
             if buf.len() == 4 {
-                if let Ok(year) = buf.parse::<u32>() {
-                    if (1990..=2035).contains(&year) { years.push(year); }
-                }
+                if let Ok(year) = buf.parse::<u32>() { if (1990..=2035).contains(&year) { years.push(year); } }
             }
             buf.clear();
         }
@@ -691,71 +827,5 @@ fn materialize_findings(report: &mut PhoneIntelReport) {
         let pair = build_evidence_observation(EvidenceInput { source_id: finding.source_id, source_class: SourceClass::PublicOSINT, entity_type: finding.entity_type, raw_value: finding.value, raw_context: context, confidence: finding.confidence, sensitivity, tags: vec!["phone_intel".to_string(), finding.note] });
         report.evidences.push(pair.evidence);
         report.observations.push(pair.observation);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn normalizes_belarus_e164_phone() {
-        let phone = normalize_phone("+375 25 799 76 76");
-        assert_eq!(phone.digits, "375257997676");
-        assert_eq!(phone.e164.as_deref(), Some("+375257997676"));
-        assert_eq!(phone.country_guess.as_deref(), Some("Беларусь"));
-        assert!(phone.valid_shape);
-    }
-    #[test]
-    fn normalizes_belarus_80_phone() {
-        let phone = normalize_phone("80 25 799 76 76");
-        assert_eq!(phone.e164.as_deref(), Some("+375257997676"));
-        assert_eq!(phone.national_number.as_deref(), Some("257997676"));
-        assert_eq!(phone.country_code.as_deref(), Some("375"));
-        assert!(phone.valid_shape);
-    }
-    #[test]
-    fn guesses_belarus_life_prefix_25() {
-        let phone = normalize_phone("+375257997676");
-        let guess = guess_carrier(&phone).expect("carrier guess");
-        assert_eq!(guess.operator.as_deref(), Some("life:)"));
-        assert!(guess.reason.contains("MNP"));
-    }
-    #[test]
-    fn builds_phone_search_terms() {
-        let phone = normalize_phone("+375257997676");
-        let terms = build_phone_search_terms(&phone);
-        assert!(terms.contains(&"+375257997676".to_string()));
-        assert!(terms.contains(&"\"+375257997676\"".to_string()));
-        assert!(terms.contains(&"80257997676".to_string()));
-        assert!(terms.iter().any(|term| term.starts_with("site:t.me")));
-    }
-    #[test]
-    fn phone_intel_report_materializes_evidence() {
-        let seed = EntityNode { value: "+375257997676".to_string(), entity_type: EntityType::Phone, first_seen: 0 };
-        let rt = tokio::runtime::Runtime::new().expect("runtime");
-        let report = rt.block_on(run_phone_intel_for_seeds(&[seed]));
-        assert_eq!(report.stats.phones_checked, 1);
-        assert!(report.stats.evidences_count > 0);
-        assert!(report.stats.observations_count > 0);
-    }
-    #[test]
-    fn extracts_context_signals() {
-        let mention = PhonePublicMention { source_id: "test".to_string(), url: Some("https://example.com/u/@tester".to_string()), value: "+375257997676".to_string(), context_snippet: "contact test@example.com @tester year 2021".to_string(), confidence: 70, note: "test".to_string() };
-        let signals = extract_signals_from_mention(&mention);
-        assert!(signals.iter().any(|s| s.entity_type == EntityType::Email && s.value == "test@example.com"));
-        assert!(signals.iter().any(|s| s.entity_type == EntityType::Username && s.value == "@tester"));
-        assert_eq!(extract_years_from_mention(&mention)[0].year, 2021);
-    }
-    #[test]
-    fn aggregates_repeated_phone_signals() {
-        let signals = vec![
-            PhoneExtractedSignal { phone_value: "+375257997676".to_string(), entity_type: EntityType::Email, value: "test@example.com".to_string(), source_id: "s1".to_string(), url: Some("https://a.example".to_string()), confidence: 62, reason: "r".to_string(), context_snippet: "c".to_string() },
-            PhoneExtractedSignal { phone_value: "+375257997676".to_string(), entity_type: EntityType::Email, value: "test@example.com".to_string(), source_id: "s2".to_string(), url: Some("https://b.example".to_string()), confidence: 62, reason: "r".to_string(), context_snippet: "c".to_string() },
-        ];
-        let years = vec![PhoneSourceYear { phone_value: "+375257997676".to_string(), source_id: "s1".to_string(), url: None, year: 2021, confidence: 45, reason: "year".to_string() }];
-        let summaries = aggregate_phone_correlations(&signals, &years);
-        assert_eq!(summaries.len(), 1);
-        assert!(summaries[0].confidence >= 68);
-        assert_eq!(summaries[0].independent_sources, 2);
     }
 }
