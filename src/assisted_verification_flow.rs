@@ -89,6 +89,25 @@ pub struct AssistedVerificationFlow {
     pub global_warnings: Vec<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AssistedFlowValidationReport {
+    pub ready: bool,
+    pub readiness_percent: u8,
+    pub expected_platforms: Vec<String>,
+    pub present_platforms: Vec<String>,
+    pub missing_platforms: Vec<String>,
+    pub platform_profile_count: usize,
+    pub total_steps: usize,
+    pub messenger_steps_expected: usize,
+    pub messenger_steps_present: usize,
+    pub forbidden_action_violations: usize,
+    pub raw_data_violations: usize,
+    pub automated_discovery_violations: usize,
+    pub identity_confirmation_violations: usize,
+    pub decision_cap_ok: bool,
+    pub findings: Vec<String>,
+}
+
 pub fn build_phone_assisted_verification_flow(raw_phone: &str) -> AssistedVerificationFlow {
     let selector_masked = mask_phone(raw_phone);
     let platforms = assisted_messenger_platforms();
@@ -181,6 +200,67 @@ pub fn build_phone_assisted_verification_flow(raw_phone: &str) -> AssistedVerifi
             "Messenger presence never proves current ownership or identity by itself.".to_string(),
             "MAX is handled as a separate manual messenger verification target.".to_string(),
         ],
+    }
+}
+
+pub fn validate_assisted_verification_flow(flow: &AssistedVerificationFlow) -> AssistedFlowValidationReport {
+    let expected = assisted_messenger_platforms().into_iter().map(|p| platform_name(&p)).collect::<Vec<_>>();
+    let mut present = flow.platform_profiles.iter().map(|p| p.display_name.clone()).collect::<Vec<_>>();
+    present.sort();
+    present.dedup();
+
+    let missing = expected.iter().filter(|name| !present.contains(name)).cloned().collect::<Vec<_>>();
+    let messenger_steps_expected = expected.len() * 3;
+    let messenger_steps_present = flow.steps.iter().filter(|step| !matches!(step.platform, AssistedPlatform::PublicWeb)).count();
+    let raw_data_violations = flow.platform_profiles.iter().filter(|p| p.raw_data_stored).count()
+        + flow.steps.iter().filter(|s| s.raw_data_stored).count()
+        + usize::from(flow.raw_data_stored);
+    let automated_discovery_violations = flow.platform_profiles.iter().filter(|p| p.automated_account_discovery).count()
+        + flow.steps.iter().filter(|s| s.automated_account_discovery).count()
+        + usize::from(flow.automated_account_discovery);
+    let identity_confirmation_violations = usize::from(flow.identity_confirmation_allowed);
+    let forbidden_action_violations = flow.steps.iter().filter(|s| !required_forbidden_actions_present(&s.forbidden_actions)).count();
+    let decision_cap_ok = decision_cap_is_valid(flow);
+
+    let mut findings = Vec::new();
+    if missing.is_empty() { findings.push("all expected messenger platforms are present".to_string()); } else { findings.push(format!("missing platforms: {:?}", missing)); }
+    if flow.platform_profiles.len() == expected.len() { findings.push("platform profile count is correct".to_string()); } else { findings.push(format!("platform profile count mismatch: {}", flow.platform_profiles.len())); }
+    if messenger_steps_present == messenger_steps_expected { findings.push("each messenger platform has OpenOfficialInterface, OperatorManualCheck, and ContextAssessment steps".to_string()); } else { findings.push(format!("messenger step count mismatch: expected {}, got {}", messenger_steps_expected, messenger_steps_present)); }
+    if raw_data_violations == 0 { findings.push("raw data storage is disabled across flow, profiles, and steps".to_string()); }
+    if automated_discovery_violations == 0 { findings.push("automated account discovery is disabled across flow, profiles, and steps".to_string()); }
+    if identity_confirmation_violations == 0 { findings.push("identity confirmation remains disabled".to_string()); }
+    if forbidden_action_violations == 0 { findings.push("all steps include required forbidden-action guardrails".to_string()); }
+    if decision_cap_ok { findings.push("decision confidence cap is valid".to_string()); }
+
+    let critical_checks = [
+        missing.is_empty(),
+        flow.platform_profiles.len() == expected.len(),
+        messenger_steps_present == messenger_steps_expected,
+        raw_data_violations == 0,
+        automated_discovery_violations == 0,
+        identity_confirmation_violations == 0,
+        forbidden_action_violations == 0,
+        decision_cap_ok,
+    ];
+    let passed = critical_checks.iter().filter(|ok| **ok).count();
+    let readiness_percent = ((passed * 100) / critical_checks.len()) as u8;
+
+    AssistedFlowValidationReport {
+        ready: readiness_percent == 100,
+        readiness_percent,
+        expected_platforms: expected,
+        present_platforms: present,
+        missing_platforms: missing,
+        platform_profile_count: flow.platform_profiles.len(),
+        total_steps: flow.steps.len(),
+        messenger_steps_expected,
+        messenger_steps_present,
+        forbidden_action_violations,
+        raw_data_violations,
+        automated_discovery_violations,
+        identity_confirmation_violations,
+        decision_cap_ok,
+        findings,
     }
 }
 
@@ -353,7 +433,7 @@ fn operator_manual_check_step(profile: &AssistedPlatformProfile, selector_masked
 }
 
 fn context_assessment_step(profile: &AssistedPlatformProfile, selector_masked: &str) -> AssistedVerificationStep {
-    AssistedVerificationStep {
+        AssistedVerificationStep {
         step_id: format!("context_assessment_{}", normalized_platform_id(&profile.display_name)),
         platform: profile.platform.clone(),
         kind: AssistedStepKind::ContextAssessment,
@@ -370,6 +450,26 @@ fn context_assessment_step(profile: &AssistedPlatformProfile, selector_masked: &
         forbidden_actions: default_forbidden_actions(),
         raw_data_stored: false,
         automated_account_discovery: false,
+    }
+}
+
+fn required_forbidden_actions_present(actions: &[String]) -> bool {
+    let joined = actions.join(" | ").to_lowercase();
+    joined.contains("unofficial api")
+        && joined.contains("mass enumeration")
+        && joined.contains("contact-list")
+        && joined.contains("bypassing")
+        && joined.contains("raw private")
+        && joined.contains("identity proof")
+}
+
+fn decision_cap_is_valid(flow: &AssistedVerificationFlow) -> bool {
+    match flow.decision {
+        AssistedDecision::Pending => flow.confidence_cap == 0 && !flow.contributes_to_main_confidence,
+        AssistedDecision::NoMatch | AssistedDecision::Rejected => flow.confidence_cap == 0 && !flow.contributes_to_main_confidence,
+        AssistedDecision::SimilarOnly | AssistedDecision::Inconclusive => flow.confidence_cap <= 15 && !flow.contributes_to_main_confidence,
+        AssistedDecision::FoundNeedsContextCheck => flow.confidence_cap <= 25 && !flow.contributes_to_main_confidence,
+        AssistedDecision::CorroboratedLead => flow.confidence_cap <= 55 && flow.contributes_to_main_confidence,
     }
 }
 
@@ -468,6 +568,19 @@ mod tests {
     }
 
     #[test]
+    fn validation_report_reaches_100_percent_for_generated_flow() {
+        let flow = build_phone_assisted_verification_flow("+000000000000");
+        let validation = validate_assisted_verification_flow(&flow);
+        assert!(validation.ready, "{:?}", validation.findings);
+        assert_eq!(validation.readiness_percent, 100);
+        assert_eq!(validation.missing_platforms.len(), 0);
+        assert_eq!(validation.raw_data_violations, 0);
+        assert_eq!(validation.automated_discovery_violations, 0);
+        assert_eq!(validation.identity_confirmation_violations, 0);
+        assert_eq!(validation.forbidden_action_violations, 0);
+    }
+
+    #[test]
     fn corroborated_lead_caps_confidence() {
         let mut flow = build_phone_assisted_verification_flow("+000000000000");
         apply_assisted_decision(&mut flow, AssistedDecision::CorroboratedLead);
@@ -476,5 +589,6 @@ mod tests {
         assert!(!flow.identity_confirmation_allowed);
         assert!(!flow.raw_data_stored);
         assert!(!flow.automated_account_discovery);
+        assert!(validate_assisted_verification_flow(&flow).ready);
     }
 }
