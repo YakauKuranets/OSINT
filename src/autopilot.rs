@@ -1,6 +1,7 @@
 use crate::checkers::{self, EmailDomainReport};
 use crate::discovery::{self, DiscoveryReport};
 use crate::models::{EntityNode, EntityType};
+use crate::phone_intel::{self, PhoneIntelReport};
 use crate::public_search::{self, PublicSearchReport};
 use crate::runtime_profile;
 use serde::{Deserialize, Serialize};
@@ -11,10 +12,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub struct AutopilotCycleReport {
     pub cycle: usize,
     pub input_seed_count: usize,
+    pub new_phone_intel_nodes: usize,
     pub new_email_domain_nodes: usize,
     pub new_discovery_nodes: usize,
     pub new_public_search_nodes: usize,
     pub total_seed_count_after_cycle: usize,
+    pub phone_intel_report: PhoneIntelReport,
     pub email_domain_report: EmailDomainReport,
     pub discovery_report: DiscoveryReport,
     pub public_search_report: PublicSearchReport,
@@ -51,6 +54,11 @@ pub async fn run_autonomous_osint(seeds: &mut Vec<EntityNode>) -> AutopilotRepor
     for cycle_idx in 1..=max_cycles {
         let input_seed_count = seeds.len();
 
+        let phone_snapshot = seeds.clone();
+        let phone_intel_report = phone_intel::run_phone_intel_for_seeds(&phone_snapshot).await;
+        let phone_nodes = phone_intel::observations_as_entity_nodes(&phone_intel_report, per_cycle_new_limit);
+        let new_phone_intel_nodes = append_unique_nodes(seeds, phone_nodes, &mut seen, per_cycle_new_limit);
+
         let checker_snapshot = seeds.clone();
         let email_domain_report = checkers::run_email_domain_checkers(&checker_snapshot).await;
         let checker_nodes = checkers::observations_as_entity_nodes(&email_domain_report, per_cycle_new_limit);
@@ -66,16 +74,18 @@ pub async fn run_autonomous_osint(seeds: &mut Vec<EntityNode>) -> AutopilotRepor
         let public_search_nodes = public_search::observations_as_entity_nodes(&public_search_report, per_cycle_new_limit);
         let new_public_search_nodes = append_unique_nodes(seeds, public_search_nodes, &mut seen, per_cycle_new_limit);
 
-        let cycle_new = new_email_domain_nodes + new_discovery_nodes + new_public_search_nodes;
+        let cycle_new = new_phone_intel_nodes + new_email_domain_nodes + new_discovery_nodes + new_public_search_nodes;
         total_new_nodes += cycle_new;
 
         cycles.push(AutopilotCycleReport {
             cycle: cycle_idx,
             input_seed_count,
+            new_phone_intel_nodes,
             new_email_domain_nodes,
             new_discovery_nodes,
             new_public_search_nodes,
             total_seed_count_after_cycle: seeds.len(),
+            phone_intel_report,
             email_domain_report,
             discovery_report,
             public_search_report,
@@ -127,7 +137,7 @@ fn append_unique_nodes(
 
 fn should_autopilot_expand(node: &EntityNode) -> bool {
     match node.entity_type {
-        EntityType::Email | EntityType::Phone | EntityType::Username | EntityType::Nickname | EntityType::Domain | EntityType::Url => {
+        EntityType::Email | EntityType::Phone | EntityType::Username | EntityType::Nickname | EntityType::Domain | EntityType::Url | EntityType::Country | EntityType::DataSource => {
             let value = node.value.trim();
             !value.is_empty()
                 && !value.contains("[redacted]")
