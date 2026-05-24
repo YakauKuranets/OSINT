@@ -1,6 +1,8 @@
 use crate::evidence::{build_evidence_observation, EvidenceInput};
 use crate::models::{EntityNode, EntityType, EvidenceRecord, ObservationRecord, SensitivityClass, SourceClass};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -61,6 +63,8 @@ pub struct PhoneIntelStats {
     pub valid_shape: usize,
     pub carrier_guesses: usize,
     pub search_terms_generated: usize,
+    pub search_tasks_executed: usize,
+    pub api_errors: usize,
     pub public_mentions: usize,
     pub linked_entities: usize,
     pub evidences_count: usize,
@@ -91,6 +95,8 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
     let mut seen_phones = HashSet::new();
     let mut seen_terms = HashSet::new();
     let mut seen_findings = HashSet::new();
+    let mut seen_mentions = HashSet::new();
+    let client = Client::builder().timeout(std::time::Duration::from_secs(12)).build().expect("build phone search client");
 
     for seed in seeds.iter().filter(|seed| seed.entity_type == EntityType::Phone) {
         report.stats.phones_checked += 1;
@@ -133,9 +139,26 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
             report.carrier_guesses.push(guess);
         }
 
-        for term in build_phone_search_terms(&normalized) {
-            if seen_terms.insert(term.clone()) { report.search_terms.push(term); }
+        let phone_terms = build_phone_search_terms(&normalized);
+        for term in &phone_terms {
+            if seen_terms.insert(term.clone()) { report.search_terms.push(term.clone()); }
         }
+
+        for mention in run_phone_public_search(&client, &normalized, &phone_terms, &mut report.stats).await {
+            let key = format!("{}:{:?}:{}", mention.source_id, mention.url, mention.value);
+            if seen_mentions.insert(key) {
+                push_finding(&mut report.findings, &mut seen_findings, PhoneIntelFinding {
+                    source_id: mention.source_id.clone(),
+                    entity_type: EntityType::Phone,
+                    value: mention.value.clone(),
+                    confidence: mention.confidence,
+                    note: mention.note.clone(),
+                    reason: format!("public mention at {:?}: {}", mention.url, mention.context_snippet),
+                });
+                report.public_mentions.push(mention);
+            }
+        }
+
         report.phones.push(normalized);
     }
 
@@ -148,6 +171,103 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
     report
 }
 
+async fn run_phone_public_search(client: &Client, phone: &PhoneNormalized, terms: &[String], stats: &mut PhoneIntelStats) -> Vec<PhonePublicMention> {
+    let mut mentions = Vec::new();
+    if !phone.valid_shape {
+        return mentions;
+    }
+    let focused_terms = focused_phone_terms(phone, terms);
+    for term in focused_terms.into_iter().take(4) {
+        match search_github_code_for_phone(client, phone, &term).await {
+            Ok(mut found) => { stats.search_tasks_executed += 1; mentions.append(&mut found); }
+            Err(_) => { stats.search_tasks_executed += 1; stats.api_errors += 1; }
+        }
+        match search_github_issues_for_phone(client, phone, &term).await {
+            Ok(mut found) => { stats.search_tasks_executed += 1; mentions.append(&mut found); }
+            Err(_) => { stats.search_tasks_executed += 1; stats.api_errors += 1; }
+        }
+    }
+    mentions
+}
+
+fn focused_phone_terms(phone: &PhoneNormalized, terms: &[String]) -> Vec<String> {
+    let mut out = Vec::new();
+    if let Some(e164) = &phone.e164 { out.push(e164.clone()); }
+    out.push(phone.digits.clone());
+    if phone.country_code.as_deref() == Some("375") {
+        if let Some(national) = phone.national_number.as_deref() {
+            if national.len() == 9 {
+                out.push(format!("80{}", national));
+            }
+        }
+    }
+    for term in terms {
+        if !term.starts_with("site:") && !term.contains(' ') && !term.contains('"') { out.push(term.clone()); }
+    }
+    out.retain(|term| !term.trim().is_empty());
+    out.sort();
+    out.dedup();
+    out
+}
+
+async fn search_github_code_for_phone(client: &Client, phone: &PhoneNormalized, term: &str) -> Result<Vec<PhonePublicMention>, reqwest::Error> {
+    let query = format!("{} in:file", term);
+    let url = format!("https://api.github.com/search/code?q={}&per_page=5", url_encode(&query));
+    let body = github_json(client, &url).await?;
+    let mut mentions = Vec::new();
+    if let Some(items) = body.get("items").and_then(|v| v.as_array()) {
+        for item in items.iter().take(5) {
+            let html_url = item.get("html_url").and_then(Value::as_str).map(|s| s.to_string());
+            let repo = item.pointer("/repository/full_name").and_then(Value::as_str).unwrap_or("unknown_repo");
+            let path = item.get("path").and_then(Value::as_str).unwrap_or("unknown_path");
+            let snippet = format!("GitHub code search result: {}/{} matched term {}; exact line text requires opening source", repo, path, term);
+            mentions.push(PhonePublicMention {
+                source_id: "phone_github_code_search".to_string(),
+                url: html_url,
+                value: phone.e164.clone().unwrap_or_else(|| phone.digits.clone()),
+                context_snippet: snippet,
+                confidence: 65,
+                note: "github_code_public_mention".to_string(),
+            });
+        }
+    }
+    Ok(mentions)
+}
+
+async fn search_github_issues_for_phone(client: &Client, phone: &PhoneNormalized, term: &str) -> Result<Vec<PhonePublicMention>, reqwest::Error> {
+    let query = format!("{} in:title,body,comments", term);
+    let url = format!("https://api.github.com/search/issues?q={}&per_page=5", url_encode(&query));
+    let body = github_json(client, &url).await?;
+    let mut mentions = Vec::new();
+    if let Some(items) = body.get("items").and_then(|v| v.as_array()) {
+        for item in items.iter().take(5) {
+            let html_url = item.get("html_url").and_then(Value::as_str).map(|s| s.to_string());
+            let title = item.get("title").and_then(Value::as_str).unwrap_or("untitled");
+            let snippet = format!("GitHub issue/discussion search result: {} matched term {}", title, term);
+            mentions.push(PhonePublicMention {
+                source_id: "phone_github_issue_search".to_string(),
+                url: html_url,
+                value: phone.e164.clone().unwrap_or_else(|| phone.digits.clone()),
+                context_snippet: snippet,
+                confidence: 60,
+                note: "github_issue_public_mention".to_string(),
+            });
+        }
+    }
+    Ok(mentions)
+}
+
+async fn github_json(client: &Client, url: &str) -> Result<Value, reqwest::Error> {
+    client
+        .get(url)
+        .header("User-Agent", "XGEN-PhoneIntel/1.0 (+local self-audit)")
+        .header("Accept", "application/vnd.github+json")
+        .send()
+        .await?
+        .json::<Value>()
+        .await
+}
+
 pub fn save_phone_intel_report(report: &PhoneIntelReport, path: &str) -> Result<(), String> {
     let json = serde_json::to_string_pretty(report).map_err(|err| format!("serialize phone intel report: {}", err))?;
     std::fs::write(path, json).map_err(|err| format!("write {}: {}", path, err))
@@ -158,7 +278,7 @@ pub fn observations_as_entity_nodes(report: &PhoneIntelReport, limit: usize) -> 
     let mut seen = HashSet::new();
     for obs in &report.observations {
         if nodes.len() >= limit { break; }
-        if !matches!(obs.entity_type, EntityType::Phone | EntityType::Country | EntityType::DataSource) { continue; }
+        if !matches!(obs.entity_type, EntityType::Phone | EntityType::Country | EntityType::DataSource | EntityType::Url) { continue; }
         let value = if obs.normalized_value.is_empty() { obs.value_masked.clone() } else { obs.normalized_value.clone() };
         if value.is_empty() || value.contains("[redacted]") { continue; }
         let key = format!("{:?}:{}", obs.entity_type, value);
@@ -312,6 +432,18 @@ fn materialize_findings(report: &mut PhoneIntelReport) {
     }
 }
 
+fn url_encode(value: &str) -> String {
+    let mut out = String::new();
+    for byte in value.bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => out.push(byte as char),
+            b' ' => out.push('+'),
+            _ => out.push_str(&format!("%{:02X}", byte)),
+        }
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -360,5 +492,13 @@ mod tests {
         assert_eq!(report.stats.phones_checked, 1);
         assert!(report.stats.evidences_count > 0);
         assert!(report.stats.observations_count > 0);
+    }
+
+    #[test]
+    fn focused_terms_include_e164_and_80_variant() {
+        let phone = normalize_phone("+375257997676");
+        let terms = focused_phone_terms(&phone, &build_phone_search_terms(&phone));
+        assert!(terms.contains(&"+375257997676".to_string()));
+        assert!(terms.contains(&"80257997676".to_string()));
     }
 }
