@@ -29,6 +29,9 @@ pub struct MasterSummary {
     pub phone_valid_shape: Option<u64>,
     pub phone_carrier_guesses: Option<u64>,
     pub phone_search_terms_generated: Option<u64>,
+    pub phone_search_tasks_executed: Option<u64>,
+    pub phone_api_errors: Option<u64>,
+    pub phone_public_mentions: Option<u64>,
     pub phone_linked_entities: Option<u64>,
     pub autopilot_cycles: Option<u64>,
     pub autopilot_new_nodes: Option<u64>,
@@ -133,33 +136,42 @@ fn load_report_slot(path: &str) -> ReportSlot {
     }
 }
 
+fn report_stat(reports: &BTreeMap<String, ReportSlot>, report: &str, name: &str) -> Option<u64> {
+    get_report(reports, report)
+        .and_then(|v| v.pointer(&format!("/stats/{}", name)))
+        .and_then(Value::as_u64)
+}
+
 fn build_summary(reports: &BTreeMap<String, ReportSlot>) -> MasterSummary {
     let run_profile = get_report(reports, "run_profile").and_then(|v| v.get("label")).and_then(Value::as_str).map(|s| s.to_string());
     MasterSummary {
         run_profile,
-        phone_checked: get_report(reports, "phone_intel").and_then(|v| v.pointer("/stats/phones_checked")).and_then(Value::as_u64),
-        phone_valid_shape: get_report(reports, "phone_intel").and_then(|v| v.pointer("/stats/valid_shape")).and_then(Value::as_u64),
-        phone_carrier_guesses: get_report(reports, "phone_intel").and_then(|v| v.pointer("/stats/carrier_guesses")).and_then(Value::as_u64),
-        phone_search_terms_generated: get_report(reports, "phone_intel").and_then(|v| v.pointer("/stats/search_terms_generated")).and_then(Value::as_u64),
-        phone_linked_entities: get_report(reports, "phone_intel").and_then(|v| v.pointer("/stats/linked_entities")).and_then(Value::as_u64),
+        phone_checked: report_stat(reports, "phone_intel", "phones_checked"),
+        phone_valid_shape: report_stat(reports, "phone_intel", "valid_shape"),
+        phone_carrier_guesses: report_stat(reports, "phone_intel", "carrier_guesses"),
+        phone_search_terms_generated: report_stat(reports, "phone_intel", "search_terms_generated"),
+        phone_search_tasks_executed: report_stat(reports, "phone_intel", "search_tasks_executed"),
+        phone_api_errors: report_stat(reports, "phone_intel", "api_errors"),
+        phone_public_mentions: report_stat(reports, "phone_intel", "public_mentions"),
+        phone_linked_entities: report_stat(reports, "phone_intel", "linked_entities"),
         autopilot_cycles: get_report(reports, "autopilot").and_then(|v| v.get("cycles")).and_then(Value::as_array).map(|arr| arr.len() as u64),
         autopilot_new_nodes: get_report(reports, "autopilot").and_then(|v| v.get("total_new_nodes")).and_then(Value::as_u64),
         autopilot_phone_new_nodes: sum_cycle_field(reports, "new_phone_intel_nodes"),
         autopilot_email_domain_new_nodes: sum_cycle_field(reports, "new_email_domain_nodes"),
         autopilot_discovery_new_nodes: sum_cycle_field(reports, "new_discovery_nodes"),
         autopilot_public_search_new_nodes: sum_cycle_field(reports, "new_public_search_nodes"),
-        discovery_findings: get_report(reports, "discovery").and_then(|v| v.pointer("/stats/findings_count")).and_then(Value::as_u64),
-        discovery_blocked: get_report(reports, "discovery").and_then(|v| v.pointer("/stats/blocked_by_noise_rules")).and_then(Value::as_u64),
-        discovery_downranked: get_report(reports, "discovery").and_then(|v| v.pointer("/stats/downranked_by_noise_rules")).and_then(Value::as_u64),
-        public_search_findings: get_report(reports, "public_search").and_then(|v| v.pointer("/stats/findings_count")).and_then(Value::as_u64),
-        public_search_blocked: get_report(reports, "public_search").and_then(|v| v.pointer("/stats/blocked_by_noise_rules")).and_then(Value::as_u64),
-        public_search_downranked: get_report(reports, "public_search").and_then(|v| v.pointer("/stats/downranked_by_noise_rules")).and_then(Value::as_u64),
-        email_valid_count: get_report(reports, "email_domain").and_then(|v| v.pointer("/stats/valid_emails")).and_then(Value::as_u64),
-        email_domain_count: get_report(reports, "email_domain").and_then(|v| v.pointer("/stats/domains_checked")).and_then(Value::as_u64),
-        email_username_candidates: get_report(reports, "email_domain").and_then(|v| v.pointer("/stats/username_candidates")).and_then(Value::as_u64),
-        email_free_mail_domains: get_report(reports, "email_domain").and_then(|v| v.pointer("/stats/free_mail_domains")).and_then(Value::as_u64),
-        email_corporate_domains: get_report(reports, "email_domain").and_then(|v| v.pointer("/stats/corporate_domains")).and_then(Value::as_u64),
-        email_suspicious_domains: get_report(reports, "email_domain").and_then(|v| v.pointer("/stats/suspicious_domains")).and_then(Value::as_u64),
+        discovery_findings: report_stat(reports, "discovery", "findings_count"),
+        discovery_blocked: report_stat(reports, "discovery", "blocked_by_noise_rules"),
+        discovery_downranked: report_stat(reports, "discovery", "downranked_by_noise_rules"),
+        public_search_findings: report_stat(reports, "public_search", "findings_count"),
+        public_search_blocked: report_stat(reports, "public_search", "blocked_by_noise_rules"),
+        public_search_downranked: report_stat(reports, "public_search", "downranked_by_noise_rules"),
+        email_valid_count: report_stat(reports, "email_domain", "valid_emails"),
+        email_domain_count: report_stat(reports, "email_domain", "domains_checked"),
+        email_username_candidates: report_stat(reports, "email_domain", "username_candidates"),
+        email_free_mail_domains: report_stat(reports, "email_domain", "free_mail_domains"),
+        email_corporate_domains: report_stat(reports, "email_domain", "corporate_domains"),
+        email_suspicious_domains: report_stat(reports, "email_domain", "suspicious_domains"),
         conflict_count: get_report(reports, "conflicts").and_then(|v| v.get("findings")).and_then(Value::as_array).map(|arr| arr.len() as u64),
         active_links: get_report(reports, "analysis").and_then(|v| v.pointer("/profile_summary/active_links")).and_then(Value::as_u64).or_else(|| get_report(reports, "resolution").and_then(|v| v.pointer("/active_links")).and_then(Value::as_u64)),
         associated_nodes: get_report(reports, "analysis").and_then(|v| v.pointer("/profile_summary/associated_nodes")).and_then(Value::as_u64).or_else(|| get_report(reports, "resolution").and_then(|v| v.pointer("/associated_nodes")).and_then(Value::as_u64)),
@@ -182,6 +194,8 @@ fn build_verdict(summary: &MasterSummary, reports: &BTreeMap<String, ReportSlot>
     if summary.autopilot_phone_new_nodes.unwrap_or(0) > 0 { reasons.push("autopilot expanded through phone-intel-derived nodes".to_string()); }
     if summary.autopilot_email_domain_new_nodes.unwrap_or(0) > 0 { reasons.push("autopilot expanded through email/domain-derived nodes".to_string()); }
     if summary.phone_carrier_guesses.unwrap_or(0) > 0 { reasons.push("phone intel produced carrier prefix guesses, not ownership confirmation".to_string()); }
+    if summary.phone_search_tasks_executed.unwrap_or(0) > 0 && summary.phone_public_mentions.unwrap_or(0) == 0 { reasons.push("phone search adapter executed but found no public mentions".to_string()); }
+    if summary.phone_api_errors.unwrap_or(0) > 0 { reasons.push("phone search adapter had API/rate-limit errors".to_string()); }
     if summary.email_suspicious_domains.unwrap_or(0) > 0 { reasons.push("email/domain checker found suspicious domain signals".to_string()); }
     let status = if high_risk { "review_required" } else if confidence_adjusted.unwrap_or(0) >= 75 && missing_reports.is_empty() { "usable_with_review" } else if confidence_adjusted.unwrap_or(0) >= 50 { "partial_review_required" } else { "low_confidence" }.to_string();
     MasterVerdict { status, confidence_adjusted, high_risk, needs_human_review: true, reasons }
@@ -204,6 +218,9 @@ pub fn compact_master_summary(report: &MasterReport) -> Value {
         "phone_valid_shape": report.summary.phone_valid_shape,
         "phone_carrier_guesses": report.summary.phone_carrier_guesses,
         "phone_search_terms_generated": report.summary.phone_search_terms_generated,
+        "phone_search_tasks_executed": report.summary.phone_search_tasks_executed,
+        "phone_api_errors": report.summary.phone_api_errors,
+        "phone_public_mentions": report.summary.phone_public_mentions,
         "phone_linked_entities": report.summary.phone_linked_entities,
         "autopilot_cycles": report.summary.autopilot_cycles,
         "autopilot_new_nodes": report.summary.autopilot_new_nodes,
