@@ -1,6 +1,6 @@
 use crate::evidence::{build_evidence_observation, EvidenceInput};
 use crate::models::{EntityNode, EntityType, EvidenceRecord, ObservationRecord, SensitivityClass, SourceClass};
-use crate::phone_search::{self, PhoneSearchInput, PhoneSearchProviderSummary};
+use crate::phone_search::{self, PhoneSearchInput, PhoneSearchProviderSummary, PhoneSearchProviderTrace};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -48,6 +48,28 @@ pub struct PhoneLinkedEntity {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PhoneExtractedSignal {
+    pub phone_value: String,
+    pub entity_type: EntityType,
+    pub value: String,
+    pub source_id: String,
+    pub url: Option<String>,
+    pub confidence: u8,
+    pub reason: String,
+    pub context_snippet: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PhoneSourceYear {
+    pub phone_value: String,
+    pub source_id: String,
+    pub url: Option<String>,
+    pub year: u32,
+    pub confidence: u8,
+    pub reason: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PhoneIntelFinding {
     pub source_id: String,
     pub entity_type: EntityType,
@@ -67,8 +89,11 @@ pub struct PhoneIntelStats {
     pub api_errors: usize,
     pub public_mentions: usize,
     pub linked_entities: usize,
+    pub extracted_signals: usize,
+    pub source_years: usize,
     pub providers_enabled: usize,
     pub providers_with_hits: usize,
+    pub provider_traces: usize,
     pub evidences_count: usize,
     pub observations_count: usize,
 }
@@ -80,7 +105,10 @@ pub struct PhoneIntelReport {
     pub phones: Vec<PhoneNormalized>,
     pub carrier_guesses: Vec<PhoneCarrierGuess>,
     pub provider_summaries: Vec<PhoneSearchProviderSummary>,
+    pub traces: Vec<PhoneSearchProviderTrace>,
     pub public_mentions: Vec<PhonePublicMention>,
+    pub extracted_signals: Vec<PhoneExtractedSignal>,
+    pub source_years: Vec<PhoneSourceYear>,
     pub linked_entities: Vec<PhoneLinkedEntity>,
     pub search_terms: Vec<String>,
     pub findings: Vec<PhoneIntelFinding>,
@@ -99,6 +127,8 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
     let mut seen_terms = HashSet::new();
     let mut seen_findings = HashSet::new();
     let mut seen_mentions = HashSet::new();
+    let mut seen_signals = HashSet::new();
+    let mut seen_years = HashSet::new();
     let mut seen_provider_summary = HashSet::new();
     let client = Client::builder().timeout(std::time::Duration::from_secs(12)).build().expect("build phone search client");
 
@@ -149,6 +179,7 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
         }
 
         let provider_report = run_phone_public_search(&client, &normalized, &phone_terms).await;
+        report.traces.extend(provider_report.traces);
         for summary in provider_report.providers {
             report.stats.search_tasks_executed += summary.terms_attempted;
             report.stats.api_errors += summary.errors;
@@ -158,6 +189,9 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
                 existing.terms_attempted += summary.terms_attempted;
                 existing.hits += summary.hits;
                 existing.errors += summary.errors;
+                existing.rate_limited += summary.rate_limited;
+                existing.empty_results += summary.empty_results;
+                if summary.hits > 0 { existing.status = summary.status; }
                 existing.last_error = summary.last_error.or_else(|| existing.last_error.clone());
             }
         }
@@ -180,6 +214,42 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
                     note: mention.note.clone(),
                     reason: format!("public mention at {:?}: {}", mention.url, mention.context_snippet),
                 });
+                let signals = extract_signals_from_mention(&mention);
+                for signal in signals {
+                    let signal_key = format!("{:?}:{}:{}:{:?}", signal.entity_type, signal.value, signal.source_id, signal.url);
+                    if seen_signals.insert(signal_key) {
+                        report.linked_entities.push(PhoneLinkedEntity {
+                            entity_type: signal.entity_type.clone(),
+                            value: signal.value.clone(),
+                            confidence: signal.confidence,
+                            source_id: signal.source_id.clone(),
+                            reason: signal.reason.clone(),
+                        });
+                        push_finding(&mut report.findings, &mut seen_findings, PhoneIntelFinding {
+                            source_id: signal.source_id.clone(),
+                            entity_type: signal.entity_type.clone(),
+                            value: signal.value.clone(),
+                            confidence: signal.confidence,
+                            note: "phone_context_extracted_signal".to_string(),
+                            reason: signal.reason.clone(),
+                        });
+                        report.extracted_signals.push(signal);
+                    }
+                }
+                for source_year in extract_years_from_mention(&mention) {
+                    let year_key = format!("{}:{}:{:?}", source_year.source_id, source_year.year, source_year.url);
+                    if seen_years.insert(year_key) {
+                        push_finding(&mut report.findings, &mut seen_findings, PhoneIntelFinding {
+                            source_id: source_year.source_id.clone(),
+                            entity_type: EntityType::DataSource,
+                            value: format!("phone_seen_year:{}", source_year.year),
+                            confidence: source_year.confidence,
+                            note: "phone_source_year_hint".to_string(),
+                            reason: source_year.reason.clone(),
+                        });
+                        report.source_years.push(source_year);
+                    }
+                }
                 report.public_mentions.push(mention);
             }
         }
@@ -189,9 +259,12 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
 
     report.stats.search_terms_generated = report.search_terms.len();
     report.stats.public_mentions = report.public_mentions.len();
+    report.stats.extracted_signals = report.extracted_signals.len();
+    report.stats.source_years = report.source_years.len();
     report.stats.linked_entities = report.linked_entities.len();
     report.stats.providers_enabled = report.provider_summaries.iter().filter(|p| p.enabled).count();
     report.stats.providers_with_hits = report.provider_summaries.iter().filter(|p| p.hits > 0).count();
+    report.stats.provider_traces = report.traces.len();
     materialize_findings(&mut report);
     report.stats.evidences_count = report.evidences.len();
     report.stats.observations_count = report.observations.len();
@@ -222,7 +295,7 @@ pub fn observations_as_entity_nodes(report: &PhoneIntelReport, limit: usize) -> 
     let mut seen = HashSet::new();
     for obs in &report.observations {
         if nodes.len() >= limit { break; }
-        if !matches!(obs.entity_type, EntityType::Phone | EntityType::Country | EntityType::DataSource | EntityType::Url) { continue; }
+        if !matches!(obs.entity_type, EntityType::Phone | EntityType::Country | EntityType::DataSource | EntityType::Url | EntityType::Email | EntityType::Username | EntityType::Nickname | EntityType::SocialProfile) { continue; }
         let value = if obs.normalized_value.is_empty() { obs.value_masked.clone() } else { obs.normalized_value.clone() };
         if value.is_empty() || value.contains("[redacted]") { continue; }
         let key = format!("{:?}:{}", obs.entity_type, value);
@@ -349,6 +422,116 @@ pub fn build_phone_search_terms(phone: &PhoneNormalized) -> Vec<String> {
     terms
 }
 
+fn extract_signals_from_mention(mention: &PhonePublicMention) -> Vec<PhoneExtractedSignal> {
+    let mut signals = Vec::new();
+    let mut seen = HashSet::new();
+    let context = format!("{} {}", mention.url.clone().unwrap_or_default(), mention.context_snippet);
+    for email in extract_emails(&context) {
+        push_signal(&mut signals, &mut seen, mention, EntityType::Email, email, 62, "email found in same public phone mention context");
+    }
+    for url in extract_urls(&context) {
+        push_signal(&mut signals, &mut seen, mention, EntityType::Url, url, 58, "url found in same public phone mention context");
+    }
+    for username in extract_usernames(&context) {
+        push_signal(&mut signals, &mut seen, mention, EntityType::Username, username, 52, "username-like token found in same public phone mention context");
+    }
+    signals
+}
+
+fn push_signal(signals: &mut Vec<PhoneExtractedSignal>, seen: &mut HashSet<String>, mention: &PhonePublicMention, entity_type: EntityType, value: String, confidence: u8, reason: &str) {
+    let key = format!("{:?}:{}", entity_type, value.to_lowercase());
+    if value.trim().is_empty() || !seen.insert(key) { return; }
+    signals.push(PhoneExtractedSignal {
+        phone_value: mention.value.clone(),
+        entity_type,
+        value,
+        source_id: mention.source_id.clone(),
+        url: mention.url.clone(),
+        confidence,
+        reason: reason.to_string(),
+        context_snippet: mention.context_snippet.clone(),
+    });
+}
+
+fn extract_years_from_mention(mention: &PhonePublicMention) -> Vec<PhoneSourceYear> {
+    let context = format!("{} {}", mention.url.clone().unwrap_or_default(), mention.context_snippet);
+    extract_years(&context).into_iter().map(|year| PhoneSourceYear {
+        phone_value: mention.value.clone(),
+        source_id: mention.source_id.clone(),
+        url: mention.url.clone(),
+        year,
+        confidence: 45,
+        reason: format!("year-like value {} found in public mention context; treat as source/date hint, not guaranteed first seen", year),
+    }).collect()
+}
+
+fn extract_emails(text: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    for token in text.split_whitespace() {
+        let clean = clean_token(token);
+        if clean.contains('@') && clean.contains('.') && clean.len() <= 254 && !clean.starts_with('@') && !clean.ends_with('@') {
+            out.push(clean.to_lowercase());
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
+fn extract_urls(text: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    for token in text.split_whitespace() {
+        let clean = clean_token(token);
+        let lower = clean.to_lowercase();
+        if (lower.starts_with("http://") || lower.starts_with("https://")) && clean.len() <= 512 {
+            out.push(clean);
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
+fn extract_usernames(text: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    for token in text.split_whitespace() {
+        let clean = clean_token(token);
+        if clean.starts_with('@') && clean.len() >= 4 && clean.len() <= 33 {
+            let body = &clean[1..];
+            if body.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') && body.chars().any(|c| c.is_ascii_alphabetic()) {
+                out.push(clean.to_lowercase());
+            }
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
+fn extract_years(text: &str) -> Vec<u32> {
+    let mut years = Vec::new();
+    let mut buf = String::new();
+    for ch in text.chars().chain(std::iter::once(' ')) {
+        if ch.is_ascii_digit() {
+            buf.push(ch);
+        } else {
+            if buf.len() == 4 {
+                if let Ok(year) = buf.parse::<u32>() {
+                    if (1990..=2035).contains(&year) { years.push(year); }
+                }
+            }
+            buf.clear();
+        }
+    }
+    years.sort();
+    years.dedup();
+    years
+}
+
+fn clean_token(token: &str) -> String {
+    token.trim_matches(|c: char| c.is_whitespace() || matches!(c, ',' | ';' | ':' | ')' | '(' | '[' | ']' | '{' | '}' | '<' | '>' | '"' | '\'' | '`')).to_string()
+}
+
 fn push_finding(findings: &mut Vec<PhoneIntelFinding>, seen: &mut HashSet<String>, finding: PhoneIntelFinding) {
     let key = format!("{:?}:{}:{}", finding.entity_type, finding.value, finding.note);
     if seen.insert(key) { findings.push(finding); }
@@ -357,7 +540,7 @@ fn push_finding(findings: &mut Vec<PhoneIntelFinding>, seen: &mut HashSet<String
 fn materialize_findings(report: &mut PhoneIntelReport) {
     let findings = report.findings.clone();
     for finding in findings {
-        let sensitivity = match finding.entity_type { EntityType::Phone => SensitivityClass::Personal, _ => SensitivityClass::PublicLow };
+        let sensitivity = match finding.entity_type { EntityType::Phone | EntityType::Email | EntityType::Username | EntityType::Nickname => SensitivityClass::Personal, _ => SensitivityClass::PublicLow };
         let context = format!("phone_intel source={} note={} reason={} value={}", finding.source_id, finding.note, finding.reason, finding.value);
         let pair = build_evidence_observation(EvidenceInput { source_id: finding.source_id, source_class: SourceClass::PublicOSINT, entity_type: finding.entity_type, raw_value: finding.value, raw_context: context, confidence: finding.confidence, sensitivity, tags: vec!["phone_intel".to_string(), finding.note] });
         report.evidences.push(pair.evidence);
@@ -408,5 +591,13 @@ mod tests {
         assert_eq!(report.stats.phones_checked, 1);
         assert!(report.stats.evidences_count > 0);
         assert!(report.stats.observations_count > 0);
+    }
+    #[test]
+    fn extracts_context_signals() {
+        let mention = PhonePublicMention { source_id: "test".to_string(), url: Some("https://example.com/u/@tester".to_string()), value: "+375257997676".to_string(), context_snippet: "contact test@example.com @tester year 2021".to_string(), confidence: 70, note: "test".to_string() };
+        let signals = extract_signals_from_mention(&mention);
+        assert!(signals.iter().any(|s| s.entity_type == EntityType::Email && s.value == "test@example.com"));
+        assert!(signals.iter().any(|s| s.entity_type == EntityType::Username && s.value == "@tester"));
+        assert_eq!(extract_years_from_mention(&mention)[0].year, 2021);
     }
 }
