@@ -92,11 +92,20 @@ impl PhoneSearchProvider {
     }
 }
 
+#[derive(Debug, Clone)]
 struct ProviderRunOutcome {
     hits: Vec<PhoneSearchHit>,
     status: PhoneProviderStatus,
     message: Option<String>,
     url: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct PrecisionMatch {
+    matched_variant: String,
+    context: String,
+    context_chars: usize,
+    has_url: bool,
 }
 
 pub async fn run_phone_search_providers(client: &Client, input: &PhoneSearchInput) -> PhoneSearchProviderReport {
@@ -264,10 +273,7 @@ pub fn focused_phone_terms(input: &PhoneSearchInput) -> Vec<String> {
 async fn search_github_code_for_phone(client: &Client, input: &PhoneSearchInput, term: &str) -> ProviderRunOutcome {
     let query = format!("{} in:file", term);
     let url = format!("https://api.github.com/search/code?q={}&per_page={}", url_encode(&query), phone_search_per_page());
-    let body = match github_json(client, &url).await {
-        Ok(value) => value,
-        Err(err) => return outcome_error(url, err),
-    };
+    let body = match github_json(client, &url).await { Ok(value) => value, Err(err) => return outcome_error(url, err) };
     if let Some(message) = body.get("message").and_then(Value::as_str) {
         if body.get("items").is_none() { return outcome_from_github_message(url, "github_code", message); }
     }
@@ -294,10 +300,7 @@ async fn search_github_code_for_phone(client: &Client, input: &PhoneSearchInput,
 async fn search_github_issues_for_phone(client: &Client, input: &PhoneSearchInput, term: &str) -> ProviderRunOutcome {
     let query = format!("{} in:title,body,comments", term);
     let url = format!("https://api.github.com/search/issues?q={}&per_page={}", url_encode(&query), phone_search_per_page());
-    let body = match github_json(client, &url).await {
-        Ok(value) => value,
-        Err(err) => return outcome_error(url, err),
-    };
+    let body = match github_json(client, &url).await { Ok(value) => value, Err(err) => return outcome_error(url, err) };
     if let Some(message) = body.get("message").and_then(Value::as_str) {
         if body.get("items").is_none() { return outcome_from_github_message(url, "github_issues", message); }
     }
@@ -322,10 +325,8 @@ async fn search_github_issues_for_phone(client: &Client, input: &PhoneSearchInpu
 
 async fn search_hackernews_for_phone(client: &Client, input: &PhoneSearchInput, term: &str) -> ProviderRunOutcome {
     let url = format!("https://hn.algolia.com/api/v1/search?query={}&tags=story,comment&hitsPerPage={}", url_encode(term), phone_search_per_page());
-    let body = match public_json(client, &url, "hackernews").await {
-        Ok(value) => value,
-        Err(err) => return outcome_error(url, err),
-    };
+    let body = match public_json(client, &url, "hackernews").await { Ok(value) => value, Err(err) => return outcome_error(url, err) };
+    let variants = match_variants(input, term);
     let mut hits = Vec::new();
     if let Some(items) = body.get("hits").and_then(Value::as_array) {
         for item in items.iter().take(phone_search_per_page()) {
@@ -333,15 +334,15 @@ async fn search_hackernews_for_phone(client: &Client, input: &PhoneSearchInput, 
             let text = item.get("comment_text").or_else(|| item.get("story_text")).and_then(Value::as_str).unwrap_or("");
             let object_id = item.get("objectID").and_then(Value::as_str).unwrap_or("");
             let source_url = item.get("url").and_then(Value::as_str).map(|s| s.to_string()).or_else(|| if object_id.is_empty() { None } else { Some(format!("https://news.ycombinator.com/item?id={}", object_id)) });
-            let combined = format!("{} {} {:?}", title, text, source_url);
-            if contains_any_variant(&combined, &match_variants(input, term)) {
+            let combined = format!("{} {} {:?}", title, strip_htmlish(text), source_url);
+            if let Some(precision) = precision_accepts_public_hit("hackernews", &combined, &variants, source_url.as_deref()) {
                 hits.push(PhoneSearchHit {
                     provider_id: "phone_hackernews_search".to_string(),
                     url: source_url,
                     matched_value: input.phone_e164.clone().unwrap_or_else(|| input.digits.clone()),
-                    context_snippet: compact_context(&format!("HackerNews public result: title={} text={}", title, strip_htmlish(text)), 420),
-                    confidence: 58,
-                    note: "hackernews_public_mention".to_string(),
+                    context_snippet: compact_context(&format!("HackerNews exact public result: matched={} context_chars={} has_url={} | {}", precision.matched_variant, precision.context_chars, precision.has_url, precision.context), 520),
+                    confidence: public_provider_confidence(58, &precision),
+                    note: "hackernews_public_exact_phone_mention".to_string(),
                 });
             }
         }
@@ -358,24 +359,21 @@ async fn search_gitlab_for_phone(client: &Client, input: &PhoneSearchInput, term
     for scope in scopes {
         let url = format!("https://gitlab.com/api/v4/search?scope={}&search={}&per_page={}", scope, url_encode(term), phone_search_per_page());
         last_url = Some(url.clone());
-        let body = match public_json(client, &url, "gitlab").await {
-            Ok(value) => value,
-            Err(err) => { last_error = Some(err); continue; }
-        };
+        let body = match public_json(client, &url, "gitlab").await { Ok(value) => value, Err(err) => { last_error = Some(err); continue; } };
         if let Some(items) = body.as_array() {
             for item in items.iter().take(phone_search_per_page()) {
                 let name = item.get("name").or_else(|| item.get("title")).and_then(Value::as_str).unwrap_or("untitled");
                 let desc = item.get("description").and_then(Value::as_str).unwrap_or("");
                 let web_url = item.get("web_url").or_else(|| item.get("url")).and_then(Value::as_str).map(|s| s.to_string());
                 let combined = format!("{} {} {:?}", name, desc, web_url);
-                if contains_any_variant(&combined, &variants) || scope == "projects" && !desc.is_empty() {
+                if let Some(precision) = precision_accepts_public_hit("gitlab", &combined, &variants, web_url.as_deref()) {
                     hits.push(PhoneSearchHit {
                         provider_id: "phone_gitlab_search".to_string(),
                         url: web_url,
                         matched_value: input.phone_e164.clone().unwrap_or_else(|| input.digits.clone()),
-                        context_snippet: compact_context(&format!("GitLab public {} result: {} {}", scope, name, desc), 420),
-                        confidence: 55,
-                        note: format!("gitlab_public_{}_mention", scope),
+                        context_snippet: compact_context(&format!("GitLab exact public {} result: matched={} context_chars={} has_url={} | {}", scope, precision.matched_variant, precision.context_chars, precision.has_url, precision.context), 520),
+                        confidence: public_provider_confidence(55, &precision),
+                        note: format!("gitlab_public_{}_exact_phone_mention", scope),
                     });
                 }
             }
@@ -383,15 +381,12 @@ async fn search_gitlab_for_phone(client: &Client, input: &PhoneSearchInput, term
     }
     if !hits.is_empty() { outcome_hits(last_url.unwrap_or_default(), hits) }
     else if let Some(err) = last_error { outcome_error(last_url.unwrap_or_default(), err) }
-    else { ProviderRunOutcome { hits, status: PhoneProviderStatus::EmptyResult, message: Some("GitLab public search returned no phone matches".to_string()), url: last_url } }
+    else { ProviderRunOutcome { hits, status: PhoneProviderStatus::EmptyResult, message: Some("GitLab public search returned no exact phone matches after precision guard".to_string()), url: last_url } }
 }
 
 async fn search_npm_registry_for_phone(client: &Client, input: &PhoneSearchInput, term: &str) -> ProviderRunOutcome {
     let url = format!("https://registry.npmjs.org/-/v1/search?text={}&size={}", url_encode(term), phone_search_per_page());
-    let body = match public_json(client, &url, "npm_registry").await {
-        Ok(value) => value,
-        Err(err) => return outcome_error(url, err),
-    };
+    let body = match public_json(client, &url, "npm_registry").await { Ok(value) => value, Err(err) => return outcome_error(url, err) };
     let variants = match_variants(input, term);
     let mut hits = Vec::new();
     if let Some(items) = body.get("objects").and_then(Value::as_array) {
@@ -401,15 +396,16 @@ async fn search_npm_registry_for_phone(client: &Client, input: &PhoneSearchInput
             let desc = pkg.get("description").and_then(Value::as_str).unwrap_or("");
             let npm_url = pkg.pointer("/links/npm").and_then(Value::as_str).map(|s| s.to_string());
             let repo_url = pkg.pointer("/links/repository").and_then(Value::as_str).map(|s| s.to_string());
-            let combined = format!("{} {} {:?} {:?}", name, desc, npm_url, repo_url);
-            if contains_any_variant(&combined, &variants) || !desc.is_empty() {
+            let final_url = npm_url.or(repo_url);
+            let combined = format!("{} {} {:?}", name, desc, final_url);
+            if let Some(precision) = precision_accepts_public_hit("npm_registry", &combined, &variants, final_url.as_deref()) {
                 hits.push(PhoneSearchHit {
                     provider_id: "phone_npm_registry_search".to_string(),
-                    url: npm_url.or(repo_url),
+                    url: final_url,
                     matched_value: input.phone_e164.clone().unwrap_or_else(|| input.digits.clone()),
-                    context_snippet: compact_context(&format!("NPM registry public result: package={} description={}", name, desc), 420),
-                    confidence: 52,
-                    note: "npm_registry_public_mention".to_string(),
+                    context_snippet: compact_context(&format!("NPM registry exact public result: matched={} context_chars={} has_url={} | {}", precision.matched_variant, precision.context_chars, precision.has_url, precision.context), 520),
+                    confidence: public_provider_confidence(52, &precision),
+                    note: "npm_registry_public_exact_phone_mention".to_string(),
                 });
             }
         }
@@ -429,10 +425,7 @@ async fn probe_configured_public_urls(client: &Client, input: &PhoneSearchInput,
     for template in templates.into_iter().take(16) {
         let url = template.replace("{term}", &url_encode(term));
         last_url = Some(url.clone());
-        let body = match fetch_text_limited(client, &url).await {
-            Ok(body) => body,
-            Err(err) => { last_error = Some(err); continue; }
-        };
+        let body = match fetch_text_limited(client, &url).await { Ok(body) => body, Err(err) => { last_error = Some(err); continue; } };
         if let Some(ctx) = phone_context::parse_phone_page_context(&body, &variants, Some(&url)) {
             hits.push(PhoneSearchHit {
                 provider_id: "phone_public_url_probe".to_string(),
@@ -447,6 +440,41 @@ async fn probe_configured_public_urls(client: &Client, input: &PhoneSearchInput,
     if !hits.is_empty() { outcome_hits(last_url.unwrap_or_default(), hits) }
     else if let Some(err) = last_error { ProviderRunOutcome { hits, status: PhoneProviderStatus::Error, message: Some(err), url: last_url } }
     else { ProviderRunOutcome { hits, status: PhoneProviderStatus::EmptyResult, message: Some("configured public URL probes returned no exact phone match".to_string()), url: last_url } }
+}
+
+fn precision_accepts_public_hit(_provider: &str, combined: &str, variants: &[String], source_url: Option<&str>) -> Option<PrecisionMatch> {
+    let compact = compact_context(combined, 1_200);
+    let matched_variant = first_matching_variant(&compact, variants)?;
+    let context = context_around_variant(&compact, &matched_variant, 260);
+    let context_chars = context.chars().count();
+    let has_url = source_url.map(|u| u.starts_with("http://") || u.starts_with("https://")).unwrap_or(false);
+    if context_chars < 20 && !has_url { return None; }
+    Some(PrecisionMatch { matched_variant, context, context_chars, has_url })
+}
+
+fn first_matching_variant(text: &str, variants: &[String]) -> Option<String> {
+    let lower = text.to_lowercase();
+    variants.iter().filter(|v| !v.trim().is_empty()).find(|v| lower.contains(&v.to_lowercase())).cloned()
+}
+
+fn context_around_variant(text: &str, variant: &str, radius: usize) -> String {
+    let lower = text.to_lowercase();
+    let needle = variant.to_lowercase();
+    if let Some(pos) = lower.find(&needle) {
+        let start = char_boundary_before(text, pos.saturating_sub(radius));
+        let end = char_boundary_after(text, (pos + variant.len() + radius).min(text.len()));
+        compact_context(&text[start..end], radius * 2)
+    } else {
+        compact_context(text, radius * 2)
+    }
+}
+
+fn public_provider_confidence(base: u8, precision: &PrecisionMatch) -> u8 {
+    let mut score = base as usize;
+    if precision.has_url { score += 4; }
+    if precision.context_chars >= 100 { score += 5; }
+    if precision.context_chars >= 240 { score += 3; }
+    score.min(76) as u8
 }
 
 fn url_probe_confidence(ctx: &phone_context::PhonePageContext) -> u8 {
@@ -464,7 +492,7 @@ fn url_probe_confidence(ctx: &phone_context::PhonePageContext) -> u8 {
 
 fn outcome_hits(url: String, hits: Vec<PhoneSearchHit>) -> ProviderRunOutcome {
     if hits.is_empty() {
-        ProviderRunOutcome { hits, status: PhoneProviderStatus::EmptyResult, message: Some("provider executed successfully but returned no hits".to_string()), url: Some(url) }
+        ProviderRunOutcome { hits, status: PhoneProviderStatus::EmptyResult, message: Some("provider executed successfully but returned no precision-accepted hits".to_string()), url: Some(url) }
     } else {
         ProviderRunOutcome { status: PhoneProviderStatus::Matched, message: None, url: Some(url), hits }
     }
@@ -501,11 +529,6 @@ fn match_variants(input: &PhoneSearchInput, term: &str) -> Vec<String> {
     variants.sort();
     variants.dedup();
     variants
-}
-
-fn contains_any_variant(text: &str, variants: &[String]) -> bool {
-    let lower = text.to_lowercase();
-    variants.iter().filter(|v| !v.trim().is_empty()).any(|v| lower.contains(&v.to_lowercase()))
 }
 
 async fn fetch_text_limited(client: &Client, url: &str) -> Result<String, String> {
@@ -567,6 +590,18 @@ fn compact_context(value: &str, max_chars: usize) -> String {
     value.split_whitespace().collect::<Vec<_>>().join(" ").chars().take(max_chars).collect()
 }
 
+fn char_boundary_before(value: &str, mut idx: usize) -> usize {
+    idx = idx.min(value.len());
+    while idx > 0 && !value.is_char_boundary(idx) { idx -= 1; }
+    idx
+}
+
+fn char_boundary_after(value: &str, mut idx: usize) -> usize {
+    idx = idx.min(value.len());
+    while idx < value.len() && !value.is_char_boundary(idx) { idx += 1; }
+    idx
+}
+
 fn dedupe_hits(hits: &mut Vec<PhoneSearchHit>) {
     let mut seen = std::collections::HashSet::new();
     hits.retain(|hit| seen.insert(format!("{}:{:?}:{}", hit.provider_id, hit.url, hit.matched_value)));
@@ -613,14 +648,15 @@ mod tests {
     }
 
     #[test]
+    fn precision_guard_requires_exact_match() {
+        let variants = vec!["+000000000000".to_string(), "000000000000".to_string()];
+        assert!(precision_accepts_public_hit("test", "profile +000000000000 public context", &variants, Some("https://example.test/a")).is_some());
+        assert!(precision_accepts_public_hit("test", "profile without target number", &variants, Some("https://example.test/a")).is_none());
+    }
+
+    #[test]
     fn match_variants_include_belarus_forms() {
-        let input = PhoneSearchInput {
-            phone_e164: Some("+000000000000".to_string()),
-            digits: "000000000000".to_string(),
-            country_code: Some("375".to_string()),
-            national_number: Some("000000000".to_string()),
-            terms: vec![],
-        };
+        let input = PhoneSearchInput { phone_e164: Some("+000000000000".to_string()), digits: "000000000000".to_string(), country_code: Some("375".to_string()), national_number: Some("000000000".to_string()), terms: vec![] };
         let variants = match_variants(&input, "+000000000000");
         assert!(variants.contains(&"+000000000000".to_string()));
         assert!(variants.contains(&"000000000000".to_string()));
@@ -641,7 +677,7 @@ mod tests {
     }
 
     #[test]
-    fn configured_providers_understand_new_aliases() {
+    fn configured_provider_ids_exist() {
         let providers = [
             PhoneSearchProvider::new(PhoneSearchProviderKind::HackerNews).id,
             PhoneSearchProvider::new(PhoneSearchProviderKind::GitLab).id,
