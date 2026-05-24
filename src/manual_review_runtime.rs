@@ -1,8 +1,12 @@
+#[path = "assisted_verification_flow.rs"]
+mod assisted_verification_flow;
+
 use crate::manual_review_gate::{
     build_manual_review_gate_report, create_manual_review_card, save_manual_review_gate_report,
     ManualReviewGateCard,
 };
 use crate::models::{EntityNode, EntityType};
+use assisted_verification_flow::{build_phone_assisted_verification_flow, AssistedPlatform, AssistedVerificationFlow};
 use std::sync::Once;
 use std::time::Duration;
 
@@ -18,8 +22,53 @@ pub fn build_and_save_manual_review_gate_for_seeds(seeds: &[EntityNode], path: &
     let count = cards.len();
     let report = build_manual_review_gate_report(cards);
     save_manual_review_gate_report(&report, path)?;
+    enrich_manual_review_gate_report_with_assisted_flows(path, seeds)?;
+    save_standalone_assisted_verification_report(seeds, "assisted_verification_flow.json")?;
     start_dashboard_patcher_once();
     Ok(count)
+}
+
+fn enrich_manual_review_gate_report_with_assisted_flows(path: &str, seeds: &[EntityNode]) -> Result<(), String> {
+    let flows = assisted_flows_for_phone_seeds(seeds);
+    let raw = std::fs::read_to_string(path).map_err(|err| format!("read {}: {}", path, err))?;
+    let mut value: serde_json::Value = serde_json::from_str(&raw).map_err(|err| format!("parse {}: {}", path, err))?;
+    if let Some(obj) = value.as_object_mut() {
+        obj.insert("assisted_verification_flow_count".to_string(), serde_json::json!(flows.len()));
+        obj.insert("assisted_verification_platforms".to_string(), serde_json::json!(["Telegram", "Viber", "WhatsApp", "VK", "MAX"]));
+        obj.insert("assisted_verification_flows".to_string(), serde_json::to_value(&flows).map_err(|err| format!("serialize assisted flows: {}", err))?);
+        obj.insert("assisted_verification_policy".to_string(), serde_json::json!({
+            "mode": "assisted_verification_not_hidden_probe",
+            "raw_data_stored": false,
+            "automated_account_discovery": false,
+            "operator_decision_required": true,
+            "identity_confirmation_allowed": false
+        }));
+    }
+    let updated = serde_json::to_string_pretty(&value).map_err(|err| format!("serialize {}: {}", path, err))?;
+    std::fs::write(path, updated).map_err(|err| format!("write {}: {}", path, err))
+}
+
+fn save_standalone_assisted_verification_report(seeds: &[EntityNode], path: &str) -> Result<(), String> {
+    let flows = assisted_flows_for_phone_seeds(seeds);
+    let value = serde_json::json!({
+        "flow_count": flows.len(),
+        "platforms": ["Telegram", "Viber", "WhatsApp", "VK", "MAX"],
+        "mode": "assisted_verification_not_hidden_probe",
+        "raw_data_stored": false,
+        "automated_account_discovery": false,
+        "identity_confirmation_allowed": false,
+        "flows": flows
+    });
+    let json = serde_json::to_string_pretty(&value).map_err(|err| format!("serialize {}: {}", path, err))?;
+    std::fs::write(path, json).map_err(|err| format!("write {}: {}", path, err))
+}
+
+fn assisted_flows_for_phone_seeds(seeds: &[EntityNode]) -> Vec<AssistedVerificationFlow> {
+    seeds
+        .iter()
+        .filter(|seed| matches!(seed.entity_type, EntityType::Phone))
+        .map(|seed| build_phone_assisted_verification_flow(&seed.value))
+        .collect()
 }
 
 fn start_dashboard_patcher_once() {
@@ -60,7 +109,19 @@ async function loadManualReviewGate(){
     if(!r.ok)throw new Error(r.status);
     const data=await r.json();
     const cards=data.cards||[];
+    const flows=data.assisted_verification_flows||[];
     box.innerHTML=row('Operator review cards',`pending=${n(data.pending_count)} | rejected=${n(data.rejected_count)} | questionable=${n(data.questionable_count)} | more_verification=${n(data.more_verification_count)} | probable=${n(data.probable_count)}`,data.pending_count?'warn':(data.probable_count?'ok':''));
+    box.innerHTML+=row('Assisted verification',`flows=${n(data.assisted_verification_flow_count||flows.length)} | platforms=${tags(data.assisted_verification_platforms||['Telegram','Viber','WhatsApp','VK','MAX'])}<br>mode=${escapeHtml(data.assisted_verification_policy?.mode||'assisted_verification_not_hidden_probe')} | raw_data=${data.assisted_verification_policy?.raw_data_stored===true} | auto_discovery=${data.assisted_verification_policy?.automated_account_discovery===true}`,'warn');
+    for(const f of flows.slice(0,4)){
+      const platformNames=[...new Set((f.steps||[]).map(s=>s.platform).filter(Boolean))];
+      const ready=(f.steps||[]).filter(s=>s.status==='ReadyForOperator').length;
+      box.innerHTML+=row(`Assisted flow / ${f.decision||'Pending'}`,
+        `selector=<code>${escapeHtml(f.selector_masked)}</code> | steps=${n((f.steps||[]).length)} | ready=${n(ready)}<br>`+
+        `platforms=${tags(platformNames)}<br>`+
+        `cap=${n(f.confidence_cap)} | main_confidence=${f.contributes_to_main_confidence} | identity_confirm=${f.identity_confirmation_allowed} | raw_data=${f.raw_data_stored}<br>`+
+        `warnings=${tags((f.global_warnings||[]).slice(0,4),true)}`,
+        statusCls(f.decision));
+    }
     for(const c of cards.slice(0,8)){
       box.innerHTML+=row(`${c.review_id||'review'} / ${c.decision||'Pending'}`,
         `selector=${escapeHtml(c.selector_type)} <code>${escapeHtml(c.selector_masked)}</code><br>`+
@@ -173,6 +234,25 @@ fn stable_short_id(value: &str) -> String {
     format!("{:x}", hash)[..8].to_string()
 }
 
+fn assisted_platform_names(flow: &AssistedVerificationFlow) -> Vec<String> {
+    let mut out = flow
+        .steps
+        .iter()
+        .map(|step| match &step.platform {
+            AssistedPlatform::Telegram => "Telegram".to_string(),
+            AssistedPlatform::Viber => "Viber".to_string(),
+            AssistedPlatform::WhatsApp => "WhatsApp".to_string(),
+            AssistedPlatform::Vk => "VK".to_string(),
+            AssistedPlatform::Max => "MAX".to_string(),
+            AssistedPlatform::PublicWeb => "PublicWeb".to_string(),
+            AssistedPlatform::Other(value) => value.clone(),
+        })
+        .collect::<Vec<_>>();
+    out.sort();
+    out.dedup();
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -185,5 +265,16 @@ mod tests {
         assert!(card.selector_masked.contains("***"));
         assert!(!card.raw_record_stored);
         assert!(!card.raw_record_visible);
+    }
+
+    #[test]
+    fn assisted_flow_for_phone_seed_contains_max() {
+        let seeds = vec![EntityNode { value: "+000000000000".to_string(), entity_type: EntityType::Phone, first_seen: 1 }];
+        let flows = assisted_flows_for_phone_seeds(&seeds);
+        assert_eq!(flows.len(), 1);
+        let names = assisted_platform_names(&flows[0]);
+        assert!(names.contains(&"MAX".to_string()));
+        assert!(flows[0].steps.iter().all(|step| !step.raw_data_stored));
+        assert!(flows[0].steps.iter().all(|step| !step.automated_account_discovery));
     }
 }
