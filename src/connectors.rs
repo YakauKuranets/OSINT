@@ -1,0 +1,347 @@
+use crate::models::{EntityNode, EntityType};
+
+#[derive(Debug, Clone)]
+pub struct Observation {
+    pub value: String,
+    pub entity_type: EntityType,
+    pub source_id: String,
+    pub timestamp: u64,
+    pub confidence: u8,
+    pub evidence_snippet: String,
+    pub connector_kind: String,
+}
+
+impl Observation {
+    pub fn source_tag(&self) -> String {
+        let evidence_mark = self
+            .evidence_snippet
+            .chars()
+            .take(24)
+            .collect::<String>()
+            .replace(' ', "_");
+        format!(
+            "{}::{}::c{}::{}",
+            self.connector_kind,
+            self.source_id,
+            self.confidence,
+            evidence_mark
+        )
+    }
+}
+
+impl Observation {
+    pub fn to_entity_node(&self) -> EntityNode {
+        EntityNode {
+            value: self.value.clone(),
+            entity_type: self.entity_type.clone(),
+            first_seen: self.timestamp,
+        }
+    }
+}
+
+pub trait Connector {
+    fn id(&self) -> &'static str;
+    fn kind(&self) -> &'static str;
+    fn supports(&self, entity_type: &EntityType) -> bool;
+}
+
+pub struct ConnectorRegistry {
+    social: SocialSpiderConnector,
+    email: EmailBreachConnector,
+    last_run_by_connector: std::collections::HashMap<&'static str, u64>,
+}
+
+pub struct ThrottlePolicy;
+
+impl ThrottlePolicy {
+    pub fn interval_for_connector(connector_id: &str) -> u64 {
+        let env_key = format!("OSINT_CONNECTOR_INTERVAL_{}", connector_id.to_uppercase());
+        std::env::var(&env_key)
+            .ok()
+            .and_then(|v| v.parse::<u64>().ok())
+            .or_else(|| {
+                std::env::var("OSINT_CONNECTOR_INTERVAL_DEFAULT")
+                    .ok()
+                    .and_then(|v| v.parse::<u64>().ok())
+            })
+            .unwrap_or(1)
+    }
+}
+
+impl ConnectorRegistry {
+    pub fn new() -> Self {
+        Self {
+            social: SocialSpiderConnector,
+            email: EmailBreachConnector,
+            last_run_by_connector: std::collections::HashMap::new(),
+        }
+    }
+
+    fn allow_run(&mut self, connector_id: &'static str, timestamp: u64, min_interval_secs: u64) -> bool {
+        match self.last_run_by_connector.get(connector_id) {
+            Some(last_ts) if timestamp.saturating_sub(*last_ts) < min_interval_secs => false,
+            _ => {
+                self.last_run_by_connector.insert(connector_id, timestamp);
+                true
+            }
+        }
+    }
+
+    pub fn collect_seed_observations(&mut self, seeds: &[EntityNode], timestamp: u64) -> Vec<Observation> {
+        let mut observations = Vec::new();
+        for seed in seeds {
+            let social_interval = ThrottlePolicy::interval_for_connector(self.social.id());
+            if self.social.supports(&seed.entity_type)
+                && self.allow_run(self.social.id(), timestamp, social_interval)
+            {
+                observations.extend(self.social.collect(&seed.value, timestamp));
+            }
+            let email_interval = ThrottlePolicy::interval_for_connector(self.email.id());
+            if self.email.supports(&seed.entity_type)
+                && self.allow_run(self.email.id(), timestamp, email_interval)
+            {
+                observations.extend(self.email.collect(&seed.value, timestamp));
+            }
+        }
+        observations
+    }
+}
+
+pub struct SocialSpiderConnector;
+
+impl Connector for SocialSpiderConnector {
+    fn id(&self) -> &'static str {
+        "social_spider"
+    }
+
+    fn kind(&self) -> &'static str {
+        "social"
+    }
+
+    fn supports(&self, entity_type: &EntityType) -> bool {
+        matches!(entity_type, EntityType::Nickname)
+    }
+}
+
+pub struct EmailBreachConnector;
+
+impl Connector for EmailBreachConnector {
+    fn id(&self) -> &'static str {
+        "email_breach"
+    }
+
+    fn kind(&self) -> &'static str {
+        "breach"
+    }
+
+    fn supports(&self, entity_type: &EntityType) -> bool {
+        matches!(entity_type, EntityType::Email)
+    }
+}
+
+impl EmailBreachConnector {
+    pub fn collect(&self, email: &str, timestamp: u64) -> Vec<Observation> {
+        vec![Observation {
+            value: format!("seed_email:{}", email),
+            entity_type: EntityType::Email,
+            source_id: self.id().to_string(),
+            timestamp,
+            confidence: 60,
+            evidence_snippet: "connector-enabled-email-seed".to_string(),
+            connector_kind: self.kind().to_string(),
+        }]
+    }
+
+    pub fn collect_breaches(
+        &self,
+        email: &str,
+        breaches: &[String],
+        timestamp: u64,
+    ) -> Vec<Observation> {
+        breaches
+            .iter()
+            .map(|name| Observation {
+                value: format!("breach:{}", name),
+                entity_type: EntityType::Nickname,
+                source_id: self.id().to_string(),
+                timestamp,
+                confidence: 75,
+                evidence_snippet: format!("email={} matched breach={}", email, name),
+                connector_kind: self.kind().to_string(),
+            })
+            .collect()
+    }
+}
+
+pub struct PhoneIntelConnector;
+
+impl Connector for PhoneIntelConnector {
+    fn id(&self) -> &'static str {
+        "phone_intel"
+    }
+
+    fn kind(&self) -> &'static str {
+        "phone"
+    }
+
+    fn supports(&self, entity_type: &EntityType) -> bool {
+        matches!(entity_type, EntityType::Phone)
+    }
+}
+
+impl PhoneIntelConnector {
+    pub fn collect_phone_traits(&self, traits: &[String], timestamp: u64) -> Vec<Observation> {
+        traits
+            .iter()
+            .map(|t| Observation {
+                value: t.clone(),
+                entity_type: EntityType::Nickname,
+                source_id: self.id().to_string(),
+                timestamp,
+                confidence: 65,
+                evidence_snippet: format!("phone_trait={}", t),
+                connector_kind: self.kind().to_string(),
+            })
+            .collect()
+    }
+}
+
+pub struct TelegramConnector;
+
+impl Connector for TelegramConnector {
+    fn id(&self) -> &'static str {
+        "telegram"
+    }
+
+    fn kind(&self) -> &'static str {
+        "messenger"
+    }
+
+    fn supports(&self, entity_type: &EntityType) -> bool {
+        matches!(entity_type, EntityType::Nickname | EntityType::Phone)
+    }
+}
+
+impl TelegramConnector {
+    pub fn collect_telegram_info(&self, info: &[String], timestamp: u64) -> Vec<Observation> {
+        info.iter()
+            .map(|entry| {
+                let entity_type = if entry.starts_with("tg_phone:") {
+                    EntityType::Phone
+                } else {
+                    EntityType::Nickname
+                };
+
+                let value = if let Some(stripped) = entry.strip_prefix("tg_phone:") {
+                    stripped.to_string()
+                } else {
+                    entry.clone()
+                };
+
+                Observation {
+                    value,
+                    entity_type,
+                    source_id: self.id().to_string(),
+                    timestamp,
+                    confidence: 70,
+                    evidence_snippet: entry.clone(),
+                    connector_kind: self.kind().to_string(),
+                }
+            })
+            .collect()
+    }
+}
+
+pub struct BrokerConnector;
+
+impl Connector for BrokerConnector {
+    fn id(&self) -> &'static str {
+        "broker"
+    }
+
+    fn kind(&self) -> &'static str {
+        "broker"
+    }
+
+    fn supports(&self, entity_type: &EntityType) -> bool {
+        matches!(entity_type, EntityType::Email | EntityType::Phone)
+    }
+}
+
+impl BrokerConnector {
+    pub fn collect_nodes(
+        &self,
+        nodes: &[EntityNode],
+        source_id: &str,
+        timestamp: u64,
+    ) -> Vec<Observation> {
+        nodes
+            .iter()
+            .map(|n| Observation {
+                value: n.value.clone(),
+                entity_type: n.entity_type.clone(),
+                source_id: source_id.to_string(),
+                timestamp,
+                confidence: 70,
+                evidence_snippet: format!("broker_entity={}", n.value),
+                connector_kind: self.kind().to_string(),
+            })
+            .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Mutex, OnceLock};
+
+    fn env_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
+
+    #[test]
+    fn throttle_policy_uses_default_interval() {
+        let _guard = env_lock().lock().unwrap();
+        unsafe {
+            std::env::set_var("OSINT_CONNECTOR_INTERVAL_DEFAULT", "7");
+            std::env::remove_var("OSINT_CONNECTOR_INTERVAL_SOCIAL_SPIDER");
+            std::env::remove_var("OSINT_CONNECTOR_INTERVAL_EMAIL_BREACH");
+        }
+        let value = ThrottlePolicy::interval_for_connector("social_spider");
+        assert_eq!(value, 7);
+    }
+
+    #[test]
+    fn throttle_policy_prefers_connector_specific_interval() {
+        let _guard = env_lock().lock().unwrap();
+        unsafe {
+            std::env::set_var("OSINT_CONNECTOR_INTERVAL_DEFAULT", "7");
+            std::env::set_var("OSINT_CONNECTOR_INTERVAL_SOCIAL_SPIDER", "3");
+        }
+        let value = ThrottlePolicy::interval_for_connector("social_spider");
+        assert_eq!(value, 3);
+        unsafe {
+            std::env::remove_var("OSINT_CONNECTOR_INTERVAL_SOCIAL_SPIDER");
+            std::env::remove_var("OSINT_CONNECTOR_INTERVAL_DEFAULT");
+        }
+    }
+}
+
+impl SocialSpiderConnector {
+    pub fn collect(
+        &self,
+        username: &str,
+        timestamp: u64,
+    ) -> Vec<Observation> {
+        vec![Observation {
+            value: format!("seed_nickname:{}", username),
+            entity_type: EntityType::Nickname,
+            source_id: self.id().to_string(),
+            timestamp,
+            confidence: 50,
+            evidence_snippet: "connector-enabled-social-seed".to_string(),
+            connector_kind: self.kind().to_string(),
+        }]
+    }
+}
