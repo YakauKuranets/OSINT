@@ -28,6 +28,7 @@ mod runtime_profile;
 mod master_report;
 mod preflight;
 mod phone_intel;
+mod phone_search;
 
 use axum::{
     routing::{post, get},
