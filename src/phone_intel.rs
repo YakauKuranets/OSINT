@@ -83,18 +83,11 @@ pub struct PhoneIntelReport {
 }
 
 fn now_unix() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs()
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs()
 }
 
 pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport {
-    let mut report = PhoneIntelReport {
-        generated_at: now_unix(),
-        input_count: seeds.iter().filter(|seed| seed.entity_type == EntityType::Phone).count(),
-        ..PhoneIntelReport::default()
-    };
+    let mut report = PhoneIntelReport { generated_at: now_unix(), input_count: seeds.iter().filter(|seed| seed.entity_type == EntityType::Phone).count(), ..PhoneIntelReport::default() };
     let mut seen_phones = HashSet::new();
     let mut seen_terms = HashSet::new();
     let mut seen_findings = HashSet::new();
@@ -103,88 +96,46 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
         report.stats.phones_checked += 1;
         let normalized = normalize_phone(&seed.value);
         let phone_key = normalized.e164.clone().unwrap_or_else(|| normalized.digits.clone());
-        if phone_key.is_empty() || !seen_phones.insert(phone_key.clone()) {
-            continue;
-        }
+        if phone_key.is_empty() || !seen_phones.insert(phone_key.clone()) { continue; }
+        if normalized.valid_shape { report.stats.valid_shape += 1; }
 
-        if normalized.valid_shape {
-            report.stats.valid_shape += 1;
-        }
-
-        push_finding(
-            &mut report.findings,
-            &mut seen_findings,
-            PhoneIntelFinding {
-                source_id: "phone_normalizer".to_string(),
-                entity_type: EntityType::Phone,
-                value: normalized.e164.clone().unwrap_or_else(|| normalized.digits.clone()),
-                confidence: if normalized.valid_shape { 90 } else { 35 },
-                note: "normalized_phone_shape".to_string(),
-                reason: normalized.notes.join("; "),
-            },
-        );
+        push_finding(&mut report.findings, &mut seen_findings, PhoneIntelFinding {
+            source_id: "phone_normalizer".to_string(),
+            entity_type: EntityType::Phone,
+            value: normalized.e164.clone().unwrap_or_else(|| normalized.digits.clone()),
+            confidence: if normalized.valid_shape { 90 } else { 35 },
+            note: "normalized_phone_shape".to_string(),
+            reason: normalized.notes.join("; "),
+        });
 
         if let Some(country) = normalized.country_guess.clone() {
-            report.linked_entities.push(PhoneLinkedEntity {
-                entity_type: EntityType::Country,
-                value: country.clone(),
-                confidence: if normalized.valid_shape { 80 } else { 45 },
-                source_id: "phone_country_prefix".to_string(),
-                reason: format!("country inferred from phone country code {:?}", normalized.country_code),
-            });
-            push_finding(
-                &mut report.findings,
-                &mut seen_findings,
-                PhoneIntelFinding {
-                    source_id: "phone_country_prefix".to_string(),
-                    entity_type: EntityType::Country,
-                    value: country,
-                    confidence: if normalized.valid_shape { 80 } else { 45 },
-                    note: "country_guess_from_phone_prefix".to_string(),
-                    reason: "phone prefix maps to country guess".to_string(),
-                },
-            );
+            report.linked_entities.push(PhoneLinkedEntity { entity_type: EntityType::Country, value: country.clone(), confidence: if normalized.valid_shape { 80 } else { 45 }, source_id: "phone_country_prefix".to_string(), reason: format!("country inferred from phone country code {:?}", normalized.country_code) });
+            push_finding(&mut report.findings, &mut seen_findings, PhoneIntelFinding { source_id: "phone_country_prefix".to_string(), entity_type: EntityType::Country, value: country, confidence: if normalized.valid_shape { 80 } else { 45 }, note: "country_guess_from_phone_prefix".to_string(), reason: "phone prefix maps to country guess".to_string() });
         }
 
         if let Some(guess) = guess_carrier(&normalized) {
             report.stats.carrier_guesses += 1;
             report.linked_entities.push(PhoneLinkedEntity {
                 entity_type: EntityType::DataSource,
-                value: format!(
-                    "carrier_guess:{}:{}",
-                    normalized.e164.clone().unwrap_or_else(|| normalized.digits.clone()),
-                    guess.operator.clone().unwrap_or_else(|| "unknown".to_string())
-                ),
+                value: format!("carrier_guess:{}:{}", normalized.e164.clone().unwrap_or_else(|| normalized.digits.clone()), guess.operator.clone().unwrap_or_else(|| "unknown".to_string())),
                 confidence: guess.confidence,
                 source_id: "phone_carrier_prefix_guess".to_string(),
                 reason: guess.reason.clone(),
             });
-            push_finding(
-                &mut report.findings,
-                &mut seen_findings,
-                PhoneIntelFinding {
-                    source_id: "phone_carrier_prefix_guess".to_string(),
-                    entity_type: EntityType::DataSource,
-                    value: format!(
-                        "carrier_guess:{}:{}:{}",
-                        guess.country,
-                        guess.operator.clone().unwrap_or_else(|| "unknown".to_string()),
-                        guess.number_type
-                    ),
-                    confidence: guess.confidence,
-                    note: "operator_guess_not_owner_confirmation".to_string(),
-                    reason: guess.reason.clone(),
-                },
-            );
+            push_finding(&mut report.findings, &mut seen_findings, PhoneIntelFinding {
+                source_id: "phone_carrier_prefix_guess".to_string(),
+                entity_type: EntityType::DataSource,
+                value: format!("carrier_guess:{}:{}:{}", guess.country, guess.operator.clone().unwrap_or_else(|| "unknown".to_string()), guess.number_type),
+                confidence: guess.confidence,
+                note: "operator_guess_not_owner_confirmation".to_string(),
+                reason: guess.reason.clone(),
+            });
             report.carrier_guesses.push(guess);
         }
 
         for term in build_phone_search_terms(&normalized) {
-            if seen_terms.insert(term.clone()) {
-                report.search_terms.push(term);
-            }
+            if seen_terms.insert(term.clone()) { report.search_terms.push(term); }
         }
-
         report.phones.push(normalized);
     }
 
@@ -198,8 +149,7 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
 }
 
 pub fn save_phone_intel_report(report: &PhoneIntelReport, path: &str) -> Result<(), String> {
-    let json = serde_json::to_string_pretty(report)
-        .map_err(|err| format!("serialize phone intel report: {}", err))?;
+    let json = serde_json::to_string_pretty(report).map_err(|err| format!("serialize phone intel report: {}", err))?;
     std::fs::write(path, json).map_err(|err| format!("write {}: {}", path, err))
 }
 
@@ -207,40 +157,21 @@ pub fn observations_as_entity_nodes(report: &PhoneIntelReport, limit: usize) -> 
     let mut nodes = Vec::new();
     let mut seen = HashSet::new();
     for obs in &report.observations {
-        if nodes.len() >= limit {
-            break;
-        }
-        if !matches!(obs.entity_type, EntityType::Phone | EntityType::Country | EntityType::DataSource) {
-            continue;
-        }
-        let value = if obs.normalized_value.is_empty() {
-            obs.value_masked.clone()
-        } else {
-            obs.normalized_value.clone()
-        };
-        if value.is_empty() || value.contains("[redacted]") {
-            continue;
-        }
+        if nodes.len() >= limit { break; }
+        if !matches!(obs.entity_type, EntityType::Phone | EntityType::Country | EntityType::DataSource) { continue; }
+        let value = if obs.normalized_value.is_empty() { obs.value_masked.clone() } else { obs.normalized_value.clone() };
+        if value.is_empty() || value.contains("[redacted]") { continue; }
         let key = format!("{:?}:{}", obs.entity_type, value);
         if seen.insert(key) {
-            nodes.push(EntityNode {
-                value,
-                entity_type: obs.entity_type.clone(),
-                first_seen: obs.seen_at,
-            });
+            nodes.push(EntityNode { value, entity_type: obs.entity_type.clone(), first_seen: obs.seen_at });
         }
     }
     nodes
 }
 
 pub fn normalize_phone(raw: &str) -> PhoneNormalized {
-    let trimmed = raw.trim();
-    let digits: String = trimmed.chars().filter(|c| c.is_ascii_digit()).collect();
-    let mut result = PhoneNormalized {
-        raw: raw.to_string(),
-        digits: digits.clone(),
-        ..PhoneNormalized::default()
-    };
+    let digits: String = raw.trim().chars().filter(|c| c.is_ascii_digit()).collect();
+    let mut result = PhoneNormalized { raw: raw.to_string(), digits: digits.clone(), ..PhoneNormalized::default() };
 
     if digits.is_empty() {
         result.notes.push("no digits found".to_string());
@@ -258,12 +189,12 @@ pub fn normalize_phone(raw: &str) -> PhoneNormalized {
     }
 
     if digits.starts_with("80") && digits.len() == 11 {
-        let national = digits.trim_start_matches('8').to_string();
+        let national = digits[2..].to_string();
         result.country_guess = Some("Беларусь".to_string());
         result.country_code = Some("375".to_string());
         result.national_number = Some(national.clone());
         result.e164 = Some(format!("+375{}", national));
-        result.valid_shape = national.len() == 10 && national.starts_with('0');
+        result.valid_shape = national.len() == 9;
         result.notes.push("Belarus trunk 80 converted to +375".to_string());
         return result;
     }
@@ -306,43 +237,18 @@ pub fn normalize_phone(raw: &str) -> PhoneNormalized {
 pub fn guess_carrier(phone: &PhoneNormalized) -> Option<PhoneCarrierGuess> {
     let country_code = phone.country_code.as_deref()?;
     let national = phone.national_number.as_deref().unwrap_or_default();
-
     match country_code {
         "375" => guess_belarus_carrier(phone, national),
-        "48" => Some(PhoneCarrierGuess {
-            phone_e164: phone.e164.clone(),
-            country: "Польша".to_string(),
-            operator: None,
-            number_type: "mobile_or_fixed_requires_external_lookup".to_string(),
-            confidence: 35,
-            reason: "Poland operator cannot be reliably inferred from prefix without external numbering/MNP data".to_string(),
-        }),
-        "7" => Some(PhoneCarrierGuess {
-            phone_e164: phone.e164.clone(),
-            country: "Россия/Казахстан".to_string(),
-            operator: None,
-            number_type: "requires_external_lookup".to_string(),
-            confidence: 25,
-            reason: "+7 numbers require external numbering plan and MNP data".to_string(),
-        }),
-        "380" => Some(PhoneCarrierGuess {
-            phone_e164: phone.e164.clone(),
-            country: "Украина".to_string(),
-            operator: None,
-            number_type: "requires_external_lookup".to_string(),
-            confidence: 25,
-            reason: "Ukraine operator requires external numbering/MNP data".to_string(),
-        }),
+        "48" => Some(PhoneCarrierGuess { phone_e164: phone.e164.clone(), country: "Польша".to_string(), operator: None, number_type: "mobile_or_fixed_requires_external_lookup".to_string(), confidence: 35, reason: "Poland operator cannot be reliably inferred from prefix without external numbering/MNP data".to_string() }),
+        "7" => Some(PhoneCarrierGuess { phone_e164: phone.e164.clone(), country: "Россия/Казахстан".to_string(), operator: None, number_type: "requires_external_lookup".to_string(), confidence: 25, reason: "+7 numbers require external numbering plan and MNP data".to_string() }),
+        "380" => Some(PhoneCarrierGuess { phone_e164: phone.e164.clone(), country: "Украина".to_string(), operator: None, number_type: "requires_external_lookup".to_string(), confidence: 25, reason: "Ukraine operator requires external numbering/MNP data".to_string() }),
         _ => None,
     }
 }
 
 fn guess_belarus_carrier(phone: &PhoneNormalized, national: &str) -> Option<PhoneCarrierGuess> {
-    let cleaned = national.trim_start_matches('0');
-    if cleaned.len() < 2 {
-        return None;
-    }
-    let prefix = &cleaned[..2];
+    if national.len() < 2 { return None; }
+    let prefix = &national[..2];
     let (operator, number_type, confidence, reason) = match prefix {
         "25" => (Some("life:)".to_string()), "mobile", 60, "prefix 25 historically belongs to life:); MNP may change current operator".to_string()),
         "29" => (Some("A1 / MTS".to_string()), "mobile", 45, "prefix 29 is shared historically; subprefix/MNP lookup required".to_string()),
@@ -351,24 +257,13 @@ fn guess_belarus_carrier(phone: &PhoneNormalized, national: &str) -> Option<Phon
         "17" => (Some("fixed Minsk area".to_string()), "fixed_line", 55, "prefix 17 suggests Minsk fixed-line/area numbering".to_string()),
         _ => (None, "unknown", 20, format!("Belarus prefix {} is not in the local static map", prefix)),
     };
-
-    Some(PhoneCarrierGuess {
-        phone_e164: phone.e164.clone(),
-        country: "Беларусь".to_string(),
-        operator,
-        number_type: number_type.to_string(),
-        confidence,
-        reason,
-    })
+    Some(PhoneCarrierGuess { phone_e164: phone.e164.clone(), country: "Беларусь".to_string(), operator, number_type: number_type.to_string(), confidence, reason })
 }
 
 pub fn build_phone_search_terms(phone: &PhoneNormalized) -> Vec<String> {
     let mut terms = Vec::new();
     let digits = phone.digits.trim();
-    if digits.is_empty() {
-        return terms;
-    }
-
+    if digits.is_empty() { return terms; }
     if let Some(e164) = &phone.e164 {
         terms.push(e164.clone());
         terms.push(format!("\"{}\"", e164));
@@ -378,12 +273,11 @@ pub fn build_phone_search_terms(phone: &PhoneNormalized) -> Vec<String> {
 
     if phone.country_code.as_deref() == Some("375") {
         if let Some(national) = phone.national_number.as_deref() {
-            let n = national.trim_start_matches('0');
-            if n.len() == 9 {
-                let operator = &n[..2];
-                let part1 = &n[2..5];
-                let part2 = &n[5..7];
-                let part3 = &n[7..9];
+            if national.len() == 9 {
+                let operator = &national[..2];
+                let part1 = &national[2..5];
+                let part2 = &national[5..7];
+                let part3 = &national[7..9];
                 terms.push(format!("80{}{}{}{}", operator, part1, part2, part3));
                 terms.push(format!("{} {} {} {}", operator, part1, part2, part3));
                 terms.push(format!("+375 {} {} {} {}", operator, part1, part2, part3));
@@ -396,7 +290,6 @@ pub fn build_phone_search_terms(phone: &PhoneNormalized) -> Vec<String> {
             terms.push(format!("site:{} \"{}\"", site, e164));
         }
     }
-
     terms.retain(|term| !term.trim().is_empty());
     terms.sort();
     terms.dedup();
@@ -405,32 +298,15 @@ pub fn build_phone_search_terms(phone: &PhoneNormalized) -> Vec<String> {
 
 fn push_finding(findings: &mut Vec<PhoneIntelFinding>, seen: &mut HashSet<String>, finding: PhoneIntelFinding) {
     let key = format!("{:?}:{}:{}", finding.entity_type, finding.value, finding.note);
-    if seen.insert(key) {
-        findings.push(finding);
-    }
+    if seen.insert(key) { findings.push(finding); }
 }
 
 fn materialize_findings(report: &mut PhoneIntelReport) {
     let findings = report.findings.clone();
     for finding in findings {
-        let sensitivity = match finding.entity_type {
-            EntityType::Phone => SensitivityClass::Personal,
-            _ => SensitivityClass::PublicLow,
-        };
-        let context = format!(
-            "phone_intel source={} note={} reason={} value={}",
-            finding.source_id, finding.note, finding.reason, finding.value
-        );
-        let pair = build_evidence_observation(EvidenceInput {
-            source_id: finding.source_id,
-            source_class: SourceClass::PublicOSINT,
-            entity_type: finding.entity_type,
-            raw_value: finding.value,
-            raw_context: context,
-            confidence: finding.confidence,
-            sensitivity,
-            tags: vec!["phone_intel".to_string(), finding.note],
-        });
+        let sensitivity = match finding.entity_type { EntityType::Phone => SensitivityClass::Personal, _ => SensitivityClass::PublicLow };
+        let context = format!("phone_intel source={} note={} reason={} value={}", finding.source_id, finding.note, finding.reason, finding.value);
+        let pair = build_evidence_observation(EvidenceInput { source_id: finding.source_id, source_class: SourceClass::PublicOSINT, entity_type: finding.entity_type, raw_value: finding.value, raw_context: context, confidence: finding.confidence, sensitivity, tags: vec!["phone_intel".to_string(), finding.note] });
         report.evidences.push(pair.evidence);
         report.observations.push(pair.observation);
     }
@@ -452,7 +328,8 @@ mod tests {
     #[test]
     fn normalizes_belarus_80_phone() {
         let phone = normalize_phone("80 25 799 76 76");
-        assert_eq!(phone.e164.as_deref(), Some("+3750257997676"));
+        assert_eq!(phone.e164.as_deref(), Some("+375257997676"));
+        assert_eq!(phone.national_number.as_deref(), Some("257997676"));
         assert_eq!(phone.country_code.as_deref(), Some("375"));
         assert!(phone.valid_shape);
     }
@@ -471,6 +348,7 @@ mod tests {
         let terms = build_phone_search_terms(&phone);
         assert!(terms.contains(&"+375257997676".to_string()));
         assert!(terms.contains(&"\"+375257997676\"".to_string()));
+        assert!(terms.contains(&"80257997676".to_string()));
         assert!(terms.iter().any(|term| term.starts_with("site:t.me")));
     }
 
