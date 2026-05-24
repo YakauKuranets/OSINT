@@ -32,6 +32,8 @@ mod phone_search;
 mod phone_context;
 mod phone_quality;
 mod phone_quality_runtime;
+mod manual_review_gate;
+mod manual_review_runtime;
 
 use axum::{
     routing::{post, get},
@@ -299,6 +301,11 @@ async fn main() {
     if let Some(v) = selectors.country.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Country, first_seen: now }); }
     if let Some(path) = selectors.telegram_export_path.as_deref() { add_telegram_export_seeds(&mut seeds, path); }
 
+    match manual_review_runtime::build_and_save_manual_review_gate_for_seeds(&seeds, "manual_review_gate_report.json") {
+        Ok(count) => println!("\n[*] Manual Review Gate: manual_review_gate_report.json | cards={}", count),
+        Err(err) => eprintln!("[!] Не удалось сохранить manual_review_gate_report.json: {}", err),
+    }
+
     add_phone_intel_seeds(&mut seeds).await;
     add_email_domain_checker_seeds(&mut seeds).await;
     run_autopilot_seeds(&mut seeds).await;
@@ -402,7 +409,7 @@ async fn report_handler() -> impl IntoResponse {
 
 async fn runtime_file_handler(Path(file): Path<String>) -> Response {
     let allowed = [
-        "run_profile_report.json", "preflight_report.json", "phone_intel_report.json", "phone_source_quality_report.json", "autopilot_report.json", "discovery_report.json", "public_search_report.json", "email_domain_report.json", "confidence_report.json", "conflict_report.json", "analysis_report.json", "master_report.json", "resolution_report.json", "stix_report.json", "ai_summary.txt", "dorks.txt",
+        "run_profile_report.json", "preflight_report.json", "manual_review_gate_report.json", "phone_intel_report.json", "phone_source_quality_report.json", "autopilot_report.json", "discovery_report.json", "public_search_report.json", "email_domain_report.json", "confidence_report.json", "conflict_report.json", "analysis_report.json", "master_report.json", "resolution_report.json", "stix_report.json", "ai_summary.txt", "dorks.txt",
     ];
     if !allowed.contains(&file.as_str()) || file.contains('/') || file.contains('\\') || file.contains("..") {
         return (StatusCode::NOT_FOUND, "not found").into_response();
