@@ -3,7 +3,7 @@ use crate::models::{EntityNode, EntityType, EvidenceRecord, ObservationRecord, S
 use crate::phone_search::{self, PhoneSearchInput, PhoneSearchProviderSummary, PhoneSearchProviderTrace};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -69,6 +69,30 @@ pub struct PhoneSourceYear {
     pub reason: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PhoneCorrelationLevel {
+    Weak,
+    Possible,
+    Probable,
+    Strong,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PhoneCorrelationSummary {
+    pub phone_value: String,
+    pub entity_type: EntityType,
+    pub value: String,
+    pub level: PhoneCorrelationLevel,
+    pub confidence: u8,
+    pub mentions: usize,
+    pub independent_sources: usize,
+    pub urls_count: usize,
+    pub year_hints: Vec<u32>,
+    pub source_ids: Vec<String>,
+    pub urls: Vec<String>,
+    pub reasons: Vec<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PhoneIntelFinding {
     pub source_id: String,
@@ -90,6 +114,9 @@ pub struct PhoneIntelStats {
     pub public_mentions: usize,
     pub linked_entities: usize,
     pub extracted_signals: usize,
+    pub correlation_summaries: usize,
+    pub strong_correlations: usize,
+    pub probable_correlations: usize,
     pub source_years: usize,
     pub providers_enabled: usize,
     pub providers_with_hits: usize,
@@ -108,6 +135,7 @@ pub struct PhoneIntelReport {
     pub traces: Vec<PhoneSearchProviderTrace>,
     pub public_mentions: Vec<PhonePublicMention>,
     pub extracted_signals: Vec<PhoneExtractedSignal>,
+    pub correlation_summaries: Vec<PhoneCorrelationSummary>,
     pub source_years: Vec<PhoneSourceYear>,
     pub linked_entities: Vec<PhoneLinkedEntity>,
     pub search_terms: Vec<String>,
@@ -115,6 +143,17 @@ pub struct PhoneIntelReport {
     pub evidences: Vec<EvidenceRecord>,
     pub observations: Vec<ObservationRecord>,
     pub stats: PhoneIntelStats,
+}
+
+#[derive(Debug, Default)]
+struct CorrelationBucket {
+    phone_value: String,
+    entity_type: Option<EntityType>,
+    value: String,
+    max_signal_confidence: u8,
+    mentions: usize,
+    source_ids: HashSet<String>,
+    urls: HashSet<String>,
 }
 
 fn now_unix() -> u64 {
@@ -257,9 +296,32 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
         report.phones.push(normalized);
     }
 
+    let correlation_summaries = aggregate_phone_correlations(&report.extracted_signals, &report.source_years);
+    for summary in &correlation_summaries {
+        report.linked_entities.push(PhoneLinkedEntity {
+            entity_type: summary.entity_type.clone(),
+            value: summary.value.clone(),
+            confidence: summary.confidence,
+            source_id: "phone_correlation_aggregator".to_string(),
+            reason: summary.reasons.join("; "),
+        });
+        push_finding(&mut report.findings, &mut seen_findings, PhoneIntelFinding {
+            source_id: "phone_correlation_aggregator".to_string(),
+            entity_type: summary.entity_type.clone(),
+            value: summary.value.clone(),
+            confidence: summary.confidence,
+            note: format!("phone_correlation_{:?}", summary.level).to_lowercase(),
+            reason: summary.reasons.join("; "),
+        });
+    }
+    report.correlation_summaries = correlation_summaries;
+
     report.stats.search_terms_generated = report.search_terms.len();
     report.stats.public_mentions = report.public_mentions.len();
     report.stats.extracted_signals = report.extracted_signals.len();
+    report.stats.correlation_summaries = report.correlation_summaries.len();
+    report.stats.strong_correlations = report.correlation_summaries.iter().filter(|s| s.level == PhoneCorrelationLevel::Strong).count();
+    report.stats.probable_correlations = report.correlation_summaries.iter().filter(|s| s.level == PhoneCorrelationLevel::Probable).count();
     report.stats.source_years = report.source_years.len();
     report.stats.linked_entities = report.linked_entities.len();
     report.stats.providers_enabled = report.provider_summaries.iter().filter(|p| p.enabled).count();
@@ -420,6 +482,90 @@ pub fn build_phone_search_terms(phone: &PhoneNormalized) -> Vec<String> {
     terms.sort();
     terms.dedup();
     terms
+}
+
+fn aggregate_phone_correlations(signals: &[PhoneExtractedSignal], years: &[PhoneSourceYear]) -> Vec<PhoneCorrelationSummary> {
+    let mut buckets: HashMap<String, CorrelationBucket> = HashMap::new();
+    for signal in signals {
+        let key = format!("{}::{:?}::{}", signal.phone_value, signal.entity_type, signal.value.to_lowercase());
+        let bucket = buckets.entry(key).or_insert_with(|| CorrelationBucket {
+            phone_value: signal.phone_value.clone(),
+            entity_type: Some(signal.entity_type.clone()),
+            value: signal.value.clone(),
+            ..CorrelationBucket::default()
+        });
+        bucket.mentions += 1;
+        bucket.max_signal_confidence = bucket.max_signal_confidence.max(signal.confidence);
+        bucket.source_ids.insert(signal.source_id.clone());
+        if let Some(url) = &signal.url { bucket.urls.insert(url.clone()); }
+    }
+
+    let mut summaries = Vec::new();
+    for bucket in buckets.into_values() {
+        let entity_type = bucket.entity_type.unwrap_or(EntityType::DataSource);
+        let year_hints = years_for_phone(years, &bucket.phone_value);
+        let independent_sources = bucket.source_ids.len();
+        let urls_count = bucket.urls.len();
+        let confidence = correlation_confidence(bucket.max_signal_confidence, bucket.mentions, independent_sources, urls_count, year_hints.len());
+        let level = correlation_level(confidence, bucket.mentions, independent_sources);
+        let mut source_ids = bucket.source_ids.into_iter().collect::<Vec<_>>();
+        let mut urls = bucket.urls.into_iter().collect::<Vec<_>>();
+        source_ids.sort();
+        urls.sort();
+        let reasons = correlation_reasons(&level, confidence, bucket.mentions, independent_sources, urls_count, &year_hints);
+        summaries.push(PhoneCorrelationSummary {
+            phone_value: bucket.phone_value,
+            entity_type,
+            value: bucket.value,
+            level,
+            confidence,
+            mentions: bucket.mentions,
+            independent_sources,
+            urls_count,
+            year_hints,
+            source_ids,
+            urls,
+            reasons,
+        });
+    }
+    summaries.sort_by(|a, b| b.confidence.cmp(&a.confidence).then_with(|| b.mentions.cmp(&a.mentions)));
+    summaries
+}
+
+fn years_for_phone(years: &[PhoneSourceYear], phone_value: &str) -> Vec<u32> {
+    let mut out = years.iter().filter(|year| year.phone_value == phone_value).map(|year| year.year).collect::<Vec<_>>();
+    out.sort();
+    out.dedup();
+    out
+}
+
+fn correlation_confidence(base: u8, mentions: usize, independent_sources: usize, urls_count: usize, year_count: usize) -> u8 {
+    let mut score = base as usize;
+    score += mentions.saturating_sub(1).min(6) * 4;
+    score += independent_sources.saturating_sub(1).min(4) * 9;
+    score += urls_count.min(4) * 3;
+    score += year_count.min(3) * 2;
+    score.min(92) as u8
+}
+
+fn correlation_level(confidence: u8, mentions: usize, independent_sources: usize) -> PhoneCorrelationLevel {
+    if confidence >= 82 && independent_sources >= 2 && mentions >= 2 { PhoneCorrelationLevel::Strong }
+    else if confidence >= 68 && (independent_sources >= 2 || mentions >= 2) { PhoneCorrelationLevel::Probable }
+    else if confidence >= 50 { PhoneCorrelationLevel::Possible }
+    else { PhoneCorrelationLevel::Weak }
+}
+
+fn correlation_reasons(level: &PhoneCorrelationLevel, confidence: u8, mentions: usize, independent_sources: usize, urls_count: usize, year_hints: &[u32]) -> Vec<String> {
+    let mut reasons = Vec::new();
+    reasons.push(format!("aggregated phone-context signal level={:?} confidence={}", level, confidence));
+    reasons.push(format!("mentions={} independent_sources={} urls_count={}", mentions, independent_sources, urls_count));
+    if !year_hints.is_empty() {
+        reasons.push(format!("year hints present: {:?}; these are source/date hints, not guaranteed first_seen", year_hints));
+    }
+    if independent_sources < 2 {
+        reasons.push("single-source correlation; do not treat as identity confirmation".to_string());
+    }
+    reasons
 }
 
 fn extract_signals_from_mention(mention: &PhonePublicMention) -> Vec<PhoneExtractedSignal> {
@@ -599,5 +745,17 @@ mod tests {
         assert!(signals.iter().any(|s| s.entity_type == EntityType::Email && s.value == "test@example.com"));
         assert!(signals.iter().any(|s| s.entity_type == EntityType::Username && s.value == "@tester"));
         assert_eq!(extract_years_from_mention(&mention)[0].year, 2021);
+    }
+    #[test]
+    fn aggregates_repeated_phone_signals() {
+        let signals = vec![
+            PhoneExtractedSignal { phone_value: "+375257997676".to_string(), entity_type: EntityType::Email, value: "test@example.com".to_string(), source_id: "s1".to_string(), url: Some("https://a.example".to_string()), confidence: 62, reason: "r".to_string(), context_snippet: "c".to_string() },
+            PhoneExtractedSignal { phone_value: "+375257997676".to_string(), entity_type: EntityType::Email, value: "test@example.com".to_string(), source_id: "s2".to_string(), url: Some("https://b.example".to_string()), confidence: 62, reason: "r".to_string(), context_snippet: "c".to_string() },
+        ];
+        let years = vec![PhoneSourceYear { phone_value: "+375257997676".to_string(), source_id: "s1".to_string(), url: None, year: 2021, confidence: 45, reason: "year".to_string() }];
+        let summaries = aggregate_phone_correlations(&signals, &years);
+        assert_eq!(summaries.len(), 1);
+        assert!(summaries[0].confidence >= 68);
+        assert_eq!(summaries[0].independent_sources, 2);
     }
 }
