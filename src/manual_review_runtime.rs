@@ -6,7 +6,10 @@ use crate::manual_review_gate::{
     ManualReviewGateCard,
 };
 use crate::models::{EntityNode, EntityType};
-use assisted_verification_flow::{build_phone_assisted_verification_flow, AssistedPlatform, AssistedVerificationFlow};
+use assisted_verification_flow::{
+    build_phone_assisted_verification_flow, validate_assisted_verification_flow,
+    AssistedFlowValidationReport, AssistedPlatform, AssistedVerificationFlow,
+};
 use std::sync::Once;
 use std::time::Duration;
 
@@ -30,12 +33,16 @@ pub fn build_and_save_manual_review_gate_for_seeds(seeds: &[EntityNode], path: &
 
 fn enrich_manual_review_gate_report_with_assisted_flows(path: &str, seeds: &[EntityNode]) -> Result<(), String> {
     let flows = assisted_flows_for_phone_seeds(seeds);
+    let validations = validation_reports_for_flows(&flows);
+    let summary = assisted_validation_summary(&validations);
     let raw = std::fs::read_to_string(path).map_err(|err| format!("read {}: {}", path, err))?;
     let mut value: serde_json::Value = serde_json::from_str(&raw).map_err(|err| format!("parse {}: {}", path, err))?;
     if let Some(obj) = value.as_object_mut() {
         obj.insert("assisted_verification_flow_count".to_string(), serde_json::json!(flows.len()));
         obj.insert("assisted_verification_platforms".to_string(), serde_json::json!(["Telegram", "Viber", "WhatsApp", "VK", "MAX"]));
         obj.insert("assisted_verification_flows".to_string(), serde_json::to_value(&flows).map_err(|err| format!("serialize assisted flows: {}", err))?);
+        obj.insert("assisted_verification_flow_validations".to_string(), serde_json::to_value(&validations).map_err(|err| format!("serialize assisted validations: {}", err))?);
+        obj.insert("assisted_verification_validation".to_string(), summary);
         obj.insert("assisted_verification_policy".to_string(), serde_json::json!({
             "mode": "assisted_verification_not_hidden_probe",
             "raw_data_stored": false,
@@ -50,6 +57,8 @@ fn enrich_manual_review_gate_report_with_assisted_flows(path: &str, seeds: &[Ent
 
 fn save_standalone_assisted_verification_report(seeds: &[EntityNode], path: &str) -> Result<(), String> {
     let flows = assisted_flows_for_phone_seeds(seeds);
+    let validations = validation_reports_for_flows(&flows);
+    let summary = assisted_validation_summary(&validations);
     let value = serde_json::json!({
         "flow_count": flows.len(),
         "platforms": ["Telegram", "Viber", "WhatsApp", "VK", "MAX"],
@@ -57,6 +66,8 @@ fn save_standalone_assisted_verification_report(seeds: &[EntityNode], path: &str
         "raw_data_stored": false,
         "automated_account_discovery": false,
         "identity_confirmation_allowed": false,
+        "validation": summary,
+        "flow_validations": validations,
         "flows": flows
     });
     let json = serde_json::to_string_pretty(&value).map_err(|err| format!("serialize {}: {}", path, err))?;
@@ -69,6 +80,42 @@ fn assisted_flows_for_phone_seeds(seeds: &[EntityNode]) -> Vec<AssistedVerificat
         .filter(|seed| matches!(seed.entity_type, EntityType::Phone))
         .map(|seed| build_phone_assisted_verification_flow(&seed.value))
         .collect()
+}
+
+fn validation_reports_for_flows(flows: &[AssistedVerificationFlow]) -> Vec<AssistedFlowValidationReport> {
+    flows.iter().map(validate_assisted_verification_flow).collect()
+}
+
+fn assisted_validation_summary(validations: &[AssistedFlowValidationReport]) -> serde_json::Value {
+    let flow_count = validations.len();
+    let ready_count = validations.iter().filter(|v| v.ready).count();
+    let readiness_percent = if validations.is_empty() {
+        100
+    } else {
+        validations.iter().map(|v| v.readiness_percent as usize).min().unwrap_or(0)
+    };
+    let raw_data_violations: usize = validations.iter().map(|v| v.raw_data_violations).sum();
+    let automated_discovery_violations: usize = validations.iter().map(|v| v.automated_discovery_violations).sum();
+    let identity_confirmation_violations: usize = validations.iter().map(|v| v.identity_confirmation_violations).sum();
+    let forbidden_action_violations: usize = validations.iter().map(|v| v.forbidden_action_violations).sum();
+    let missing_platforms = validations
+        .iter()
+        .flat_map(|v| v.missing_platforms.clone())
+        .collect::<Vec<_>>();
+
+    serde_json::json!({
+        "ready": readiness_percent == 100 && raw_data_violations == 0 && automated_discovery_violations == 0 && identity_confirmation_violations == 0 && forbidden_action_violations == 0,
+        "readiness_percent": readiness_percent,
+        "flow_count": flow_count,
+        "ready_count": ready_count,
+        "expected_platforms": ["Telegram", "Viber", "WhatsApp", "VK", "MAX"],
+        "missing_platforms": missing_platforms,
+        "raw_data_violations": raw_data_violations,
+        "automated_discovery_violations": automated_discovery_violations,
+        "identity_confirmation_violations": identity_confirmation_violations,
+        "forbidden_action_violations": forbidden_action_violations,
+        "status": if readiness_percent == 100 { "ready" } else { "needs_fix" }
+    })
 }
 
 fn start_dashboard_patcher_once() {
@@ -110,15 +157,29 @@ async function loadManualReviewGate(){
     const data=await r.json();
     const cards=data.cards||[];
     const flows=data.assisted_verification_flows||[];
+    const validation=data.assisted_verification_validation||{};
+    const flowValidations=data.assisted_verification_flow_validations||[];
     box.innerHTML=row('Operator review cards',`pending=${n(data.pending_count)} | rejected=${n(data.rejected_count)} | questionable=${n(data.questionable_count)} | more_verification=${n(data.more_verification_count)} | probable=${n(data.probable_count)}`,data.pending_count?'warn':(data.probable_count?'ok':''));
-    box.innerHTML+=row('Assisted verification',`flows=${n(data.assisted_verification_flow_count||flows.length)} | platforms=${tags(data.assisted_verification_platforms||['Telegram','Viber','WhatsApp','VK','MAX'])}<br>mode=${escapeHtml(data.assisted_verification_policy?.mode||'assisted_verification_not_hidden_probe')} | raw_data=${data.assisted_verification_policy?.raw_data_stored===true} | auto_discovery=${data.assisted_verification_policy?.automated_account_discovery===true}`,'warn');
+    box.innerHTML+=row('Assisted verification readiness',`ready=${validation.ready===true} | readiness=${n(validation.readiness_percent)}% | status=${escapeHtml(validation.status||'unknown')}<br>`+
+      `flows=${n(data.assisted_verification_flow_count||flows.length)} | ready_flows=${n(validation.ready_count)} | platforms=${tags(data.assisted_verification_platforms||['Telegram','Viber','WhatsApp','VK','MAX'])}<br>`+
+      `raw_violations=${n(validation.raw_data_violations)} | auto_discovery_violations=${n(validation.automated_discovery_violations)} | identity_violations=${n(validation.identity_confirmation_violations)} | guardrail_violations=${n(validation.forbidden_action_violations)}<br>`+
+      `mode=${escapeHtml(data.assisted_verification_policy?.mode||'assisted_verification_not_hidden_probe')}`,
+      validation.ready===true?'ok':'bad');
+    for(const v of flowValidations.slice(0,4)){
+      box.innerHTML+=row(`Flow validation / ${v.ready?'ready':'needs_fix'}`,
+        `readiness=${n(v.readiness_percent)}% | profiles=${n(v.platform_profile_count)} | steps=${n(v.total_steps)} | messenger_steps=${n(v.messenger_steps_present)}/${n(v.messenger_steps_expected)}<br>`+
+        `missing=${tags(v.missing_platforms||[],true)}<br>`+
+        `raw=${n(v.raw_data_violations)} | auto=${n(v.automated_discovery_violations)} | identity=${n(v.identity_confirmation_violations)} | guardrails=${n(v.forbidden_action_violations)}<br>`+
+        `findings=${tags((v.findings||[]).slice(0,5))}`,
+        v.ready?'ok':'bad');
+    }
     for(const f of flows.slice(0,4)){
-      const platformNames=[...new Set((f.steps||[]).map(s=>s.platform).filter(Boolean))];
+      const platformNames=[...new Set((f.platform_profiles||[]).map(p=>p.display_name).filter(Boolean))];
       const ready=(f.steps||[]).filter(s=>s.status==='ReadyForOperator').length;
       box.innerHTML+=row(`Assisted flow / ${f.decision||'Pending'}`,
         `selector=<code>${escapeHtml(f.selector_masked)}</code> | steps=${n((f.steps||[]).length)} | ready=${n(ready)}<br>`+
         `platforms=${tags(platformNames)}<br>`+
-        `cap=${n(f.confidence_cap)} | main_confidence=${f.contributes_to_main_confidence} | identity_confirm=${f.identity_confirmation_allowed} | raw_data=${f.raw_data_stored}<br>`+
+        `cap=${n(f.confidence_cap)} | main_confidence=${f.contributes_to_main_confidence} | identity_confirm=${f.identity_confirmation_allowed} | raw_data=${f.raw_data_stored} | auto_discovery=${f.automated_account_discovery}<br>`+
         `warnings=${tags((f.global_warnings||[]).slice(0,4),true)}`,
         statusCls(f.decision));
     }
@@ -276,5 +337,19 @@ mod tests {
         assert!(names.contains(&"MAX".to_string()));
         assert!(flows[0].steps.iter().all(|step| !step.raw_data_stored));
         assert!(flows[0].steps.iter().all(|step| !step.automated_account_discovery));
+    }
+
+    #[test]
+    fn assisted_validation_summary_is_ready_for_generated_phone_flow() {
+        let seeds = vec![EntityNode { value: "+000000000000".to_string(), entity_type: EntityType::Phone, first_seen: 1 }];
+        let flows = assisted_flows_for_phone_seeds(&seeds);
+        let validations = validation_reports_for_flows(&flows);
+        let summary = assisted_validation_summary(&validations);
+        assert_eq!(summary.get("ready").and_then(|v| v.as_bool()), Some(true));
+        assert_eq!(summary.get("readiness_percent").and_then(|v| v.as_u64()), Some(100));
+        assert_eq!(summary.get("raw_data_violations").and_then(|v| v.as_u64()), Some(0));
+        assert_eq!(summary.get("automated_discovery_violations").and_then(|v| v.as_u64()), Some(0));
+        assert_eq!(summary.get("identity_confirmation_violations").and_then(|v| v.as_u64()), Some(0));
+        assert_eq!(summary.get("forbidden_action_violations").and_then(|v| v.as_u64()), Some(0));
     }
 }
