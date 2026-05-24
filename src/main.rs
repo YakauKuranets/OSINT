@@ -29,6 +29,7 @@ mod master_report;
 mod preflight;
 mod phone_intel;
 mod phone_search;
+mod phone_context;
 mod phone_quality;
 mod phone_quality_runtime;
 
