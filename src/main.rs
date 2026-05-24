@@ -30,6 +30,7 @@ mod preflight;
 mod phone_intel;
 mod phone_search;
 mod phone_quality;
+mod phone_quality_runtime;
 
 use axum::{
     routing::{post, get},
@@ -226,6 +227,8 @@ async fn add_phone_intel_seeds(seeds: &mut Vec<models::EntityNode>) {
     println!("  phones={} valid={} carrier_guesses={} search_terms={} linked_entities={} observations={}", report.stats.phones_checked, report.stats.valid_shape, report.stats.carrier_guesses, report.stats.search_terms_generated, report.stats.linked_entities, report.stats.observations_count);
     if let Err(err) = phone_intel::save_phone_intel_report(&report, "phone_intel_report.json") {
         eprintln!("  [!] Не удалось сохранить phone_intel_report.json: {}", err);
+    } else if let Err(err) = phone_quality_runtime::enrich_phone_intel_report_file("phone_intel_report.json") {
+        eprintln!("  [!] Не удалось обогатить phone_intel_report.json source_quality: {}", err);
     }
     let nodes = phone_intel::observations_as_entity_nodes(&report, 100);
     println!("  [+] Добавлено phone-derived селекторов: {}", nodes.len());
@@ -256,6 +259,7 @@ async fn run_autopilot_seeds(seeds: &mut Vec<models::EntityNode>) {
     }
     if let Some(last_cycle) = report.cycles.last() {
         let _ = phone_intel::save_phone_intel_report(&last_cycle.phone_intel_report, "phone_intel_report.json");
+        let _ = phone_quality_runtime::enrich_phone_intel_report_file("phone_intel_report.json");
         let _ = checkers::save_email_domain_report(&last_cycle.email_domain_report, "email_domain_report.json");
         let _ = discovery::save_discovery_report(&last_cycle.discovery_report, "discovery_report.json");
         let _ = public_search::save_public_search_report(&last_cycle.public_search_report, "public_search_report.json");
@@ -397,7 +401,7 @@ async fn report_handler() -> impl IntoResponse {
 
 async fn runtime_file_handler(Path(file): Path<String>) -> Response {
     let allowed = [
-        "run_profile_report.json", "preflight_report.json", "phone_intel_report.json", "autopilot_report.json", "discovery_report.json", "public_search_report.json", "email_domain_report.json", "confidence_report.json", "conflict_report.json", "analysis_report.json", "master_report.json", "resolution_report.json", "stix_report.json", "ai_summary.txt", "dorks.txt",
+        "run_profile_report.json", "preflight_report.json", "phone_intel_report.json", "phone_source_quality_report.json", "autopilot_report.json", "discovery_report.json", "public_search_report.json", "email_domain_report.json", "confidence_report.json", "conflict_report.json", "analysis_report.json", "master_report.json", "resolution_report.json", "stix_report.json", "ai_summary.txt", "dorks.txt",
     ];
     if !allowed.contains(&file.as_str()) || file.contains('/') || file.contains('\\') || file.contains("..") {
         return (StatusCode::NOT_FOUND, "not found").into_response();
