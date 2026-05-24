@@ -6,6 +6,7 @@ use serde_json::Value;
 pub enum PhoneSearchProviderKind {
     GitHubCode,
     GitHubIssues,
+    UrlProbe,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,6 +55,7 @@ impl PhoneSearchProvider {
         let id = match kind {
             PhoneSearchProviderKind::GitHubCode => "phone_github_code_search",
             PhoneSearchProviderKind::GitHubIssues => "phone_github_issue_search",
+            PhoneSearchProviderKind::UrlProbe => "phone_public_url_probe",
         };
         Self { kind, id }
     }
@@ -76,6 +78,13 @@ pub async fn run_phone_search_providers(client: &Client, input: &PhoneSearchInpu
             errors: 0,
             last_error: None,
         };
+
+        if provider.kind == PhoneSearchProviderKind::UrlProbe && configured_probe_templates().is_empty() {
+            summary.enabled = false;
+            summary.last_error = Some("XGEN_PHONE_PROBE_URLS is empty; url_probe provider skipped".to_string());
+            report.providers.push(summary);
+            continue;
+        }
 
         for term in &terms {
             summary.terms_attempted += 1;
@@ -102,22 +111,25 @@ async fn run_provider(client: &Client, provider: &PhoneSearchProvider, input: &P
     match provider.kind {
         PhoneSearchProviderKind::GitHubCode => search_github_code_for_phone(client, input, term).await,
         PhoneSearchProviderKind::GitHubIssues => search_github_issues_for_phone(client, input, term).await,
+        PhoneSearchProviderKind::UrlProbe => probe_configured_public_urls(client, input, term).await,
     }
 }
 
 fn configured_providers() -> Vec<PhoneSearchProvider> {
-    let raw = std::env::var("XGEN_PHONE_PROVIDERS").unwrap_or_else(|_| "github_code,github_issues".to_string());
+    let raw = std::env::var("XGEN_PHONE_PROVIDERS").unwrap_or_else(|_| "github_code,github_issues,url_probe".to_string());
     let mut providers = Vec::new();
     for item in raw.split(',').map(|s| s.trim().to_lowercase()).filter(|s| !s.is_empty()) {
         match item.as_str() {
             "github_code" | "phone_github_code_search" => providers.push(PhoneSearchProvider::new(PhoneSearchProviderKind::GitHubCode)),
             "github_issues" | "phone_github_issue_search" => providers.push(PhoneSearchProvider::new(PhoneSearchProviderKind::GitHubIssues)),
+            "url_probe" | "phone_public_url_probe" => providers.push(PhoneSearchProvider::new(PhoneSearchProviderKind::UrlProbe)),
             _ => {}
         }
     }
     if providers.is_empty() {
         providers.push(PhoneSearchProvider::new(PhoneSearchProviderKind::GitHubCode));
         providers.push(PhoneSearchProvider::new(PhoneSearchProviderKind::GitHubIssues));
+        providers.push(PhoneSearchProvider::new(PhoneSearchProviderKind::UrlProbe));
     }
     providers
 }
@@ -136,6 +148,34 @@ fn phone_search_per_page() -> usize {
         .and_then(|v| v.parse::<usize>().ok())
         .unwrap_or(5)
         .clamp(1, 10)
+}
+
+fn phone_probe_max_bytes() -> usize {
+    std::env::var("XGEN_PHONE_PROBE_MAX_BYTES")
+        .ok()
+        .and_then(|v| v.parse::<usize>().ok())
+        .unwrap_or(512_000)
+        .clamp(16_384, 2_000_000)
+}
+
+fn configured_probe_templates() -> Vec<String> {
+    std::env::var("XGEN_PHONE_PROBE_URLS")
+        .unwrap_or_default()
+        .split('|')
+        .map(|s| s.trim().to_string())
+        .filter(|s| is_safe_probe_template(s))
+        .collect()
+}
+
+fn is_safe_probe_template(template: &str) -> bool {
+    let lowered = template.to_lowercase();
+    !template.is_empty()
+        && template.contains("{term}")
+        && (lowered.starts_with("https://") || lowered.starts_with("http://"))
+        && !lowered.contains("localhost")
+        && !lowered.contains("127.0.0.1")
+        && !lowered.contains("169.254.")
+        && !lowered.contains("file:")
 }
 
 pub fn focused_phone_terms(input: &PhoneSearchInput) -> Vec<String> {
@@ -217,6 +257,85 @@ async fn search_github_issues_for_phone(client: &Client, input: &PhoneSearchInpu
     Ok(hits)
 }
 
+async fn probe_configured_public_urls(client: &Client, input: &PhoneSearchInput, term: &str) -> Result<Vec<PhoneSearchHit>, String> {
+    let templates = configured_probe_templates();
+    if templates.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let variants = match_variants(input, term);
+    let mut hits = Vec::new();
+    for template in templates.into_iter().take(16) {
+        let url = template.replace("{term}", &url_encode(term));
+        let body = fetch_text_limited(client, &url).await?;
+        let lowered_body = body.to_lowercase();
+        for variant in &variants {
+            if variant.is_empty() { continue; }
+            let lowered_variant = variant.to_lowercase();
+            if lowered_body.contains(&lowered_variant) {
+                hits.push(PhoneSearchHit {
+                    provider_id: "phone_public_url_probe".to_string(),
+                    url: Some(url.clone()),
+                    matched_value: input.phone_e164.clone().unwrap_or_else(|| input.digits.clone()),
+                    context_snippet: context_around_match(&body, variant, 180),
+                    confidence: 70,
+                    note: "configured_public_url_probe_exact_match".to_string(),
+                });
+                break;
+            }
+        }
+    }
+    Ok(hits)
+}
+
+fn match_variants(input: &PhoneSearchInput, term: &str) -> Vec<String> {
+    let mut variants = vec![term.to_string(), input.digits.clone()];
+    if let Some(e164) = &input.phone_e164 { variants.push(e164.clone()); }
+    if input.country_code.as_deref() == Some("375") {
+        if let Some(national) = input.national_number.as_deref() {
+            if national.len() == 9 {
+                variants.push(format!("80{}", national));
+                variants.push(format!("+375{}", national));
+            }
+        }
+    }
+    variants.retain(|v| !v.trim().is_empty());
+    variants.sort();
+    variants.dedup();
+    variants
+}
+
+async fn fetch_text_limited(client: &Client, url: &str) -> Result<String, String> {
+    let text = client
+        .get(url)
+        .header("User-Agent", "XGEN-PhoneProbe/1.0 (+configured public URL probe)")
+        .send()
+        .await
+        .map_err(|err| format!("url_probe request failed: {}", err))?
+        .text()
+        .await
+        .map_err(|err| format!("url_probe body read failed: {}", err))?;
+    let limit = phone_probe_max_bytes();
+    Ok(text.chars().take(limit).collect())
+}
+
+fn context_around_match(body: &str, needle: &str, radius: usize) -> String {
+    let lower_body = body.to_lowercase();
+    let lower_needle = needle.to_lowercase();
+    if let Some(pos) = lower_body.find(&lower_needle) {
+        let start = pos.saturating_sub(radius);
+        let end = (pos + needle.len() + radius).min(body.len());
+        return body[start..end]
+            .chars()
+            .map(|c| if c.is_control() { ' ' } else { c })
+            .collect::<String>()
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ");
+    }
+    "exact phone variant matched configured public URL".to_string()
+}
+
 async fn github_json(client: &Client, url: &str) -> Result<Value, String> {
     client
         .get(url)
@@ -265,5 +384,28 @@ mod tests {
         assert!(terms.contains(&"375257997676".to_string()));
         assert!(terms.contains(&"80257997676".to_string()));
         assert!(!terms.iter().any(|term| term.starts_with("site:")));
+    }
+
+    #[test]
+    fn rejects_unsafe_probe_template() {
+        assert!(!is_safe_probe_template("file:///tmp/{term}"));
+        assert!(!is_safe_probe_template("http://127.0.0.1/{term}"));
+        assert!(!is_safe_probe_template("https://example.com/no-placeholder"));
+        assert!(is_safe_probe_template("https://example.com/search?q={term}"));
+    }
+
+    #[test]
+    fn match_variants_include_belarus_forms() {
+        let input = PhoneSearchInput {
+            phone_e164: Some("+375257997676".to_string()),
+            digits: "375257997676".to_string(),
+            country_code: Some("375".to_string()),
+            national_number: Some("257997676".to_string()),
+            terms: vec![],
+        };
+        let variants = match_variants(&input, "+375257997676");
+        assert!(variants.contains(&"+375257997676".to_string()));
+        assert!(variants.contains(&"375257997676".to_string()));
+        assert!(variants.contains(&"80257997676".to_string()));
     }
 }
