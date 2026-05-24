@@ -25,8 +25,14 @@ pub struct MasterVerdict {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MasterSummary {
     pub run_profile: Option<String>,
+    pub phone_checked: Option<u64>,
+    pub phone_valid_shape: Option<u64>,
+    pub phone_carrier_guesses: Option<u64>,
+    pub phone_search_terms_generated: Option<u64>,
+    pub phone_linked_entities: Option<u64>,
     pub autopilot_cycles: Option<u64>,
     pub autopilot_new_nodes: Option<u64>,
+    pub autopilot_phone_new_nodes: Option<u64>,
     pub autopilot_email_domain_new_nodes: Option<u64>,
     pub autopilot_discovery_new_nodes: Option<u64>,
     pub autopilot_public_search_new_nodes: Option<u64>,
@@ -56,16 +62,14 @@ pub struct ReportSlot {
 }
 
 fn now_unix() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs()
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs()
 }
 
 pub fn build_master_report() -> MasterReport {
     let report_paths = vec![
         ("run_profile", "run_profile_report.json"),
         ("preflight", "preflight_report.json"),
+        ("phone_intel", "phone_intel_report.json"),
         ("autopilot", "autopilot_report.json"),
         ("discovery", "discovery_report.json"),
         ("public_search", "public_search_report.json"),
@@ -79,18 +83,14 @@ pub fn build_master_report() -> MasterReport {
 
     let mut reports = BTreeMap::new();
     let mut missing_reports = Vec::new();
-
     for (key, path) in report_paths {
         let slot = load_report_slot(path);
-        if !slot.loaded {
-            missing_reports.push(path.to_string());
-        }
+        if !slot.loaded { missing_reports.push(path.to_string()); }
         reports.insert(key.to_string(), slot);
     }
 
     let summary = build_summary(&reports);
     let verdict = build_verdict(&summary, &reports, &missing_reports);
-
     MasterReport {
         generated_at: now_unix(),
         verdict,
@@ -99,6 +99,7 @@ pub fn build_master_report() -> MasterReport {
         missing_reports,
         recommended_review_order: vec![
             "master_report.json".to_string(),
+            "phone_intel_report.json".to_string(),
             "confidence_report.json".to_string(),
             "conflict_report.json".to_string(),
             "email_domain_report.json".to_string(),
@@ -112,8 +113,7 @@ pub fn build_master_report() -> MasterReport {
 }
 
 pub fn save_master_report(report: &MasterReport, path: &str) -> Result<(), String> {
-    let json = serde_json::to_string_pretty(report)
-        .map_err(|err| format!("serialize master report: {}", err))?;
+    let json = serde_json::to_string_pretty(report).map_err(|err| format!("serialize master report: {}", err))?;
     std::fs::write(path, json).map_err(|err| format!("write {}: {}", path, err))
 }
 
@@ -126,174 +126,71 @@ pub fn build_and_save_master_report(path: &str) -> Result<MasterReport, String> 
 fn load_report_slot(path: &str) -> ReportSlot {
     match std::fs::read_to_string(path) {
         Ok(raw) => match serde_json::from_str::<Value>(&raw) {
-            Ok(value) => ReportSlot {
-                path: path.to_string(),
-                loaded: true,
-                data: Some(value),
-                error: None,
-            },
-            Err(err) => ReportSlot {
-                path: path.to_string(),
-                loaded: false,
-                data: None,
-                error: Some(format!("parse error: {}", err)),
-            },
+            Ok(value) => ReportSlot { path: path.to_string(), loaded: true, data: Some(value), error: None },
+            Err(err) => ReportSlot { path: path.to_string(), loaded: false, data: None, error: Some(format!("parse error: {}", err)) },
         },
-        Err(err) => ReportSlot {
-            path: path.to_string(),
-            loaded: false,
-            data: None,
-            error: Some(format!("read error: {}", err)),
-        },
+        Err(err) => ReportSlot { path: path.to_string(), loaded: false, data: None, error: Some(format!("read error: {}", err)) },
     }
 }
 
 fn build_summary(reports: &BTreeMap<String, ReportSlot>) -> MasterSummary {
-    let run_profile = get_report(reports, "run_profile")
-        .and_then(|v| v.get("label"))
-        .and_then(Value::as_str)
-        .map(|s| s.to_string());
-
+    let run_profile = get_report(reports, "run_profile").and_then(|v| v.get("label")).and_then(Value::as_str).map(|s| s.to_string());
     MasterSummary {
         run_profile,
-        autopilot_cycles: get_report(reports, "autopilot")
-            .and_then(|v| v.get("cycles"))
-            .and_then(Value::as_array)
-            .map(|arr| arr.len() as u64),
-        autopilot_new_nodes: get_report(reports, "autopilot")
-            .and_then(|v| v.get("total_new_nodes"))
-            .and_then(Value::as_u64),
+        phone_checked: get_report(reports, "phone_intel").and_then(|v| v.pointer("/stats/phones_checked")).and_then(Value::as_u64),
+        phone_valid_shape: get_report(reports, "phone_intel").and_then(|v| v.pointer("/stats/valid_shape")).and_then(Value::as_u64),
+        phone_carrier_guesses: get_report(reports, "phone_intel").and_then(|v| v.pointer("/stats/carrier_guesses")).and_then(Value::as_u64),
+        phone_search_terms_generated: get_report(reports, "phone_intel").and_then(|v| v.pointer("/stats/search_terms_generated")).and_then(Value::as_u64),
+        phone_linked_entities: get_report(reports, "phone_intel").and_then(|v| v.pointer("/stats/linked_entities")).and_then(Value::as_u64),
+        autopilot_cycles: get_report(reports, "autopilot").and_then(|v| v.get("cycles")).and_then(Value::as_array).map(|arr| arr.len() as u64),
+        autopilot_new_nodes: get_report(reports, "autopilot").and_then(|v| v.get("total_new_nodes")).and_then(Value::as_u64),
+        autopilot_phone_new_nodes: sum_cycle_field(reports, "new_phone_intel_nodes"),
         autopilot_email_domain_new_nodes: sum_cycle_field(reports, "new_email_domain_nodes"),
         autopilot_discovery_new_nodes: sum_cycle_field(reports, "new_discovery_nodes"),
         autopilot_public_search_new_nodes: sum_cycle_field(reports, "new_public_search_nodes"),
-        discovery_findings: get_report(reports, "discovery")
-            .and_then(|v| v.pointer("/stats/findings_count"))
-            .and_then(Value::as_u64),
-        discovery_blocked: get_report(reports, "discovery")
-            .and_then(|v| v.pointer("/stats/blocked_by_noise_rules"))
-            .and_then(Value::as_u64),
-        discovery_downranked: get_report(reports, "discovery")
-            .and_then(|v| v.pointer("/stats/downranked_by_noise_rules"))
-            .and_then(Value::as_u64),
-        public_search_findings: get_report(reports, "public_search")
-            .and_then(|v| v.pointer("/stats/findings_count"))
-            .and_then(Value::as_u64),
-        public_search_blocked: get_report(reports, "public_search")
-            .and_then(|v| v.pointer("/stats/blocked_by_noise_rules"))
-            .and_then(Value::as_u64),
-        public_search_downranked: get_report(reports, "public_search")
-            .and_then(|v| v.pointer("/stats/downranked_by_noise_rules"))
-            .and_then(Value::as_u64),
-        email_valid_count: get_report(reports, "email_domain")
-            .and_then(|v| v.pointer("/stats/valid_emails"))
-            .and_then(Value::as_u64),
-        email_domain_count: get_report(reports, "email_domain")
-            .and_then(|v| v.pointer("/stats/domains_checked"))
-            .and_then(Value::as_u64),
-        email_username_candidates: get_report(reports, "email_domain")
-            .and_then(|v| v.pointer("/stats/username_candidates"))
-            .and_then(Value::as_u64),
-        email_free_mail_domains: get_report(reports, "email_domain")
-            .and_then(|v| v.pointer("/stats/free_mail_domains"))
-            .and_then(Value::as_u64),
-        email_corporate_domains: get_report(reports, "email_domain")
-            .and_then(|v| v.pointer("/stats/corporate_domains"))
-            .and_then(Value::as_u64),
-        email_suspicious_domains: get_report(reports, "email_domain")
-            .and_then(|v| v.pointer("/stats/suspicious_domains"))
-            .and_then(Value::as_u64),
-        conflict_count: get_report(reports, "conflicts")
-            .and_then(|v| v.get("findings"))
-            .and_then(Value::as_array)
-            .map(|arr| arr.len() as u64),
-        active_links: get_report(reports, "analysis")
-            .and_then(|v| v.pointer("/profile_summary/active_links"))
-            .and_then(Value::as_u64)
-            .or_else(|| get_report(reports, "resolution").and_then(|v| v.pointer("/active_links")).and_then(Value::as_u64)),
-        associated_nodes: get_report(reports, "analysis")
-            .and_then(|v| v.pointer("/profile_summary/associated_nodes"))
-            .and_then(Value::as_u64)
-            .or_else(|| get_report(reports, "resolution").and_then(|v| v.pointer("/associated_nodes")).and_then(Value::as_u64)),
+        discovery_findings: get_report(reports, "discovery").and_then(|v| v.pointer("/stats/findings_count")).and_then(Value::as_u64),
+        discovery_blocked: get_report(reports, "discovery").and_then(|v| v.pointer("/stats/blocked_by_noise_rules")).and_then(Value::as_u64),
+        discovery_downranked: get_report(reports, "discovery").and_then(|v| v.pointer("/stats/downranked_by_noise_rules")).and_then(Value::as_u64),
+        public_search_findings: get_report(reports, "public_search").and_then(|v| v.pointer("/stats/findings_count")).and_then(Value::as_u64),
+        public_search_blocked: get_report(reports, "public_search").and_then(|v| v.pointer("/stats/blocked_by_noise_rules")).and_then(Value::as_u64),
+        public_search_downranked: get_report(reports, "public_search").and_then(|v| v.pointer("/stats/downranked_by_noise_rules")).and_then(Value::as_u64),
+        email_valid_count: get_report(reports, "email_domain").and_then(|v| v.pointer("/stats/valid_emails")).and_then(Value::as_u64),
+        email_domain_count: get_report(reports, "email_domain").and_then(|v| v.pointer("/stats/domains_checked")).and_then(Value::as_u64),
+        email_username_candidates: get_report(reports, "email_domain").and_then(|v| v.pointer("/stats/username_candidates")).and_then(Value::as_u64),
+        email_free_mail_domains: get_report(reports, "email_domain").and_then(|v| v.pointer("/stats/free_mail_domains")).and_then(Value::as_u64),
+        email_corporate_domains: get_report(reports, "email_domain").and_then(|v| v.pointer("/stats/corporate_domains")).and_then(Value::as_u64),
+        email_suspicious_domains: get_report(reports, "email_domain").and_then(|v| v.pointer("/stats/suspicious_domains")).and_then(Value::as_u64),
+        conflict_count: get_report(reports, "conflicts").and_then(|v| v.get("findings")).and_then(Value::as_array).map(|arr| arr.len() as u64),
+        active_links: get_report(reports, "analysis").and_then(|v| v.pointer("/profile_summary/active_links")).and_then(Value::as_u64).or_else(|| get_report(reports, "resolution").and_then(|v| v.pointer("/active_links")).and_then(Value::as_u64)),
+        associated_nodes: get_report(reports, "analysis").and_then(|v| v.pointer("/profile_summary/associated_nodes")).and_then(Value::as_u64).or_else(|| get_report(reports, "resolution").and_then(|v| v.pointer("/associated_nodes")).and_then(Value::as_u64)),
     }
 }
 
-fn build_verdict(
-    summary: &MasterSummary,
-    reports: &BTreeMap<String, ReportSlot>,
-    missing_reports: &[String],
-) -> MasterVerdict {
-    let confidence_adjusted = get_report(reports, "confidence")
-        .and_then(|v| v.get("adjusted_score"))
-        .and_then(Value::as_u64);
+fn build_verdict(summary: &MasterSummary, reports: &BTreeMap<String, ReportSlot>, missing_reports: &[String]) -> MasterVerdict {
+    let confidence_adjusted = get_report(reports, "confidence").and_then(|v| v.get("adjusted_score")).and_then(Value::as_u64);
     let conflict_count = summary.conflict_count.unwrap_or(0);
-    let high_risk = get_report(reports, "conflicts")
-        .and_then(|v| v.get("high_risk"))
-        .and_then(Value::as_bool)
-        .unwrap_or(false)
-        || conflict_count > 0
-        || summary.email_suspicious_domains.unwrap_or(0) > 0;
-
+    let high_risk = get_report(reports, "conflicts").and_then(|v| v.get("high_risk")).and_then(Value::as_bool).unwrap_or(false) || conflict_count > 0 || summary.email_suspicious_domains.unwrap_or(0) > 0;
     let mut reasons = Vec::new();
-    if !missing_reports.is_empty() {
-        reasons.push(format!("{} runtime reports are missing", missing_reports.len()));
-    }
-    if high_risk {
-        reasons.push("conflict/risk engine reported review-worthy signals".to_string());
-    }
+    if !missing_reports.is_empty() { reasons.push(format!("{} runtime reports are missing", missing_reports.len())); }
+    if high_risk { reasons.push("conflict/risk engine reported review-worthy signals".to_string()); }
     if let Some(score) = confidence_adjusted {
-        if score < 50 {
-            reasons.push("adjusted confidence is below 50".to_string());
-        } else if score < 75 {
-            reasons.push("adjusted confidence is moderate, manual review recommended".to_string());
-        }
-    } else {
-        reasons.push("confidence report is unavailable".to_string());
-    }
-    if summary.public_search_blocked.unwrap_or(0) > 0
-        || summary.public_search_downranked.unwrap_or(0) > 0
-        || summary.discovery_blocked.unwrap_or(0) > 0
-        || summary.discovery_downranked.unwrap_or(0) > 0
-    {
-        reasons.push("noise rules blocked or downranked discovery/search findings".to_string());
-    }
-    if summary.autopilot_new_nodes.unwrap_or(0) == 0 {
-        reasons.push("autopilot did not discover new nodes".to_string());
-    }
-    if summary.autopilot_email_domain_new_nodes.unwrap_or(0) > 0 {
-        reasons.push("autopilot expanded through email/domain-derived nodes".to_string());
-    }
-    if summary.email_suspicious_domains.unwrap_or(0) > 0 {
-        reasons.push("email/domain checker found suspicious domain signals".to_string());
-    }
-
-    let status = if high_risk {
-        "review_required"
-    } else if confidence_adjusted.unwrap_or(0) >= 75 && missing_reports.is_empty() {
-        "usable_with_review"
-    } else if confidence_adjusted.unwrap_or(0) >= 50 {
-        "partial_review_required"
-    } else {
-        "low_confidence"
-    }
-    .to_string();
-
-    MasterVerdict {
-        status,
-        confidence_adjusted,
-        high_risk,
-        needs_human_review: true,
-        reasons,
-    }
+        if score < 50 { reasons.push("adjusted confidence is below 50".to_string()); }
+        else if score < 75 { reasons.push("adjusted confidence is moderate, manual review recommended".to_string()); }
+    } else { reasons.push("confidence report is unavailable".to_string()); }
+    if summary.public_search_blocked.unwrap_or(0) > 0 || summary.public_search_downranked.unwrap_or(0) > 0 || summary.discovery_blocked.unwrap_or(0) > 0 || summary.discovery_downranked.unwrap_or(0) > 0 { reasons.push("noise rules blocked or downranked discovery/search findings".to_string()); }
+    if summary.autopilot_new_nodes.unwrap_or(0) == 0 { reasons.push("autopilot did not discover new nodes".to_string()); }
+    if summary.autopilot_phone_new_nodes.unwrap_or(0) > 0 { reasons.push("autopilot expanded through phone-intel-derived nodes".to_string()); }
+    if summary.autopilot_email_domain_new_nodes.unwrap_or(0) > 0 { reasons.push("autopilot expanded through email/domain-derived nodes".to_string()); }
+    if summary.phone_carrier_guesses.unwrap_or(0) > 0 { reasons.push("phone intel produced carrier prefix guesses, not ownership confirmation".to_string()); }
+    if summary.email_suspicious_domains.unwrap_or(0) > 0 { reasons.push("email/domain checker found suspicious domain signals".to_string()); }
+    let status = if high_risk { "review_required" } else if confidence_adjusted.unwrap_or(0) >= 75 && missing_reports.is_empty() { "usable_with_review" } else if confidence_adjusted.unwrap_or(0) >= 50 { "partial_review_required" } else { "low_confidence" }.to_string();
+    MasterVerdict { status, confidence_adjusted, high_risk, needs_human_review: true, reasons }
 }
 
-fn get_report<'a>(reports: &'a BTreeMap<String, ReportSlot>, key: &str) -> Option<&'a Value> {
-    reports.get(key)?.data.as_ref()
-}
+fn get_report<'a>(reports: &'a BTreeMap<String, ReportSlot>, key: &str) -> Option<&'a Value> { reports.get(key)?.data.as_ref() }
 
 fn sum_cycle_field(reports: &BTreeMap<String, ReportSlot>, field: &str) -> Option<u64> {
-    let cycles = get_report(reports, "autopilot")?
-        .get("cycles")?
-        .as_array()?;
+    let cycles = get_report(reports, "autopilot")?.get("cycles")?.as_array()?;
     Some(cycles.iter().filter_map(|cycle| cycle.get(field).and_then(Value::as_u64)).sum())
 }
 
@@ -303,8 +200,14 @@ pub fn compact_master_summary(report: &MasterReport) -> Value {
         "confidence_adjusted": report.verdict.confidence_adjusted,
         "high_risk": report.verdict.high_risk,
         "run_profile": report.summary.run_profile,
+        "phone_checked": report.summary.phone_checked,
+        "phone_valid_shape": report.summary.phone_valid_shape,
+        "phone_carrier_guesses": report.summary.phone_carrier_guesses,
+        "phone_search_terms_generated": report.summary.phone_search_terms_generated,
+        "phone_linked_entities": report.summary.phone_linked_entities,
         "autopilot_cycles": report.summary.autopilot_cycles,
         "autopilot_new_nodes": report.summary.autopilot_new_nodes,
+        "autopilot_phone_new_nodes": report.summary.autopilot_phone_new_nodes,
         "autopilot_email_domain_new_nodes": report.summary.autopilot_email_domain_new_nodes,
         "autopilot_discovery_new_nodes": report.summary.autopilot_discovery_new_nodes,
         "autopilot_public_search_new_nodes": report.summary.autopilot_public_search_new_nodes,
@@ -323,30 +226,15 @@ pub fn compact_master_summary(report: &MasterReport) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[test]
     fn missing_slot_is_not_loaded() {
         let slot = load_report_slot("definitely_missing_report_for_test.json");
         assert!(!slot.loaded);
         assert!(slot.error.is_some());
     }
-
     #[test]
     fn compact_summary_contains_status() {
-        let report = MasterReport {
-            generated_at: 0,
-            verdict: MasterVerdict {
-                status: "low_confidence".to_string(),
-                confidence_adjusted: Some(20),
-                high_risk: false,
-                needs_human_review: true,
-                reasons: vec![],
-            },
-            summary: MasterSummary::default(),
-            reports: BTreeMap::new(),
-            missing_reports: vec![],
-            recommended_review_order: vec![],
-        };
+        let report = MasterReport { generated_at: 0, verdict: MasterVerdict { status: "low_confidence".to_string(), confidence_adjusted: Some(20), high_risk: false, needs_human_review: true, reasons: vec![] }, summary: MasterSummary::default(), reports: BTreeMap::new(), missing_reports: vec![], recommended_review_order: vec![] };
         assert_eq!(compact_master_summary(&report).get("status").and_then(Value::as_str), Some("low_confidence"));
     }
 }
