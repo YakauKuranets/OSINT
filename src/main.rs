@@ -27,13 +27,15 @@ mod noise_rules;
 mod runtime_profile;
 mod master_report;
 mod preflight;
+mod phone_intel;
 
 use axum::{
     routing::{post, get},
-    extract::State,
+    extract::{State, Path},
     Json,
     Router,
-    response::IntoResponse,
+    response::{IntoResponse, Response},
+    http::{header, StatusCode},
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -137,30 +139,16 @@ fn profile_to_stix(profile: &models::IdentityProfile) -> (Vec<StixIndicator>, Ve
 
 fn print_conflict_report(report: &conflicts::ConflictReport) {
     println!("\n[*] Conflict Engine:");
-    println!(
-        "  findings={} | severity_score={} | high_risk={}",
-        report.findings.len(),
-        report.severity_score(),
-        report.has_high_risk()
-    );
-
+    println!("  findings={} | severity_score={} | high_risk={}", report.findings.len(), report.severity_score(), report.has_high_risk());
     if report.findings.is_empty() {
         println!("  - Конфликты не обнаружены.");
         return;
     }
-
     for finding in report.findings.iter().take(8) {
-        println!(
-            "  - [{:?}/{:?}] {} | sources={:?}",
-            finding.severity,
-            finding.kind,
-            finding.entity_value,
-            finding.source_ids
-        );
+        println!("  - [{:?}/{:?}] {} | sources={:?}", finding.severity, finding.kind, finding.entity_value, finding.source_ids);
         println!("    {}", finding.message);
         println!("    next: {}", finding.recommended_action);
     }
-
     if report.findings.len() > 8 {
         println!("  ... и еще {} конфликтов", report.findings.len() - 8);
     }
@@ -168,11 +156,7 @@ fn print_conflict_report(report: &conflicts::ConflictReport) {
 
 fn save_conflict_report(report: &conflicts::ConflictReport, path: &str) {
     match serde_json::to_string_pretty(report) {
-        Ok(json) => {
-            if let Err(err) = std::fs::write(path, json) {
-                eprintln!("[!] Не удалось сохранить {}: {}", path, err);
-            }
-        }
+        Ok(json) => if let Err(err) = std::fs::write(path, json) { eprintln!("[!] Не удалось сохранить {}: {}", path, err); },
         Err(err) => eprintln!("[!] Не удалось сериализовать conflict report: {}", err),
     }
 }
@@ -180,12 +164,7 @@ fn save_conflict_report(report: &conflicts::ConflictReport, path: &str) {
 fn apply_and_save_confidence_guardrails(profile: &mut models::IdentityProfile) {
     let before = profile.calculated_confidence;
     let report = confidence::apply_confidence_guardrails(profile);
-    println!(
-        "\n[*] Confidence Guardrails: original={} adjusted={} capped={}",
-        before,
-        report.adjusted_score,
-        report.was_capped()
-    );
+    println!("\n[*] Confidence Guardrails: original={} adjusted={} capped={}", before, report.adjusted_score, report.was_capped());
     if report.was_capped() {
         for rule in &report.applied_guardrails {
             println!("  - {:?} cap={} | {}", rule.kind, rule.cap, rule.reason);
@@ -203,14 +182,7 @@ fn save_full_analysis_report(
     source_health: Vec<scoring::SourceHealth>,
     next_steps: Vec<String>,
 ) {
-    let report = analysis_report::build_analysis_report(
-        profile,
-        resolution_report,
-        conflict_report,
-        source_health,
-        next_steps,
-    );
-
+    let report = analysis_report::build_analysis_report(profile, resolution_report, conflict_report, source_health, next_steps);
     if let Err(err) = analysis_report::save_analysis_report(&report, "analysis_report.json") {
         eprintln!("[!] Не удалось сохранить analysis_report.json: {}", err);
     }
@@ -234,19 +206,10 @@ fn add_telegram_export_seeds(seeds: &mut Vec<models::EntityNode>, path: &str) {
     println!("\n[*] Telegram Export Parser: {}", path);
     match telegram_export::analyze_telegram_export(path) {
         Ok(report) => {
-            println!(
-                "  chats={} | messages={} | emails={} | phones={} | usernames={} | urls={}",
-                report.chats_analyzed,
-                report.messages_analyzed,
-                report.extracted_counts.emails,
-                report.extracted_counts.phones,
-                report.extracted_counts.usernames,
-                report.extracted_counts.urls
-            );
+            println!("  chats={} | messages={} | emails={} | phones={} | usernames={} | urls={}", report.chats_analyzed, report.messages_analyzed, report.extracted_counts.emails, report.extracted_counts.phones, report.extracted_counts.usernames, report.extracted_counts.urls);
             if let Err(err) = telegram_export::save_telegram_export_report(&report, "telegram_export_report.json") {
                 eprintln!("  [!] Не удалось сохранить telegram_export_report.json: {}", err);
             }
-
             let nodes = telegram_export::observations_as_entity_nodes(&report, 100);
             println!("  [+] Добавлено Telegram-derived селекторов: {}", nodes.len());
             seeds.extend(nodes);
@@ -255,24 +218,25 @@ fn add_telegram_export_seeds(seeds: &mut Vec<models::EntityNode>, path: &str) {
     }
 }
 
+async fn add_phone_intel_seeds(seeds: &mut Vec<models::EntityNode>) {
+    println!("\n[*] Phone Intel");
+    let report = phone_intel::run_phone_intel_for_seeds(seeds).await;
+    println!("  phones={} valid={} carrier_guesses={} search_terms={} linked_entities={} observations={}", report.stats.phones_checked, report.stats.valid_shape, report.stats.carrier_guesses, report.stats.search_terms_generated, report.stats.linked_entities, report.stats.observations_count);
+    if let Err(err) = phone_intel::save_phone_intel_report(&report, "phone_intel_report.json") {
+        eprintln!("  [!] Не удалось сохранить phone_intel_report.json: {}", err);
+    }
+    let nodes = phone_intel::observations_as_entity_nodes(&report, 100);
+    println!("  [+] Добавлено phone-derived селекторов: {}", nodes.len());
+    seeds.extend(nodes);
+}
+
 async fn add_email_domain_checker_seeds(seeds: &mut Vec<models::EntityNode>) {
     println!("\n[*] Email/Domain Checker MVP");
     let report = checkers::run_email_domain_checkers(seeds).await;
-    println!(
-        "  emails={} valid={} invalid={} domains={} username_candidates={} dns_errors={} findings={}",
-        report.stats.emails_checked,
-        report.stats.valid_emails,
-        report.stats.invalid_emails,
-        report.stats.domains_checked,
-        report.stats.username_candidates,
-        report.stats.dns_errors,
-        report.stats.findings_count
-    );
-
+    println!("  emails={} valid={} invalid={} domains={} username_candidates={} dns_errors={} findings={}", report.stats.emails_checked, report.stats.valid_emails, report.stats.invalid_emails, report.stats.domains_checked, report.stats.username_candidates, report.stats.dns_errors, report.stats.findings_count);
     if let Err(err) = checkers::save_email_domain_report(&report, "email_domain_report.json") {
         eprintln!("  [!] Не удалось сохранить email_domain_report.json: {}", err);
     }
-
     let nodes = checkers::observations_as_entity_nodes(&report, 100);
     println!("  [+] Добавлено email/domain селекторов: {}", nodes.len());
     seeds.extend(nodes);
@@ -281,30 +245,16 @@ async fn add_email_domain_checker_seeds(seeds: &mut Vec<models::EntityNode>) {
 async fn run_autopilot_seeds(seeds: &mut Vec<models::EntityNode>) {
     println!("\n[*] Autonomous OSINT Autopilot");
     let report = autopilot::run_autonomous_osint(seeds).await;
-    println!(
-        "  cycles={} | initial_seeds={} | final_seeds={} | new_nodes={}",
-        report.cycles.len(),
-        report.initial_seed_count,
-        report.final_seed_count,
-        report.total_new_nodes
-    );
-
+    println!("  cycles={} | initial_seeds={} | final_seeds={} | new_nodes={}", report.cycles.len(), report.initial_seed_count, report.final_seed_count, report.total_new_nodes);
     for cycle in &report.cycles {
-        println!(
-            "  - cycle {}: input={} discovery_new={} search_new={} total={}",
-            cycle.cycle,
-            cycle.input_seed_count,
-            cycle.new_discovery_nodes,
-            cycle.new_public_search_nodes,
-            cycle.total_seed_count_after_cycle
-        );
+        println!("  - cycle {}: input={} phone_new={} email_new={} discovery_new={} search_new={} total={}", cycle.cycle, cycle.input_seed_count, cycle.new_phone_intel_nodes, cycle.new_email_domain_nodes, cycle.new_discovery_nodes, cycle.new_public_search_nodes, cycle.total_seed_count_after_cycle);
     }
-
     if let Err(err) = autopilot::save_autopilot_report(&report, "autopilot_report.json") {
         eprintln!("  [!] Не удалось сохранить autopilot_report.json: {}", err);
     }
-
     if let Some(last_cycle) = report.cycles.last() {
+        let _ = phone_intel::save_phone_intel_report(&last_cycle.phone_intel_report, "phone_intel_report.json");
+        let _ = checkers::save_email_domain_report(&last_cycle.email_domain_report, "email_domain_report.json");
         let _ = discovery::save_discovery_report(&last_cycle.discovery_report, "discovery_report.json");
         let _ = public_search::save_public_search_report(&last_cycle.public_search_report, "public_search_report.json");
     }
@@ -317,16 +267,7 @@ async fn main() {
     println!("==================================================");
 
     let profile = runtime_profile::init_runtime_profile();
-    println!(
-        "[*] Run profile: {} | discovery_tasks={} | public_search_tasks={} | cycles={} | dns={} | github={} | fetch={}",
-        profile.label,
-        profile.discovery_max_tasks,
-        profile.public_search_max_tasks,
-        profile.autopilot_cycles,
-        profile.dns_check,
-        profile.github_search,
-        profile.discovery_fetch
-    );
+    println!("[*] Run profile: {} | discovery_tasks={} | public_search_tasks={} | cycles={} | dns={} | github={} | fetch={}", profile.label, profile.discovery_max_tasks, profile.public_search_max_tasks, profile.autopilot_cycles, profile.dns_check, profile.github_search, profile.discovery_fetch);
     if let Err(err) = runtime_profile::save_run_profile_report("run_profile_report.json") {
         eprintln!("[!] Не удалось сохранить run_profile_report.json: {}", err);
     }
@@ -349,19 +290,16 @@ async fn main() {
     if let Some(v) = selectors.full_name.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::FullName, first_seen: now }); }
     if let Some(v) = selectors.dob.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::DateOfBirth, first_seen: now }); }
     if let Some(v) = selectors.country.clone() { seeds.push(models::EntityNode { value: v, entity_type: models::EntityType::Country, first_seen: now }); }
-    if let Some(path) = selectors.telegram_export_path.as_deref() {
-        add_telegram_export_seeds(&mut seeds, path);
-    }
+    if let Some(path) = selectors.telegram_export_path.as_deref() { add_telegram_export_seeds(&mut seeds, path); }
 
+    add_phone_intel_seeds(&mut seeds).await;
     add_email_domain_checker_seeds(&mut seeds).await;
     run_autopilot_seeds(&mut seeds).await;
 
     let mut registry = connectors::ConnectorRegistry::new();
     let mut connector_seeds = Vec::new();
     let observations = registry.collect_seed_observations(&seeds, now);
-    for obs in observations {
-        connector_seeds.push(obs.to_entity_node());
-    }
+    for obs in observations { connector_seeds.push(obs.to_entity_node()); }
     seeds.extend(connector_seeds);
 
     if seeds.is_empty() {
@@ -375,11 +313,8 @@ async fn main() {
     println!("[*] Запуск сквозного каскадного поиска для {} стартовых селекторов\n", seeds.len());
 
     let start_target = seeds.remove(0);
-
     let mut engine_instance = engine::AnalysisEngine::new(start_target, "dumps");
-    for seed in seeds {
-        engine_instance.task_queue.push_back(seed);
-    }
+    for seed in seeds { engine_instance.task_queue.push_back(seed); }
 
     engine_instance.resolve_cascade().await;
     scoring::evaluate_profile(&mut engine_instance.final_profile);
@@ -390,55 +325,31 @@ async fn main() {
 
     println!("\n[*] Запуск ИИ-аналитика (Mistral:7b) для составления сводки...");
     let mut profile_text = format!("Target: {}\n", engine_instance.final_profile.root_entity.value);
-    for (val, node) in &engine_instance.final_profile.associated_nodes {
-        profile_text.push_str(&format!("[{:?}] {}\n", node.entity_type, val));
-    }
+    for (val, node) in &engine_instance.final_profile.associated_nodes { profile_text.push_str(&format!("[{:?}] {}\n", node.entity_type, val)); }
 
     let summary = engine_instance.ai_core.investigator_summarize(&profile_text).await;
     match summary {
-        Some(text) => {
-            println!("--- AI Executive Summary ---");
-            println!("{}", text);
-            let _ = std::fs::write("ai_summary.txt", &text);
-        }
+        Some(text) => { println!("--- AI Executive Summary ---"); println!("{}", text); let _ = std::fs::write("ai_summary.txt", &text); }
         None => println!("  [AI] Не удалось получить аналитическую сводку."),
     }
 
     let (indicators, identities, relationships) = profile_to_stix(&engine_instance.final_profile);
     let stix_bundle = serde_json::json!({ "type": "bundle", "objects": { "indicators": indicators, "identities": identities, "relationships": relationships }});
-    if let Ok(json_str) = serde_json::to_string_pretty(&stix_bundle) {
-        let _ = std::fs::write("stix_report.json", &json_str);
-    }
+    if let Ok(json_str) = serde_json::to_string_pretty(&stix_bundle) { let _ = std::fs::write("stix_report.json", &json_str); }
     let _ = crate::dork_generator::DorkGenerator::generate_dorks(&engine_instance.final_profile, "dorks.txt");
     crate::visualizer::generate_html_report(&engine_instance.final_profile, "report.html");
     let resolution_report = scoring::build_resolution_report(&engine_instance.final_profile);
-    if let Ok(report_json) = serde_json::to_string_pretty(&resolution_report) {
-        let _ = std::fs::write("resolution_report.json", report_json);
-    }
+    if let Ok(report_json) = serde_json::to_string_pretty(&resolution_report) { let _ = std::fs::write("resolution_report.json", report_json); }
 
     let next_steps = scoring::suggest_next_steps(&engine_instance.final_profile);
     println!("\n[*] Рекомендованные следующие шаги:");
-    for (idx, step) in next_steps.iter().enumerate() {
-        println!("  {}. {}", idx + 1, step);
-    }
+    for (idx, step) in next_steps.iter().enumerate() { println!("  {}. {}", idx + 1, step); }
 
     let source_health = scoring::source_health_summary(&engine_instance.final_profile);
     println!("\n[*] Надежность источников (top-5):");
-    for src in source_health.iter().take(5) {
-        println!(
-            "  - {} | links={} | avg_weight={:.1} | reliability={}",
-            src.source_id, src.links, src.avg_weight, src.reliability
-        );
-    }
+    for src in source_health.iter().take(5) { println!("  - {} | links={} | avg_weight={:.1} | reliability={}", src.source_id, src.links, src.avg_weight, src.reliability); }
 
-    save_full_analysis_report(
-        &engine_instance.final_profile,
-        resolution_report,
-        conflict_report,
-        source_health,
-        next_steps,
-    );
-
+    save_full_analysis_report(&engine_instance.final_profile, resolution_report, conflict_report, source_health, next_steps);
     build_and_save_master_report();
 
     println!("\n[?] Найдено связей: {} | confidence: {}", engine_instance.final_profile.active_links.len(), engine_instance.final_profile.calculated_confidence);
@@ -454,27 +365,18 @@ async fn main() {
         print_conflict_report(&conflict_report);
         save_conflict_report(&conflict_report, "conflict_report.json");
         crate::visualizer::generate_html_report(&engine_instance.final_profile, "report.html");
-
         let resolution_report = scoring::build_resolution_report(&engine_instance.final_profile);
         let next_steps = scoring::suggest_next_steps(&engine_instance.final_profile);
         let source_health = scoring::source_health_summary(&engine_instance.final_profile);
-        save_full_analysis_report(
-            &engine_instance.final_profile,
-            resolution_report,
-            conflict_report,
-            source_health,
-            next_steps,
-        );
+        save_full_analysis_report(&engine_instance.final_profile, resolution_report, conflict_report, source_health, next_steps);
         build_and_save_master_report();
     }
 
-    let shared_state = Arc::new(AppState {
-        engine: Mutex::new(engine_instance)
-    });
-
+    let shared_state = Arc::new(AppState { engine: Mutex::new(engine_instance) });
     let app = Router::new()
         .route("/expand", post(expand_handler))
         .route("/", get(report_handler))
+        .route("/:file", get(runtime_file_handler))
         .with_state(shared_state);
 
     println!("\n==================================================");
@@ -487,30 +389,33 @@ async fn main() {
 }
 
 async fn report_handler() -> impl IntoResponse {
-    let html = std::fs::read_to_string("report.html").unwrap_or_else(|_| {
-        "<html><body><h1>report.html не найден</h1><p>Сначала запусти анализ.</p></body></html>".to_string()
-    });
+    let html = std::fs::read_to_string("report.html").unwrap_or_else(|_| "<html><body><h1>report.html не найден</h1><p>Сначала запусти анализ.</p></body></html>".to_string());
     axum::response::Html(html)
 }
 
+async fn runtime_file_handler(Path(file): Path<String>) -> Response {
+    let allowed = [
+        "run_profile_report.json", "preflight_report.json", "phone_intel_report.json", "autopilot_report.json", "discovery_report.json", "public_search_report.json", "email_domain_report.json", "confidence_report.json", "conflict_report.json", "analysis_report.json", "master_report.json", "resolution_report.json", "stix_report.json", "ai_summary.txt", "dorks.txt",
+    ];
+    if !allowed.contains(&file.as_str()) || file.contains('/') || file.contains('\\') || file.contains("..") {
+        return (StatusCode::NOT_FOUND, "not found").into_response();
+    }
+    match std::fs::read_to_string(&file) {
+        Ok(body) => {
+            let content_type = if file.ends_with(".json") { "application/json; charset=utf-8" } else { "text/plain; charset=utf-8" };
+            ([(header::CONTENT_TYPE, content_type)], body).into_response()
+        }
+        Err(_) => (StatusCode::NOT_FOUND, "not found").into_response(),
+    }
+}
+
 #[axum::debug_handler]
-async fn expand_handler(
-    State(state): State<Arc<AppState>>,
-    Json(payload): Json<ExpandRequest>
-) -> impl IntoResponse {
+async fn expand_handler(State(state): State<Arc<AppState>>, Json(payload): Json<ExpandRequest>) -> impl IntoResponse {
     let mut machine = state.engine.lock().await;
-
     println!("[Web] Запуск дополнительного поиска для узла: {}", payload.target);
-
     let _node = models::EntityNode::new(&payload.target, models::EntityType::Nickname);
-
     machine.resolve_cascade().await;
-
     crate::visualizer::generate_html_report(&machine.final_profile, "report.html");
     build_and_save_master_report();
-
-    Json(serde_json::json!({
-        "status": "success",
-        "message": "Граф обновлен. Обновите страницу в браузере!"
-    }))
+    Json(serde_json::json!({ "status": "success", "message": "Граф обновлен. Обновите страницу в браузере!" }))
 }
