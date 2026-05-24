@@ -1,3 +1,4 @@
+use crate::phone_context;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -327,26 +328,33 @@ async fn probe_configured_public_urls(client: &Client, input: &PhoneSearchInput,
                 continue;
             }
         };
-        let lowered_body = body.to_lowercase();
-        for variant in &variants {
-            if variant.is_empty() { continue; }
-            let lowered_variant = variant.to_lowercase();
-            if lowered_body.contains(&lowered_variant) {
-                hits.push(PhoneSearchHit {
-                    provider_id: "phone_public_url_probe".to_string(),
-                    url: Some(url.clone()),
-                    matched_value: input.phone_e164.clone().unwrap_or_else(|| input.digits.clone()),
-                    context_snippet: context_around_match(&body, variant, 180),
-                    confidence: 70,
-                    note: "configured_public_url_probe_exact_match".to_string(),
-                });
-                break;
-            }
+        if let Some(ctx) = phone_context::parse_phone_page_context(&body, &variants, Some(&url)) {
+            hits.push(PhoneSearchHit {
+                provider_id: "phone_public_url_probe".to_string(),
+                url: Some(url.clone()),
+                matched_value: input.phone_e164.clone().unwrap_or_else(|| input.digits.clone()),
+                context_snippet: phone_context::format_context_for_phone_hit(&ctx),
+                confidence: url_probe_confidence(&ctx),
+                note: "configured_public_url_probe_enriched_context_match".to_string(),
+            });
         }
     }
     if !hits.is_empty() { outcome_hits(last_url.unwrap_or_default(), hits) }
     else if let Some(err) = last_error { ProviderRunOutcome { hits, status: PhoneProviderStatus::Error, message: Some(err), url: last_url } }
     else { ProviderRunOutcome { hits, status: PhoneProviderStatus::EmptyResult, message: Some("configured public URL probes returned no exact phone match".to_string()), url: last_url } }
+}
+
+fn url_probe_confidence(ctx: &phone_context::PhonePageContext) -> u8 {
+    let mut score = 70usize;
+    if ctx.title.is_some() { score += 3; }
+    if ctx.meta_description.is_some() { score += 3; }
+    if !ctx.email_hints.is_empty() { score += 5; }
+    if !ctx.username_hints.is_empty() { score += 4; }
+    if !ctx.url_hints.is_empty() { score += 2; }
+    if !ctx.date_hints.is_empty() { score += 2; }
+    if !ctx.json_ld_types.is_empty() { score += 3; }
+    if ctx.cleaned_text_chars < 80 { score = score.saturating_sub(8); }
+    score.min(88) as u8
 }
 
 fn outcome_hits(url: String, hits: Vec<PhoneSearchHit>) -> ProviderRunOutcome {
@@ -406,17 +414,6 @@ async fn fetch_text_limited(client: &Client, url: &str) -> Result<String, String
     Ok(text.chars().take(limit).collect())
 }
 
-fn context_around_match(body: &str, needle: &str, radius: usize) -> String {
-    let lower_body = body.to_lowercase();
-    let lower_needle = needle.to_lowercase();
-    if let Some(pos) = lower_body.find(&lower_needle) {
-        let start = pos.saturating_sub(radius);
-        let end = (pos + needle.len() + radius).min(body.len());
-        return body[start..end].chars().map(|c| if c.is_control() { ' ' } else { c }).collect::<String>().split_whitespace().collect::<Vec<_>>().join(" ");
-    }
-    "exact phone variant matched configured public URL".to_string()
-}
-
 async fn github_json(client: &Client, url: &str) -> Result<Value, String> {
     let response = client
         .get(url)
@@ -456,16 +453,16 @@ mod tests {
     #[test]
     fn focused_terms_include_e164_and_trunk_variant() {
         let input = PhoneSearchInput {
-            phone_e164: Some("+375257997676".to_string()),
-            digits: "375257997676".to_string(),
+            phone_e164: Some("+000000000000".to_string()),
+            digits: "000000000000".to_string(),
             country_code: Some("375".to_string()),
-            national_number: Some("257997676".to_string()),
-            terms: vec!["site:t.me \"+375257997676\"".to_string(), "80257997676".to_string()],
+            national_number: Some("000000000".to_string()),
+            terms: vec!["site:example.test \"+000000000000\"".to_string(), "80000000000".to_string()],
         };
         let terms = focused_phone_terms(&input);
-        assert!(terms.contains(&"+375257997676".to_string()));
-        assert!(terms.contains(&"375257997676".to_string()));
-        assert!(terms.contains(&"80257997676".to_string()));
+        assert!(terms.contains(&"+000000000000".to_string()));
+        assert!(terms.contains(&"000000000000".to_string()));
+        assert!(terms.contains(&"80000000000".to_string()));
         assert!(!terms.iter().any(|term| term.starts_with("site:")));
     }
 
@@ -480,16 +477,16 @@ mod tests {
     #[test]
     fn match_variants_include_belarus_forms() {
         let input = PhoneSearchInput {
-            phone_e164: Some("+375257997676".to_string()),
-            digits: "375257997676".to_string(),
+            phone_e164: Some("+000000000000".to_string()),
+            digits: "000000000000".to_string(),
             country_code: Some("375".to_string()),
-            national_number: Some("257997676".to_string()),
+            national_number: Some("000000000".to_string()),
             terms: vec![],
         };
-        let variants = match_variants(&input, "+375257997676");
-        assert!(variants.contains(&"+375257997676".to_string()));
-        assert!(variants.contains(&"375257997676".to_string()));
-        assert!(variants.contains(&"80257997676".to_string()));
+        let variants = match_variants(&input, "+000000000000");
+        assert!(variants.contains(&"+000000000000".to_string()));
+        assert!(variants.contains(&"000000000000".to_string()));
+        assert!(variants.contains(&"80000000000".to_string()));
     }
 
     #[test]
