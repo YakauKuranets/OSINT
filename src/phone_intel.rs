@@ -1,8 +1,8 @@
 use crate::evidence::{build_evidence_observation, EvidenceInput};
 use crate::models::{EntityNode, EntityType, EvidenceRecord, ObservationRecord, SensitivityClass, SourceClass};
+use crate::phone_search::{self, PhoneSearchInput, PhoneSearchProviderSummary};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::collections::HashSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -67,6 +67,8 @@ pub struct PhoneIntelStats {
     pub api_errors: usize,
     pub public_mentions: usize,
     pub linked_entities: usize,
+    pub providers_enabled: usize,
+    pub providers_with_hits: usize,
     pub evidences_count: usize,
     pub observations_count: usize,
 }
@@ -77,6 +79,7 @@ pub struct PhoneIntelReport {
     pub input_count: usize,
     pub phones: Vec<PhoneNormalized>,
     pub carrier_guesses: Vec<PhoneCarrierGuess>,
+    pub provider_summaries: Vec<PhoneSearchProviderSummary>,
     pub public_mentions: Vec<PhonePublicMention>,
     pub linked_entities: Vec<PhoneLinkedEntity>,
     pub search_terms: Vec<String>,
@@ -96,6 +99,7 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
     let mut seen_terms = HashSet::new();
     let mut seen_findings = HashSet::new();
     let mut seen_mentions = HashSet::new();
+    let mut seen_provider_summary = HashSet::new();
     let client = Client::builder().timeout(std::time::Duration::from_secs(12)).build().expect("build phone search client");
 
     for seed in seeds.iter().filter(|seed| seed.entity_type == EntityType::Phone) {
@@ -144,7 +148,28 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
             if seen_terms.insert(term.clone()) { report.search_terms.push(term.clone()); }
         }
 
-        for mention in run_phone_public_search(&client, &normalized, &phone_terms, &mut report.stats).await {
+        let provider_report = run_phone_public_search(&client, &normalized, &phone_terms).await;
+        for summary in provider_report.providers {
+            report.stats.search_tasks_executed += summary.terms_attempted;
+            report.stats.api_errors += summary.errors;
+            if seen_provider_summary.insert(summary.provider_id.clone()) {
+                report.provider_summaries.push(summary);
+            } else if let Some(existing) = report.provider_summaries.iter_mut().find(|item| item.provider_id == summary.provider_id) {
+                existing.terms_attempted += summary.terms_attempted;
+                existing.hits += summary.hits;
+                existing.errors += summary.errors;
+                existing.last_error = summary.last_error.or_else(|| existing.last_error.clone());
+            }
+        }
+        for hit in provider_report.hits {
+            let mention = PhonePublicMention {
+                source_id: hit.provider_id,
+                url: hit.url,
+                value: hit.matched_value,
+                context_snippet: hit.context_snippet,
+                confidence: hit.confidence,
+                note: hit.note,
+            };
             let key = format!("{}:{:?}:{}", mention.source_id, mention.url, mention.value);
             if seen_mentions.insert(key) {
                 push_finding(&mut report.findings, &mut seen_findings, PhoneIntelFinding {
@@ -165,107 +190,26 @@ pub async fn run_phone_intel_for_seeds(seeds: &[EntityNode]) -> PhoneIntelReport
     report.stats.search_terms_generated = report.search_terms.len();
     report.stats.public_mentions = report.public_mentions.len();
     report.stats.linked_entities = report.linked_entities.len();
+    report.stats.providers_enabled = report.provider_summaries.iter().filter(|p| p.enabled).count();
+    report.stats.providers_with_hits = report.provider_summaries.iter().filter(|p| p.hits > 0).count();
     materialize_findings(&mut report);
     report.stats.evidences_count = report.evidences.len();
     report.stats.observations_count = report.observations.len();
     report
 }
 
-async fn run_phone_public_search(client: &Client, phone: &PhoneNormalized, terms: &[String], stats: &mut PhoneIntelStats) -> Vec<PhonePublicMention> {
-    let mut mentions = Vec::new();
+async fn run_phone_public_search(client: &Client, phone: &PhoneNormalized, terms: &[String]) -> phone_search::PhoneSearchProviderReport {
     if !phone.valid_shape {
-        return mentions;
+        return phone_search::PhoneSearchProviderReport::default();
     }
-    let focused_terms = focused_phone_terms(phone, terms);
-    for term in focused_terms.into_iter().take(4) {
-        match search_github_code_for_phone(client, phone, &term).await {
-            Ok(mut found) => { stats.search_tasks_executed += 1; mentions.append(&mut found); }
-            Err(_) => { stats.search_tasks_executed += 1; stats.api_errors += 1; }
-        }
-        match search_github_issues_for_phone(client, phone, &term).await {
-            Ok(mut found) => { stats.search_tasks_executed += 1; mentions.append(&mut found); }
-            Err(_) => { stats.search_tasks_executed += 1; stats.api_errors += 1; }
-        }
-    }
-    mentions
-}
-
-fn focused_phone_terms(phone: &PhoneNormalized, terms: &[String]) -> Vec<String> {
-    let mut out = Vec::new();
-    if let Some(e164) = &phone.e164 { out.push(e164.clone()); }
-    out.push(phone.digits.clone());
-    if phone.country_code.as_deref() == Some("375") {
-        if let Some(national) = phone.national_number.as_deref() {
-            if national.len() == 9 {
-                out.push(format!("80{}", national));
-            }
-        }
-    }
-    for term in terms {
-        if !term.starts_with("site:") && !term.contains(' ') && !term.contains('"') { out.push(term.clone()); }
-    }
-    out.retain(|term| !term.trim().is_empty());
-    out.sort();
-    out.dedup();
-    out
-}
-
-async fn search_github_code_for_phone(client: &Client, phone: &PhoneNormalized, term: &str) -> Result<Vec<PhonePublicMention>, reqwest::Error> {
-    let query = format!("{} in:file", term);
-    let url = format!("https://api.github.com/search/code?q={}&per_page=5", url_encode(&query));
-    let body = github_json(client, &url).await?;
-    let mut mentions = Vec::new();
-    if let Some(items) = body.get("items").and_then(|v| v.as_array()) {
-        for item in items.iter().take(5) {
-            let html_url = item.get("html_url").and_then(Value::as_str).map(|s| s.to_string());
-            let repo = item.pointer("/repository/full_name").and_then(Value::as_str).unwrap_or("unknown_repo");
-            let path = item.get("path").and_then(Value::as_str).unwrap_or("unknown_path");
-            let snippet = format!("GitHub code search result: {}/{} matched term {}; exact line text requires opening source", repo, path, term);
-            mentions.push(PhonePublicMention {
-                source_id: "phone_github_code_search".to_string(),
-                url: html_url,
-                value: phone.e164.clone().unwrap_or_else(|| phone.digits.clone()),
-                context_snippet: snippet,
-                confidence: 65,
-                note: "github_code_public_mention".to_string(),
-            });
-        }
-    }
-    Ok(mentions)
-}
-
-async fn search_github_issues_for_phone(client: &Client, phone: &PhoneNormalized, term: &str) -> Result<Vec<PhonePublicMention>, reqwest::Error> {
-    let query = format!("{} in:title,body,comments", term);
-    let url = format!("https://api.github.com/search/issues?q={}&per_page=5", url_encode(&query));
-    let body = github_json(client, &url).await?;
-    let mut mentions = Vec::new();
-    if let Some(items) = body.get("items").and_then(|v| v.as_array()) {
-        for item in items.iter().take(5) {
-            let html_url = item.get("html_url").and_then(Value::as_str).map(|s| s.to_string());
-            let title = item.get("title").and_then(Value::as_str).unwrap_or("untitled");
-            let snippet = format!("GitHub issue/discussion search result: {} matched term {}", title, term);
-            mentions.push(PhonePublicMention {
-                source_id: "phone_github_issue_search".to_string(),
-                url: html_url,
-                value: phone.e164.clone().unwrap_or_else(|| phone.digits.clone()),
-                context_snippet: snippet,
-                confidence: 60,
-                note: "github_issue_public_mention".to_string(),
-            });
-        }
-    }
-    Ok(mentions)
-}
-
-async fn github_json(client: &Client, url: &str) -> Result<Value, reqwest::Error> {
-    client
-        .get(url)
-        .header("User-Agent", "XGEN-PhoneIntel/1.0 (+local self-audit)")
-        .header("Accept", "application/vnd.github+json")
-        .send()
-        .await?
-        .json::<Value>()
-        .await
+    let input = PhoneSearchInput {
+        phone_e164: phone.e164.clone(),
+        digits: phone.digits.clone(),
+        country_code: phone.country_code.clone(),
+        national_number: phone.national_number.clone(),
+        terms: terms.to_vec(),
+    };
+    phone_search::run_phone_search_providers(client, &input).await
 }
 
 pub fn save_phone_intel_report(report: &PhoneIntelReport, path: &str) -> Result<(), String> {
@@ -282,9 +226,7 @@ pub fn observations_as_entity_nodes(report: &PhoneIntelReport, limit: usize) -> 
         let value = if obs.normalized_value.is_empty() { obs.value_masked.clone() } else { obs.normalized_value.clone() };
         if value.is_empty() || value.contains("[redacted]") { continue; }
         let key = format!("{:?}:{}", obs.entity_type, value);
-        if seen.insert(key) {
-            nodes.push(EntityNode { value, entity_type: obs.entity_type.clone(), first_seen: obs.seen_at });
-        }
+        if seen.insert(key) { nodes.push(EntityNode { value, entity_type: obs.entity_type.clone(), first_seen: obs.seen_at }); }
     }
     nodes
 }
@@ -292,12 +234,10 @@ pub fn observations_as_entity_nodes(report: &PhoneIntelReport, limit: usize) -> 
 pub fn normalize_phone(raw: &str) -> PhoneNormalized {
     let digits: String = raw.trim().chars().filter(|c| c.is_ascii_digit()).collect();
     let mut result = PhoneNormalized { raw: raw.to_string(), digits: digits.clone(), ..PhoneNormalized::default() };
-
     if digits.is_empty() {
         result.notes.push("no digits found".to_string());
         return result;
     }
-
     if let Some(national) = digits.strip_prefix("375") {
         result.country_guess = Some("Беларусь".to_string());
         result.country_code = Some("375".to_string());
@@ -307,7 +247,6 @@ pub fn normalize_phone(raw: &str) -> PhoneNormalized {
         result.notes.push("Belarus +375 shape".to_string());
         return result;
     }
-
     if digits.starts_with("80") && digits.len() == 11 {
         let national = digits[2..].to_string();
         result.country_guess = Some("Беларусь".to_string());
@@ -318,7 +257,6 @@ pub fn normalize_phone(raw: &str) -> PhoneNormalized {
         result.notes.push("Belarus trunk 80 converted to +375".to_string());
         return result;
     }
-
     if let Some(national) = digits.strip_prefix("48") {
         result.country_guess = Some("Польша".to_string());
         result.country_code = Some("48".to_string());
@@ -328,7 +266,6 @@ pub fn normalize_phone(raw: &str) -> PhoneNormalized {
         result.notes.push("Poland +48 shape".to_string());
         return result;
     }
-
     if let Some(national) = digits.strip_prefix("380") {
         result.country_guess = Some("Украина".to_string());
         result.country_code = Some("380".to_string());
@@ -338,7 +275,6 @@ pub fn normalize_phone(raw: &str) -> PhoneNormalized {
         result.notes.push("Ukraine +380 shape".to_string());
         return result;
     }
-
     if let Some(national) = digits.strip_prefix('7') {
         result.country_guess = Some("Россия/Казахстан".to_string());
         result.country_code = Some("7".to_string());
@@ -348,7 +284,6 @@ pub fn normalize_phone(raw: &str) -> PhoneNormalized {
         result.notes.push("+7 shape, country requires additional context".to_string());
         return result;
     }
-
     result.valid_shape = false;
     result.notes.push("unsupported or ambiguous country prefix".to_string());
     result
@@ -390,7 +325,6 @@ pub fn build_phone_search_terms(phone: &PhoneNormalized) -> Vec<String> {
     }
     terms.push(digits.to_string());
     terms.push(format!("\"{}\"", digits));
-
     if phone.country_code.as_deref() == Some("375") {
         if let Some(national) = phone.national_number.as_deref() {
             if national.len() == 9 {
@@ -404,7 +338,6 @@ pub fn build_phone_search_terms(phone: &PhoneNormalized) -> Vec<String> {
             }
         }
     }
-
     if let Some(e164) = &phone.e164 {
         for site in ["t.me", "vk.com", "github.com", "pastebin.com", "steamcommunity.com", "worldoftanks.eu", "wargaming.net"] {
             terms.push(format!("site:{} \"{}\"", site, e164));
@@ -432,22 +365,9 @@ fn materialize_findings(report: &mut PhoneIntelReport) {
     }
 }
 
-fn url_encode(value: &str) -> String {
-    let mut out = String::new();
-    for byte in value.bytes() {
-        match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => out.push(byte as char),
-            b' ' => out.push('+'),
-            _ => out.push_str(&format!("%{:02X}", byte)),
-        }
-    }
-    out
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[test]
     fn normalizes_belarus_e164_phone() {
         let phone = normalize_phone("+375 25 799 76 76");
@@ -456,7 +376,6 @@ mod tests {
         assert_eq!(phone.country_guess.as_deref(), Some("Беларусь"));
         assert!(phone.valid_shape);
     }
-
     #[test]
     fn normalizes_belarus_80_phone() {
         let phone = normalize_phone("80 25 799 76 76");
@@ -465,7 +384,6 @@ mod tests {
         assert_eq!(phone.country_code.as_deref(), Some("375"));
         assert!(phone.valid_shape);
     }
-
     #[test]
     fn guesses_belarus_life_prefix_25() {
         let phone = normalize_phone("+375257997676");
@@ -473,7 +391,6 @@ mod tests {
         assert_eq!(guess.operator.as_deref(), Some("life:)"));
         assert!(guess.reason.contains("MNP"));
     }
-
     #[test]
     fn builds_phone_search_terms() {
         let phone = normalize_phone("+375257997676");
@@ -483,7 +400,6 @@ mod tests {
         assert!(terms.contains(&"80257997676".to_string()));
         assert!(terms.iter().any(|term| term.starts_with("site:t.me")));
     }
-
     #[test]
     fn phone_intel_report_materializes_evidence() {
         let seed = EntityNode { value: "+375257997676".to_string(), entity_type: EntityType::Phone, first_seen: 0 };
@@ -492,13 +408,5 @@ mod tests {
         assert_eq!(report.stats.phones_checked, 1);
         assert!(report.stats.evidences_count > 0);
         assert!(report.stats.observations_count > 0);
-    }
-
-    #[test]
-    fn focused_terms_include_e164_and_80_variant() {
-        let phone = normalize_phone("+375257997676");
-        let terms = focused_phone_terms(&phone, &build_phone_search_terms(&phone));
-        assert!(terms.contains(&"+375257997676".to_string()));
-        assert!(terms.contains(&"80257997676".to_string()));
     }
 }
